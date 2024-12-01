@@ -1,0 +1,34 @@
+-- Create a table to store broad tips and facts about sustainability
+CREATE TABLE Sustainability_Tips (
+    tip_id INT AUTO_INCREMENT PRIMARY KEY,
+    category VARCHAR(50),
+    tip TEXT
+);
+
+-- Insert some example tips and facts
+INSERT INTO Sustainability_Tips (category, tip) VALUES
+('food', 'Did you know? Producing one kilogram of beef emits 27 kilograms of CO2 equivalent.'),
+('food', 'Reducing food waste can save the average household hundreds of dollars annually!'),
+('travel', 'Walking or biking for short trips not only reduces emissions but improves health.'),
+('travel', 'Air travel accounts for about 2.5% of global CO2 emissions.'),
+('energy usage', 'Switching to LED light bulbs can reduce energy consumption by up to 75%.'),
+('energy usage', 'Unplugging devices when not in use can save both energy and money.'),
+('daily life', 'Composting your organic waste can reduce the waste you send to landfills by 30%.'),
+('daily life', 'Using reusable shopping bags helps reduce the demand for single-use plastics.'),
+('energy usage', 'Solar panels can save an average home more than 1 ton of CO2 per year.'),
+('travel', 'Electric vehicles produce less than half the emissions of a conventional vehicle over their lifetime.'),
+('food', 'Plant-based diets can reduce greenhouse gas emissions by up to 50% compared to meat-heavy diets.'),
+('food', 'Local and seasonal produce has a lower carbon footprint than imported foods.'),
+('travel', 'Carpooling with others reduces individual emissions and traffic congestion.'),
+('travel', 'High-speed rail travel is one of the most energy-efficient forms of long-distance transport.'),
+('energy usage', 'Insulating your home can reduce energy usage for heating and cooling by up to 30%.'),
+('energy usage', 'Smart thermostats can save 10-15% on energy bills by optimizing temperature settings.'),
+('daily life', 'Switching to biodegradable cleaning products helps reduce water pollution.'),
+('daily life', 'Repairing and reusing items can significantly reduce waste and save resources.'),
+('energy usage', 'Using cold water for laundry can cut energy use by up to 90%.'),
+('travel', 'Consider vacationing closer to home to reduce the environmental impact of long-distance travel.');
+
+-- Query to fetch a random tip from the table
+SELECT tip FROM Sustainability_Tips
+ORDER BY RAND()
+LIMIT 1;
