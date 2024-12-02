@@ -1,0 +1,62 @@
+name: Python Backend Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  # Use your desired Python version
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Run tests (optional, but recommended for CI)
+      - name: Run tests
+        run: |
+          pytest  # Replace with your test command if using unittest or another testing framework
+
+      # Step 5: Deploy to EC2
+      - name: Deploy to EC2
+        run: |
+          # Zip the project files
+          zip -r backend.zip ./*
+
+          # Copy the ZIP to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} backend.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }}:/home/${{ secrets.EC2_USER }}
+
+          # SSH into the EC2 instance to deploy the backend app
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+            # Navigate to the deployment directory
+            cd /home/${{ secrets.EC2_USER }}
+
+            # Unzip the files on EC2
+            unzip -o backend.zip -d /var/www/backend
+
+            # Navigate to the backend folder
+            cd /var/www/backend
+
+            # Install Python dependencies on EC2
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+
+            # Restart the application (e.g., using Gunicorn for Django/Flask or any WSGI server)
+            # Example using Gunicorn
+            sudo systemctl restart gunicorn
+          "
