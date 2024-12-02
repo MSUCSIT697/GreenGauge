@@ -1,0 +1,33 @@
+name: Frontend Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Deploy to EC2
+        run: |
+          zip -r build.zip ./build
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }}:/home/${{ secrets.EC2_USER }}
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }} "
+            unzip -o /home/${{ secrets.EC2_USER }}/build.zip -d /var/www/html
+          "
