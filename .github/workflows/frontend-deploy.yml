@@ -16,18 +16,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: '16'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Project
-        run: npm run build
+      - name: Build React Project
+        run: npm run build  # Builds the React project
 
       - name: Deploy to EC2
         run: |
+          # Package the build directory
           zip -r build.zip ./build
-          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }}:/home/${{ secrets.EC2_USER }}
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }} "
+          
+          # Copy the build files to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }}:/home/${{ secrets.EC2_USER }}
+          
+          # SSH into the EC2 instance and deploy the build files
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+            # Extract the build files on the EC2 instance
             unzip -o /home/${{ secrets.EC2_USER }}/build.zip -d /var/www/html
+            # Optionally, restart the web server (like nginx)
+            sudo systemctl restart nginx
           "
