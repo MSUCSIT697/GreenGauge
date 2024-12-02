@@ -1,9 +1,9 @@
-name: Frontend Deployment
+name: Deploy Frontend to EC2
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the deployment when pushing to the main branch
 
 jobs:
   deploy:
@@ -16,26 +16,24 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '16'  # Replace with your required Node version
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install   # Install the dependencies from package.json
 
       - name: Build React Project
-        run: npm run build  # Builds the React project
+        run: |
+          npm run build  # Build the React project (production-ready)
 
       - name: Deploy to EC2
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          KEY: ${{ secrets.EC2_SSH_KEY }}
+
         run: |
-          # Package the build directory
-          zip -r build.zip ./build
-          
-          # Copy the build files to the EC2 instance
-          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }}:/home/${{ secrets.EC2_USER }}
-          
-          # SSH into the EC2 instance and deploy the build files
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            # Extract the build files on the EC2 instance
-            unzip -o /home/${{ secrets.EC2_USER }}/build.zip -d /var/www/html
-            # Optionally, restart the web server (like nginx)
-            sudo systemctl restart nginx
-          "
+          echo "${{ secrets.KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -r ./build/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/html
+          ssh
