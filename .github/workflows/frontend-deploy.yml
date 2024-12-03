@@ -3,7 +3,7 @@ name: Deploy Frontend to EC2
 on:
   push:
     branches:
-      - main  # Trigger the deployment when pushing to the main branch
+      - main  # Deploy when code is pushed to the main branch
 
 jobs:
   deploy:
@@ -16,15 +16,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Replace with your required Node version
+          node-version: '16'
 
       - name: Install Dependencies
-        run: |
-          npm install   # Install the dependencies from package.json
+        run: npm install
 
-      - name: Build React Project
-        run: |
-          npm run build  # Build the React project (production-ready)
+      - name: Build Project
+        run: npm run build
 
       - name: Deploy to EC2
         env:
@@ -33,7 +31,5 @@ jobs:
           KEY: ${{ secrets.EC2_SSH_KEY }}
 
         run: |
-          echo "${{ secrets.KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem -r ./build/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/html
-          ssh
+          scp -i "${{ secrets.EC2_SSH_KEY }}" -r ./build/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html
+          ssh -i "${{ secrets.EC2_SSH_KEY }}" ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo systemctl restart nginx"
