@@ -1,9 +1,9 @@
-name: Deploy Frontend to EC2
+name: Frontend Deployment
 
 on:
   push:
     branches:
-      - main  # Deploy when code is pushed to the main branch
+      - main
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 16
 
       - name: Install Dependencies
         run: npm install
@@ -25,11 +25,9 @@ jobs:
         run: npm run build
 
       - name: Deploy to EC2
-        env:
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ${{ secrets.EC2_USER }}
-          KEY: ${{ secrets.EC2_SSH_KEY }}
-
         run: |
-          scp -i "${{ secrets.EC2_SSH_KEY }}" -r ./build/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html
-          ssh -i "${{ secrets.EC2_SSH_KEY }}" ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo systemctl restart nginx"
+          zip -r build.zip ./build
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }}:/home/${{ secrets.EC2_USER }}
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_FRONTEND_IP }} "
+            unzip -o /home/${{ secrets.EC2_USER }}/build.zip -d /var/www/html
+          "
