@@ -1,0 +1,62 @@
+name: Deploy Full Stack to EC2
+
+on:
+  push:
+    branches:
+      - main  # Deploy when code is pushed to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1  # Adjust if necessary
+      FRONTEND_EC2_HOST: ${{ secrets.EC2_FRONTEND_IP }}
+      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      #### FRONTEND DEPLOYMENT ####
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Deploy Frontend to EC2
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -r ./frontend/build/* ubuntu@$EC2_FRONTEND_IP:/var/www/html/frontend
+          ssh -i private_key.pem ubuntu@$EC2_FRONTEND_IP "sudo systemctl restart apache2"
+
+      #### BACKEND DEPLOYMENT ####
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Deploy Backend to EC2
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
+          ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
+          ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "sudo systemctl restart apache2"
