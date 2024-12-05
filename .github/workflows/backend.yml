@@ -1,4 +1,4 @@
-name: Deploy Full Stack to EC2
+name: Deploy backend to EC2
 
 on:
   push:
@@ -11,34 +11,12 @@ jobs:
 
     env:
       AWS_REGION: us-east-1  # Adjust if necessary
-      FRONTEND_EC2_HOST: ${{ secrets.EC2_FRONTEND_IP }}
       BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      #### FRONTEND DEPLOYMENT ####
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm install
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: npm run build
-
-      - name: Deploy Frontend to EC2
-        run: |
-          echo "$SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem -r ./frontend/build/* ubuntu@$EC2_FRONTEND_IP:/var/www/html/frontend
-          ssh -i private_key.pem ubuntu@$EC2_FRONTEND_IP "sudo systemctl restart apache2"
 
       #### BACKEND DEPLOYMENT ####
       - name: Set up Python
