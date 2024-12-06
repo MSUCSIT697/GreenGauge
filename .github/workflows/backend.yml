@@ -3,7 +3,7 @@ name: Deploy backend to EC2
 on:
   push:
     branches:
-      - main  # Deploy when code is pushed to the 'main' branch
+      - api  # Deploy when code is pushed to the 'main' branch
 
 jobs:
   deploy:
@@ -30,10 +30,15 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
+      
+      - name: Set environment variables
+        run: |
+        echo "DATABASE_PWD=${{ secrets.DATABASE_PWD }}" >> $GITHUB_ENV
+        echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> $GITHUB_ENV
 
       - name: Deploy Backend to EC2
         run: |
-          echo "$SSH_KEY" > private_key.pem
+          echo "${{ secrets.SSH_KEY }}" > private_key.pem
           chmod 600 private_key.pem
           scp -i private_key.pem -r ./backend/* ubuntu@$EC2_BACKEND_IP:/var/www/backend
           ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"

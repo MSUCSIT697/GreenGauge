@@ -1,5 +1,7 @@
+import os
+
 class Config:
-    MYSQL_HOST = 'database-1.c122k88askq1.us-east-1.rds.amazonaws.com'
+    MYSQL_HOST = os.getenv("DATABASE_HOST")
     MYSQL_USER = 'admin'
-    MYSQL_PASSWORD = 'x5*lpistL6et8er*_'
+    MYSQL_PASSWORD = os.getenv("DATABASE_PWD")
     MYSQL_DB = 'emissions_db'
