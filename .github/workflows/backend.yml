@@ -38,6 +38,9 @@ jobs:
       #   echo "DATABASE_PWD=$DATABASE_PWD" >> $GITHUB_ENV
       #   echo "DATABASE_HOST=$DATABASE_HOST" >> $GITHUB_ENV
 
+      - name: Print Secret Value
+        run: echo "The secret value is: $SSH_KEY"
+
       - name: Deploy Backend to EC2
         run: |
           echo "$SSH_KEY" > private_key.pem
