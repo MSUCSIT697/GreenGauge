@@ -26,12 +26,12 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
+      # - name: Install Backend Dependencies
+      #   working-directory: ./backend
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #     pip install -r requirements.txt
       
       # - name: Set environment variables
       #   run: |
@@ -46,7 +46,7 @@ jobs:
           echo "Directory Created"
           scp -v -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
           echo "Backend Files Deployed"
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "python -m venv venv && source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
           echo "Installed Backend Dependencies"
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
           echo "Restarted apache2"
