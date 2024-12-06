@@ -43,6 +43,6 @@ jobs:
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
-          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
+          scp -v -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
