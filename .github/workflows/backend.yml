@@ -33,10 +33,10 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
       
-      - name: Set environment variables
-        run: |
-        echo "DATABASE_PWD=$DATABASE_PWD" >> $GITHUB_ENV
-        echo "DATABASE_HOST=$DATABASE_HOST" >> $GITHUB_ENV
+      # - name: Set environment variables
+      #   run: |
+      #   echo "DATABASE_PWD=$DATABASE_PWD" >> $GITHUB_ENV
+      #   echo "DATABASE_HOST=$DATABASE_HOST" >> $GITHUB_ENV
 
       - name: Deploy Backend to EC2
         run: |
