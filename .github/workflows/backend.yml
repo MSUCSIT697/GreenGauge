@@ -35,6 +35,6 @@ jobs:
         run: |
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
-          scp -i private_key.pem -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
+          scp -i private_key.pem -r ./backend/* ubuntu@$EC2_BACKEND_IP:/var/www/backend
           ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
           ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "sudo systemctl restart apache2"
