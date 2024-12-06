@@ -1,48 +1,29 @@
-name: Deploy backend to EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main  # Deploy when code is pushed to the 'main' branch
+      - main  # Trigger deployment on 'main' branch push
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      AWS_REGION: us-east-1  # Adjust if necessary
-      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
-      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
     steps:
+      # Checkout code from the repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      #### BACKEND DEPLOYMENT ####
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.9
-
-      - name: Install Backend Dependencies
-        working-directory: ./backend
+      # Set up SSH key for EC2 connection
+      - name: Set up SSH key
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-
-      - name: Deploy Backend to EC2
-        run: |
-          # Save SSH key to a file
-          echo "$SSH_KEY" > private_key.pem
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
-          # Copy the backend files to the EC2 instance
-          scp -i private_key.pem -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
-
-          # Activate virtual environment, install dependencies, and restart Apache
-          ssh -i private_key.pem ubuntu@$BACKEND_EC2_HOST << 'EOF'
-            source /var/www/backend/venv/bin/activate
-            pip install -r /var/www/backend/requirements.txt
-            sudo systemctl restart apache2
-          EOF
+      # Deploy code to EC2 instance
+      - name: Deploy to EC2
+        run: |
+          scp -i private_key.pem -r ./ * ubuntu@$EC2_BACKEND_IP:/var/www/myapp
+          
+          # Restart service (example: Apache)
+          ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "sudo systemctl restart apache2"
