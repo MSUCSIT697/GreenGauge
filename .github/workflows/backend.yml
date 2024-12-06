@@ -11,7 +11,7 @@ jobs:
 
     env:
       AWS_REGION: us-east-1  # Adjust if necessary
-      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
+       EC2_BACKEND_IP: ${{ secrets.EC2_BACKEND_IP }}
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
