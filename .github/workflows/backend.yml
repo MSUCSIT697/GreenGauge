@@ -13,6 +13,8 @@ jobs:
       AWS_REGION: us-east-1  # Adjust if necessary
       BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_PWD: ${{ secrets.DATABASE_PWD }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
 
     steps:
       - name: Checkout Code
@@ -33,12 +35,12 @@ jobs:
       
       - name: Set environment variables
         run: |
-        echo "DATABASE_PWD=${{ secrets.DATABASE_PWD }}" >> $GITHUB_ENV
-        echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> $GITHUB_ENV
+        echo "$DATABASE_PWD" >> $GITHUB_ENV
+        echo "$DATABASE_HOST" >> $GITHUB_ENV
 
       - name: Deploy Backend to EC2
         run: |
-          echo "${{ secrets.SSH_KEY }}" > private_key.pem
+          echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
           scp -i private_key.pem -r ./backend/* ubuntu@$EC2_BACKEND_IP:/var/www/backend
           ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "source /var/www/backend/venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
