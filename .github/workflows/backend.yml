@@ -48,7 +48,7 @@ jobs:
           echo "Backend Files Deployed"
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo apt install python3 && sudo apt install python3-pip && sudo apt install python3.12-venv -y"
           echo "Installed Python"
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "python3 -m venv venv && source /var/www/backend/venv/bin/activate && pip3 install -r /var/www/backend/requirements.txt"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "python3 -m venv venv && source venv/bin/activate && pip3 install -r /var/www/backend/requirements.txt"
           echo "Installed Backend Dependencies"
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
           echo "Restarted apache2"
