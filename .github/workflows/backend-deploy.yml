@@ -1,0 +1,33 @@
+name: Backend Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Deploy to EC2
+        run: |
+          zip -r backend.zip ./*
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} backend.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_BACKEND_IP }}:/home/${{ secrets.EC2_USER }}
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_BACKEND_IP }} "
+            unzip -o /home/${{ secrets.EC2_USER }}/backend.zip -d /var/www/backend
+            cd /var/www/backend
+            npm install --production
+            pm2 restart all || pm2 start index.js
+          "
