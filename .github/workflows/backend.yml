@@ -3,7 +3,7 @@ name: Deploy backend to EC2
 on:
   push:
     branches:
-      - api  # Deploy when code is pushed to the 'main' branch
+      - dev  # Deploy when code is pushed to the 'main' branch
 
 jobs:
   deploy:
