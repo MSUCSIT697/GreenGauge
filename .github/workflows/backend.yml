@@ -1,0 +1,54 @@
+name: Deploy backend to EC2
+
+on:
+  push:
+    branches:
+      - api  # Deploy when code is pushed to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1  # Adjust if necessary
+      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_PWD: ${{ secrets.DATABASE_PWD }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      #### BACKEND DEPLOYMENT ####
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+
+      # - name: Install Backend Dependencies
+      #   working-directory: ./backend
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #     pip install -r requirements.txt
+      
+      # - name: Set environment variables
+      #   run: |
+      #   echo "DATABASE_PWD=$DATABASE_PWD" >> $GITHUB_ENV
+      #   echo "DATABASE_HOST=$DATABASE_HOST" >> $GITHUB_ENV
+
+      - name: Deploy Backend to EC2
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
+          echo "Directory Created"
+          scp -v -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend
+          echo "Backend Files Deployed"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo apt install python3 && sudo apt install python3-pip && sudo apt install python3.12-venv -y"
+          echo "Installed Python"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "python3 -m venv venv && source venv/bin/activate && pip3 install -r /var/www/backend/requirements.txt"
+          echo "Installed Backend Dependencies"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted apache2"
