@@ -1,44 +1,85 @@
-console.log("Backend started! Waiting for requests...");
-
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
 
 const app = express();
 const PORT = 5000;
+const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 app.use(express.json());
 
-// Mock API Route for Dashboard Data
-app.get("/api/dashboard-data", (req, res) => {
-  
-  console.log("API received a request at /api/dashboard-data");
-  res.json({
-    monthlyRating: 72,
-    ratings: [
-      { category: "House", value: -11 },
-      { category: "Car", value: 9 },
-      { category: "Public Transport", value: -20 },
-      { category: "Food", value: 7 },
-      { category: "Retail", value: 12 },
-    ],
-    sustainabilityGoals: [
-      { text: "Try Carpooling or switching to a more fuel-efficient route", completed: true },
-      { text: "Try Reducing meat intake and opting for local produce", completed: false },
-      { text: "Try to reduce non-essential purchases or choose eco-friendly brands", completed: false },
-    ],
-  });
+let reports = []; // ✅ Store all past reports
+let latestResults = null; // ✅ Store the most recent results
+
+// ✅ Get Latest Results
+app.get("/api/latest-results", (req, res) => {
+  if (!latestResults) {
+    return res.json({
+      id: null,
+      monthlyRating: 0,
+      ratings: [],
+      sustainabilityGoals: [],
+    });
+  }
+  res.json(latestResults);
 });
 
-app.get("/api/progress-data", (req, res) => {
-  console.log("Progress API hit!"); // ✅ Log when the API is accessed
-  res.json([
-    { month: "Month 1", value: 80 },
-    { month: "Month 2", value: 70 },
-    { month: "Month 3", value: 65 },
-    { month: "Month 4", value: 60 },
-    { month: "Month 5", value: 55 },
-  ]);
+// ✅ Get Specific Report by ID
+app.get("/api/reports/:id", (req, res) => {
+  const report = reports.find((r) => r.id === req.params.id);
+  if (!report) return res.status(404).json({ error: "Report not found" });
+  res.json(report);
+});
+
+// ✅ Get All Reports (For Reports Page)
+app.get("/api/reports", (req, res) => {
+  res.json(reports);
+});
+
+// ✅ Upload PDF & Process Results
+app.post("/upload-pdf", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  console.log("PDF Uploaded:", req.file.originalname);
+
+  const newResult = {
+    id: `report_${Date.now()}`,
+    date: new Date().toLocaleDateString(),
+    type: "PDF",
+    monthlyRating: 75, // Example data
+    ratings: [
+      { category: "House", value: -5 },
+      { category: "Car", value: 8 },
+    ],
+    sustainabilityGoals: [{ text: "Try carpooling", completed: false }],
+  };
+
+  latestResults = newResult; // ✅ Update latest result
+  reports.push(newResult); // ✅ Save the report for future access
+
+  res.json({ message: "Success", latestResults });
+});
+
+// ✅ Manual Calculator Entry
+app.post("/manual-calculator", (req, res) => {
+  console.log("Manual Calculator Submission:", req.body);
+
+  const newResult = {
+    id: `report_${Date.now()}`,
+    date: new Date().toLocaleDateString(),
+    type: "Manual",
+    monthlyRating: req.body.monthlyRating || 50,
+    ratings: req.body.ratings || [],
+    sustainabilityGoals: req.body.sustainabilityGoals || [],
+  };
+
+  latestResults = newResult; // ✅ Update latest result
+  reports.push(newResult); // ✅ Save the report
+
+  res.json({ message: "Success", latestResults });
 });
 
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

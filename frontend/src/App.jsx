@@ -1,30 +1,29 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout.jsx';
-import Home from './pages/Home.jsx';
-import About from './pages/About.jsx';
-import Navbar from "./components/Navbar";
-import Dashboard from "./components/Dashboard";
-
-/* function App() {
-  return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-      </Layout>
-    </Router>
-  );
-}
-
-export default App; */
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
+import Calculator from "./pages/Calculator";
+import Profile from "./pages/Profile";
+import FAQs from "./pages/FAQs";
+import Results from "./pages/Results";
+import { ResultsProvider } from "./context/ResultsContext";
 
 export default function App() {
   return (
-    <div>
-      <Navbar />
-      <Dashboard />
-    </div>
+    <ResultsProvider>
+        <Routes>
+          {/* Wrap all pages inside Layout */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="calculator" element={<Calculator />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="faqs" element={<FAQs />} />
+            <Route path="/results" element={<Results />} />
+          </Route>
+        </Routes>
+    </ResultsProvider>
   );
 }

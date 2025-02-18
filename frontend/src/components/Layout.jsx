@@ -1,12 +1,13 @@
-'use client'
+import Navbar from "./Navbar";
+import { Outlet } from "react-router-dom";
 
-import Navbar from './Navbar' // Ensure this matches your file structure
-
-export default function Layout({ children }) {
+export default function Layout() {
   return (
-    <div>
-      <Navbar /> {/* Ensure you're using the correct Navbar component */}
-      <main>{children}</main> {/* Ensure children is correctly passed */}
+    <div className="min-h-screen bg-base-100">
+      <Navbar />
+      <main className="container mx-auto p-6">
+        <Outlet /> {/* This will load the correct page */}
+      </main>
     </div>
-  )
+  );
 }

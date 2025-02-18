@@ -1,122 +1,90 @@
-'use client'
-
-import { useState } from 'react'
-import {
-  Dialog,
-  DialogPanel,
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Popover,
-  PopoverButton,
-  PopoverGroup,
-  PopoverPanel,
-} from '@headlessui/react'
-import {
-  Bars3Icon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 
 export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const location = useLocation(); // Get current route
+
+  const menuItems = [
+    { name: "Home", path: "/" },
+    { name: "Dashboard", path: "/Dashboard" },
+    { name: "Calculator", path: "/calculator" },
+    { name: "FAQs", path: "/faqs" },
+  ];
 
   return (
-    <header className="bg-white shadow">
-      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
-        {/* GreenGauge Text instead of Logo */}
-        <div className="flex lg:flex-1">
-          <a href="#" className="text-2xl font-bold text-indigo-600">
-            GreenGauge
-          </a>
+    <nav className="bg-white shadow-md px-6 py-4">
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo / Brand */}
+        <Link to="/" className="text-xl font-bold text-primary">GreenGauge</Link>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex space-x-6">
+          {menuItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`text-gray-700 hover:text-primary font-medium ${
+                location.pathname === item.path ? "border-b-2 border-primary" : ""
+              }`}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
+
+        {/* Account Dropdown Menu */}
+        <div className="relative hidden md:block">
+          <button onClick={() => setAccountMenuOpen(!accountMenuOpen)} className="flex items-center gap-2">
+            <UserCircleIcon className="h-6 w-6 text-gray-900" />
+            <span className="text-sm font-semibold text-gray-900">Account</span>
+          </button>
+          {accountMenuOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md">
+              <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                Profile
+              </Link>
+              <button onClick={() => alert("Logout clicked")} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                Logout
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex lg:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-          >
-            <span className="sr-only">Open main menu</span>
-            <Bars3Icon aria-hidden="true" className="size-6" />
-          </button>
-        </div>
-
-        {/* Desktop Menu */}
-        <div className="hidden lg:flex lg:gap-x-12">
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            Home Page
-          </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            FAQs
-          </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            Calculator
-          </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            Dashboard
-          </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            Settings
-          </a>
-        </div>
-
-        {/* Log In Button (Stays in the same place) */}
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-          <a href="#" className="text-sm font-semibold text-gray-900">
-            Log in <span aria-hidden="true">&rarr;</span>
-          </a>
-        </div>
-      </nav>
+        <button className="md:hidden text-gray-700" onClick={() => setIsOpen(!isOpen)}>
+          ☰
+        </button>
+      </div>
 
       {/* Mobile Menu */}
-      <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
-        <div className="fixed inset-0 z-10" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-          <div className="flex items-center justify-between">
-            {/* GreenGauge Title in Mobile Menu */}
-            <a href="#" className="text-2xl font-bold text-indigo-600">
-              GreenGauge
-            </a>
-
-            {/* Close Menu Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="-m-2.5 rounded-md p-2.5 text-gray-700"
+      {isOpen && (
+        <div className="md:hidden mt-4 space-y-2 bg-gray-100 rounded-lg p-4">
+          {menuItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`block text-gray-700 hover:text-primary font-medium ${
+                location.pathname === item.path ? "text-primary" : ""
+              }`}
+              onClick={() => setIsOpen(false)}
             >
-              <span className="sr-only">Close menu</span>
-              <XMarkIcon aria-hidden="true" className="size-6" />
+              {item.name}
+            </Link>
+          ))}
+          {/* Mobile Account Dropdown */}
+          <div className="border-t border-gray-300 pt-2">
+            <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              Profile
+            </Link>
+            <button onClick={() => alert("Logout clicked")} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+              Logout
             </button>
           </div>
-
-          {/* Mobile Navigation Links */}
-          <div className="mt-6">
-            <a href="#" className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              Home Page
-            </a>
-            <a href="#" className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              FAQs
-            </a>
-            <a href="#" className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              Calculator
-            </a>
-            <a href="#" className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              Dashboard
-            </a>
-            <a href="#" className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              Settings
-            </a>
-          </div>
-
-          {/* Log In Link in Mobile Menu */}
-          <div className="py-6">
-            <a href="#" className="block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-gray-50">
-              Log in
-            </a>
-          </div>
-        </DialogPanel>
-      </Dialog>
-    </header>
-  )
+        </div>
+      )}
+    </nav>
+  );
 }
