@@ -35,7 +35,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_FRONTEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "frontend/dist/*"
           target: "/var/www/html"
 
@@ -45,7 +45,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "backend/*"
           target: "~/backend"
 
@@ -55,7 +55,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/backend
             source venv/bin/activate  # Activate virtualenv if used
@@ -67,7 +67,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             sudo systemctl restart apache2
             
@@ -77,6 +77,6 @@ jobs:
         with:
           host: ${{ secrets.EC2_FRONTEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             sudo systemctl restart apache2
