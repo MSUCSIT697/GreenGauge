@@ -1,0 +1,5 @@
+- name: Build Frontend
+  working-directory: ./frontend
+  run: |
+    npm install
+    npm run build
