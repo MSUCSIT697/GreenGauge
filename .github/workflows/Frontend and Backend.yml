@@ -47,8 +47,8 @@ jobs:
           scp -i private_key.pem -o StrictHostKeyChecking=no -r ./frontend/dist/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend/
           echo "Frontend Files Deployed"
 
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart nginx"
-          echo "Restarted Nginx"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted apache2"
 
       #### BACKEND DEPLOYMENT ####
       - name: Set up Python
