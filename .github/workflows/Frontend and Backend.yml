@@ -1,82 +1,74 @@
-name: Deploy Frontend & Backend to EC2
+name: Deploy Frontend and Backend to EC2
 
 on:
   push:
     branches:
-      - dev  # Change this to your deployment branch if different
+      - dev  # Deploy when code is pushed to 'dev' branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: us-east-1  # Adjust if necessary
+      FRONTEND_EC2_HOST: ${{ secrets.EC2_FRONTEND_IP }}
+      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_PWD: ${{ secrets.DATABASE_PWD }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      ### 🏗️ Build Frontend (Vite) ###
-      - name: Install Node.js
+      #### SETUP SSH ACCESS ####
+      - name: Configure SSH Key
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+      #### FRONTEND DEPLOYMENT ####
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install Frontend Dependencies
+      - name: Install Frontend Dependencies and Build
+        working-directory: ./frontend
         run: |
-          cd frontend
           npm install
-
-      - name: Build Frontend
-        run: |
-          cd frontend
           npm run build
 
-      ### 🚀 Deploy Frontend to EC2 ###
-      - name: Deploy Frontend via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_FRONTEND_IP }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "frontend/dist/*"
-          target: "/var/www/html"
+      - name: Deploy Frontend to EC2
+        run: |
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo mkdir -p /var/www/frontend && sudo chmod -R 755 /var/www/frontend && sudo chown -R ubuntu:ubuntu /var/www/frontend/"
+          echo "Frontend Directory Created"
 
-      ### 🐍 Deploy Backend to EC2 ###
-      - name: Deploy Backend via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_BACKEND_IP }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "backend/*"
-          target: "~/backend"
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./frontend/dist/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend/
+          echo "Frontend Files Deployed"
 
-      ### 🔄 Restart Backend ###
-      - name: Restart Backend
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_BACKEND_IP }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/backend
-            source venv/bin/activate  # Activate virtualenv if used
-            pip install -r requirements.txt  # Install dependencies
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart nginx"
+          echo "Restarted Nginx"
 
-      ### 🔄 Restart Backend apache2 ###
-      - name: Restart apache2
-        uses: appleboy/ssh-action@v0.1.10
+      #### BACKEND DEPLOYMENT ####
+      - name: Set up Python
+        uses: actions/setup-python@v3
         with:
-          host: ${{ secrets.EC2_BACKEND_IP }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            sudo systemctl restart apache2
-            
- ### 🔄 Restart Frontend apache2 ###
-      - name: Restart apache2
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_FRONTEND_IP }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            sudo systemctl restart apache2
+          python-version: 3.9
+
+      - name: Deploy Backend to EC2
+        run: |
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
+          echo "Backend Directory Created"
+
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend/
+          echo "Backend Files Deployed"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo apt update && sudo apt install -y python3 python3-pip python3-venv"
+          echo "Installed Python"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "cd /var/www/backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+          echo "Installed Backend Dependencies"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted Apache"
