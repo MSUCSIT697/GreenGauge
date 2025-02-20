@@ -30,7 +30,7 @@ jobs:
 
       - name: Build Frontend
         working-directory: ./frontend
-        run: npm run build  # Ensure this generates "build" or "dist" folder
+        run: npm run build  # Vite generates "dist" folder
 
       #### FRONTEND DEPLOYMENT ####
       - name: Deploy Frontend to EC2 (Apache2)
@@ -42,7 +42,7 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/frontend
           "
           echo "Directory Created"
-          scp -r -i private_key.pem -o StrictHostKeyChecking=no ./frontend/build/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend
+          scp -r -i private_key.pem -o StrictHostKeyChecking=no ./frontend/dist/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend
           echo "Frontend Files Deployed"
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
           echo "Restarted Apache2"
