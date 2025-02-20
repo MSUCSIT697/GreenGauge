@@ -33,9 +33,9 @@ jobs:
       - name: Deploy Frontend via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_FRONTEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
           source: "frontend/dist/*"
           target: "/var/www/html"
 
@@ -43,9 +43,9 @@ jobs:
       - name: Deploy Backend via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
           source: "backend/*"
           target: "~/backend"
 
@@ -53,20 +53,30 @@ jobs:
       - name: Restart Backend
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
           script: |
             cd ~/backend
             source venv/bin/activate  # Activate virtualenv if used
             pip install -r requirements.txt  # Install dependencies
 
-      ### 🔄 Restart apache2 ###
+      ### 🔄 Restart Backend apache2 ###
       - name: Restart apache2
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_BACKEND_IP }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
+          script: |
+            sudo systemctl restart apache2
+            
+ ### 🔄 Restart Frontend apache2 ###
+      - name: Restart apache2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_FRONTEND_IP }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_KEY }}
           script: |
             sudo systemctl restart apache2
