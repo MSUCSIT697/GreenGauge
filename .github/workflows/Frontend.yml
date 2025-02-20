@@ -1,0 +1,48 @@
+name: Deploy Frontend to EC2 
+
+on:
+  push:
+    branches:
+      - dev  # Deploy when code is pushed to 'dev' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1
+      FRONTEND_EC2_HOST: ${{ secrets.EC2_FRONTEND_IP }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      #### FRONTEND BUILD ####
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18  # Use the correct Node.js version
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build  # Ensure this generates "build" or "dist" folder
+
+      #### FRONTEND DEPLOYMENT ####
+      - name: Deploy Frontend to EC2 (Apache2)
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "
+            sudo mkdir -p /var/www/frontend
+            sudo chown -R ubuntu:ubuntu /var/www/frontend
+          "
+          echo "Directory Created"
+          scp -r -i private_key.pem -o StrictHostKeyChecking=no ./frontend/build/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend
+          echo "Frontend Files Deployed"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted Apache2"
