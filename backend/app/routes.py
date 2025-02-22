@@ -4,6 +4,12 @@ from app.database import get_db_connection
 
 api_routes = Blueprint('api_routes', __name__)
 
+# Health check endpoint
+@api_routes.route('/health', methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
+
 @api_routes.route('/calculate_emissions', methods=['POST'])
 def calculate_emissions():
     data = request.get_json()

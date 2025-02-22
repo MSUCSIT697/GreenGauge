@@ -5,6 +5,7 @@ import GaugeChart from "../components/GaugeChart";
 export default function Home() {
   const [rating, setRating] = useState(50); // Default rating
   const [isPositive, setIsPositive] = useState(true); // State to track the current choice
+  // const [status, setStatus] = useState(""); // Health Status message
 
   // Handles button clicks
   const handleGaugeChange = (increase) => {
@@ -16,6 +17,18 @@ export default function Home() {
       setIsPositive(true); // Yes is selected
     }
   };
+
+  // Fetches health status from the backend
+  // const checkHealth = async () => {
+  //   try {
+  //     // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/health`);
+  //     const response = await fetch("https://greengauge.live/api/health");
+  //     const data = await response.json();
+  //     setStatus(data.status);
+  //   } catch (error) {
+  //     setStatus("Error fetching health status");
+  //   }
+  // };
 
   return (
     <div className="p-6 flex flex-col items-center">
@@ -74,3 +87,10 @@ export default function Home() {
     </div>
   );
 }
+// {/* Health Status */}
+{/* <div className="mt-6">
+<button onClick={checkHealth} className="btn btn-primary">
+  Check Health Status
+</button>
+<p className="mt-2 text-gray-700">{status}</p>
+</div> */}

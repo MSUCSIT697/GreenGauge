@@ -2,7 +2,7 @@ import json
 
 # Load emission factors from JSON file
 def load_emission_factors():
-    with open('emission_factors.json', 'r') as f:
+    with open('/var/www/backend/emission_factors.json', 'r') as f:
         return json.load(f)
 
 # Load the emission factors once when the application starts
