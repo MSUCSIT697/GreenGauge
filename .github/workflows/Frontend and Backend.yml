@@ -58,17 +58,17 @@ jobs:
 
       - name: Deploy Backend to EC2
         run: |
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
           echo "Backend Directory Created"
 
-          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$BACKEND_EC2_HOST:/var/www/backend/
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$FRONTEND_EC2_HOST:/var/www/backend/
           echo "Backend Files Deployed"
 
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo apt update && sudo apt install -y python3 python3-pip python3-venv"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo apt update && sudo apt install -y python3 python3-pip python3-venv"
           echo "Installed Python"
 
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "cd /var/www/backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "cd /var/www/backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
           echo "Installed Backend Dependencies"
 
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$BACKEND_EC2_HOST "sudo systemctl restart apache2"
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
           echo "Restarted Apache"
