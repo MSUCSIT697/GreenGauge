@@ -78,8 +78,12 @@ export default function Home() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-center space-x-4 mt-6">
-        <button className="btn btn-primary">Sign In</button>
-        <button className="btn btn-primary">Create New Account</button>
+        <Link to="/sign-in">
+          <button className="btn btn-primary">Sign In</button>
+        </Link>
+        <Link to="/create-account">
+          <button className="btn btn-primary">Create New Account</button>
+        </Link>
         <Link to="/calculator" className="btn btn-primary">
           Try Calculator
         </Link>
