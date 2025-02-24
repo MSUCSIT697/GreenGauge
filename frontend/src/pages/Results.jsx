@@ -13,9 +13,9 @@ export default function Results() {
   const njAverage = {
     monthlyRating: 85,
     ratings: [
-      { category: "House", value: -5 },
-      { category: "Car", value: 15 },
-      { category: "Public Transport", value: -10 },
+      { category: "Electricity", value: -5 },
+      { category: "Transportation", value: 15 },
+      { category: "Waste", value: -10 },
       { category: "Food", value: 12 },
       { category: "Retail", value: 8 },
     ],
@@ -23,14 +23,37 @@ export default function Results() {
 
   useEffect(() => {
     const endpoint = id
-      ? `${import.meta.env.VITE_API_URL}/api/reports/${id}`
-      : `${import.meta.env.VITE_API_URL}/api/latest-results`;
+      ? `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1}` //change back 1 to ${id}
+      : `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; //change this back to latest-results or something
 
     fetch(endpoint)
-      .then((res) => res.json())
+      .then((res) => {
+        console.log("Raw API Data:", res);
+        return res.json();
+      })
       .then((data) => {
-        if (!data || !data.monthlyRating) throw new Error("No data found.");
-        setUserResults(data);
+        console.log("Raw API Data:", data); // Log raw data
+
+        // Transform data
+        const transformedData = {
+          monthlyRating: data.total_emissions,
+          ratings: [
+            { category: "Electricity", value: data.emissions_by_category.electricity_emissions },
+            { category: "Transportation", value: data.emissions_by_category.transportation_emissions },
+            { category: "Waste", value: data.emissions_by_category.waste_emissions },
+            { category: "Food", value: data.emissions_by_category.food_emissions },
+            { category: "Retail", value: data.emissions_by_category.retail_emissions },
+          ],
+        };
+
+        console.log("Transformed Data:", transformedData); // Log transformed data
+
+        return transformedData; // Pass transformed data to the next `.then()`
+      })
+      .then((transformedData) => {
+        console.log("Final Data Before State Update:", transformedData);
+        if (!transformedData || !transformedData.monthlyRating) throw new Error("No data found.");
+        setUserResults(transformedData);
         setLoading(false);
       })
       .catch((err) => {
