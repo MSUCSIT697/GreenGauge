@@ -24,7 +24,7 @@ export default function Results() {
   useEffect(() => {
     const endpoint = id
       ? `${import.meta.env.VITE_API_URL}/api/get_total_emissions/${id}`
-      : `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; //chage this back to latest-results or something
+      : `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; //change this back to latest-results or something
 
     fetch(endpoint)
       .then((res) => res.json())

@@ -1,5 +1,5 @@
 import json
-from backend.app.database import get_db_connection
+from app.database import get_db_connection
 
 # Load emission factors from JSON file
 def load_emission_factors():
