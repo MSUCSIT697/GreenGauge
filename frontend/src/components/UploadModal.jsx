@@ -21,7 +21,7 @@ export default function UploadModal({ isOpen, onClose }) {
       });
 
       const data = await response.json();
-      updateResults(data.latestResults); // ✅ Updates global state
+      updateResults(data.latestResults); // Updates global state
       onClose();
     } catch (error) {
       alert("Upload failed. Please try again.");

@@ -1,57 +1,46 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 
 export default function Results() {
-  const { id } = useParams(); // ✅ Get report ID if accessing from Reports Page
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const njAverage = {
-    monthlyRating: 85,
-    ratings: [
-      { category: "House", value: -5 },
-      { category: "Car", value: 15 },
-      { category: "Public Transport", value: -10 },
-      { category: "Food", value: 12 },
-      { category: "Retail", value: 8 },
-    ],
-  };
-
   useEffect(() => {
-    const endpoint = id
-      ? `${import.meta.env.VITE_API_URL}/api/reports/${id}`
-      : `${import.meta.env.VITE_API_URL}/api/latest-results`;
-
-    fetch(endpoint)
-      .then((res) => res.json())
+    fetch(`${import.meta.env.VITE_API_URL}/api/latest-results`)
+      .then((response) => response.json())
       .then((data) => {
-        if (!data || !data.monthlyRating) throw new Error("No data found.");
         setUserResults(data);
         setLoading(false);
       })
-      .catch((err) => {
-        setError(err.message);
-        setUserResults(null);
+      .catch((error) => {
+        console.error("Error fetching results:", error);
+        setError("Failed to load results.");
         setLoading(false);
       });
-  }, [id]);
+  }, []);
 
   const pieData = {
-    labels: userResults?.ratings?.map((item) => item.category) || [],
+    labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults?.ratings?.map((item) => Math.abs(item.value)) || [],
+        data: [
+          userResults?.food_emissions || 0,
+          userResults?.retail_emissions || 0,
+          userResults?.transportation_emissions || 0,
+          userResults?.electricity_emissions || 0,
+          userResults?.waste_emissions || 0,
+        ],
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
   };
 
   return (
-    <div className="p-6">
+    <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
       {error && <p className="text-red-600">{error}</p>}
@@ -60,35 +49,90 @@ export default function Results() {
         <p className="text-center text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row justify-between">
-            <div className="flex-1 flex flex-col items-center">
-              <h2 className="text-lg font-semibold">Your Score</h2>
-              <GaugeChart rating={userResults?.monthlyRating || 0} />
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+            <h2 className="font-semibold">Gauge Comparison</h2>
+            <div className="flex justify-center space-x-8">
+              <GaugeChart rating={userResults?.total_emissions || 0} />
+              <GaugeChart rating={120} />
             </div>
-
-            <div className="flex-1 flex flex-col items-center">
-              <h2 className="text-lg font-semibold">NJ Average</h2>
-              <GaugeChart rating={njAverage.monthlyRating} />
-            </div>
+            <p className="text-gray-600">
+              This result was generated from a{" "}
+              {userResults?.calculation_method === "manual" ? (
+                <span className="text-green-500">manual calculation</span>
+              ) : (
+                <span className="text-blue-500">PDF scan</span>
+              )}
+              .
+            </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold text-gray-900">Your Carbon Emission Breakdown</h2>
-            <Pie data={pieData} />
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+            <h2 className="font-semibold">Comparison by Category</h2>
+            <table className="w-full table-auto">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2">Category</th>
+                  <th className="px-4 py-2 text-right">Your Monthly Carbon Emissions</th>
+                  <th className="px-4 py-2 text-right">Average NJ Resident Monthly Carbon Emissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-4 py-2">Food</td>
+                  <td className="px-4 py-2 text-right">{userResults?.food_emissions || 0}</td>
+                  <td className="px-4 py-2 text-right">160</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2">Retail</td>
+                  <td className="px-4 py-2 text-right">{userResults?.retail_emissions || 0}</td>
+                  <td className="px-4 py-2 text-right">90</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2">Transportation</td>
+                  <td className="px-4 py-2 text-right">{userResults?.transportation_emissions || 0}</td>
+                  <td className="px-4 py-2 text-right">180</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2">Electricity</td>
+                  <td className="px-4 py-2 text-right">{userResults?.electricity_emissions || 0}</td>
+                  <td className="px-4 py-2 text-right">120</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2">Waste</td>
+                  <td className="px-4 py-2 text-right">{userResults?.waste_emissions || 0}</td>
+                  <td className="px-4 py-2 text-right">40</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold text-gray-900">Progress Tracker:</h2>
-            <ProgressChart />
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+            <h2 className="font-semibold">Monthly Sustainability Goals</h2>
+            <ul>
+              <li>
+                <span className="text-green-500">&#8226;</span> Try Carpooling or switching to a more fuel-efficient route
+              </li>
+              <li>
+                <span className="text-green-500">&#8226;</span> Try Reducing meat intake and opting for local produce
+              </li>
+              <li>
+                <span className="text-green-500">&#8226;</span> Try to reduce non-essential purchases or choose eco-friendly brands
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-200">
+            <h2 className="font-semibold">Carbon Emissions</h2>
+            <Pie data={pieData} height={100} />
+            <p className="text-gray-600 text-sm">
+              Your total monthly carbon emissions are{" "}
+              <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
+            </p>
           </div>
 
           <div className="flex justify-center space-x-4 mt-6">
-            <Link to="/reports" className="btn btn-primary">
-              View Reports
-            </Link>
-            <Link to="/dashboard" className="btn btn-primary">
-              Return to Dashboard
-            </Link>
+            <Link to="/reports" className="btn btn-primary">View Reports</Link>
+            <Link to="/dashboard" className="btn btn-primary">Return to Dashboard</Link>
           </div>
         </>
       )}

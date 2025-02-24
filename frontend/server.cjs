@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const axios = require("axios"); // ✅ Used to send requests to the emissions API
+const { processPDF } = require("./processModel");
 
 const app = express();
 const PORT = 5000;
@@ -9,75 +11,89 @@ const upload = multer({ dest: "uploads/" });
 app.use(cors());
 app.use(express.json());
 
-let reports = []; // ✅ Store all past reports
-let latestResults = null; // ✅ Store the most recent results
+let latestResults = null;
+let reports = [];
 
-// ✅ Get Latest Results
+// ✅ Fetch Latest Results
 app.get("/api/latest-results", (req, res) => {
-  if (!latestResults) {
-    return res.json({
-      id: null,
-      monthlyRating: 0,
-      ratings: [],
-      sustainabilityGoals: [],
-    });
-  }
-  res.json(latestResults);
+  res.json(latestResults || { total_emissions: 0, breakdown: {}, source: "None" });
 });
 
-// ✅ Get Specific Report by ID
-app.get("/api/reports/:id", (req, res) => {
-  const report = reports.find((r) => r.id === req.params.id);
-  if (!report) return res.status(404).json({ error: "Report not found" });
-  res.json(report);
-});
-
-// ✅ Get All Reports (For Reports Page)
+// ✅ Fetch Reports
 app.get("/api/reports", (req, res) => {
   res.json(reports);
 });
 
-// ✅ Upload PDF & Process Results
-app.post("/upload-pdf", upload.single("file"), (req, res) => {
+// ✅ Function to Call Emissions API
+async function calculateEmissions(data) {
+  try {
+    const response = await axios.post("https://api.example.com/calculate_emissions", data);
+    return response.data; // The emissions breakdown from the API
+  } catch (error) {
+    console.error("Error calling emissions API:", error);
+    return null;
+  }
+}
+
+// ✅ Process PDF Upload and Calculate Emissions
+app.post("/upload-pdf", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
   console.log("PDF Uploaded:", req.file.originalname);
 
-  const newResult = {
-    id: `report_${Date.now()}`,
-    date: new Date().toLocaleDateString(),
-    type: "PDF",
-    monthlyRating: 75, // Example data
-    ratings: [
-      { category: "House", value: -5 },
-      { category: "Car", value: 8 },
-    ],
-    sustainabilityGoals: [{ text: "Try carpooling", completed: false }],
-  };
+  try {
+    const extractedData = await processPDF(req.file.path); // Extract structured data from the PDF
+    
+    const emissionsData = await calculateEmissions(extractedData);
+    if (!emissionsData) {
+      return res.status(500).json({ error: "Failed to calculate emissions" });
+    }
 
-  latestResults = newResult; // ✅ Update latest result
-  reports.push(newResult); // ✅ Save the report for future access
+    latestResults = {
+      ...emissionsData,
+      source: "PDF",
+    };
 
-  res.json({ message: "Success", latestResults });
+    const newReport = {
+      id: `report_${Date.now()}`,
+      date: new Date().toLocaleDateString(),
+      type: "PDF",
+      name: `Report_${Date.now()}`,
+    };
+
+    reports.push(newReport);
+
+    res.json({ message: "Success", latestResults });
+  } catch (error) {
+    console.error("Error processing PDF:", error);
+    res.status(500).json({ error: "Failed to process file" });
+  }
 });
 
-// ✅ Manual Calculator Entry
-app.post("/manual-calculator", (req, res) => {
+// ✅ Manual Calculator Submission
+app.post("/manual-calculator", async (req, res) => {
   console.log("Manual Calculator Submission:", req.body);
 
-  const newResult = {
+  const emissionsData = await calculateEmissions(req.body);
+  if (!emissionsData) {
+    return res.status(500).json({ error: "Failed to calculate emissions" });
+  }
+
+  latestResults = {
+    ...emissionsData,
+    source: "Manual",
+  };
+
+  const newReport = {
     id: `report_${Date.now()}`,
     date: new Date().toLocaleDateString(),
     type: "Manual",
-    monthlyRating: req.body.monthlyRating || 50,
-    ratings: req.body.ratings || [],
-    sustainabilityGoals: req.body.sustainabilityGoals || [],
+    name: `Report_${Date.now()}`,
   };
 
-  latestResults = newResult; // ✅ Update latest result
-  reports.push(newResult); // ✅ Save the report
+  reports.push(newReport);
 
   res.json({ message: "Success", latestResults });
 });
