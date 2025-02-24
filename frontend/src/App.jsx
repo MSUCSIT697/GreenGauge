@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import SignIn from "./pages/SignIn";
 import CreateAccount from "./pages/CreateAccount";
+import ForgotPassword from "./pages/ForgotPassword";  // ✅ Import ForgotPassword
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import Calculator from "./pages/Calculator";
@@ -20,6 +21,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="sign-in" element={<SignIn />} />
             <Route path="create-account" element={<CreateAccount />} />
+            <Route path="forgot-password" element={<ForgotPassword />} /> {/* ✅ Add Forgot Password Route */}
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
             <Route path="calculator" element={<Calculator />} />
