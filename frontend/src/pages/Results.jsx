@@ -21,19 +21,17 @@ export default function Results() {
   };
 
   useEffect(() => {
-    const endpoint = id
-      ? `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1}` //change back 1 to ${id}
-      : `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; //change this back to latest-results or something
+    const endpoint = `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; // Fixed syntax
 
     fetch(endpoint)
       .then((res) => {
-        console.log("Raw API Data:", res);
+        if (!res.ok) throw new Error("API response error");
         return res.json();
       })
       .then((data) => {
-        console.log("Raw API Data:", data); // Log raw data
+        if (!data || !data.total_emissions) throw new Error("No data found.");
 
-        // Transform data
+        // Transform API data
         const transformedData = {
           monthlyRating: data.total_emissions,
           ratings: [
@@ -45,13 +43,6 @@ export default function Results() {
           ],
         };
 
-        console.log("Transformed Data:", transformedData); // Log transformed data
-
-        return transformedData; // Pass transformed data to the next `.then()`
-      })
-      .then((transformedData) => {
-        console.log("Final Data Before State Update:", transformedData);
-        if (!transformedData || !transformedData.monthlyRating) throw new Error("No data found.");
         setUserResults(transformedData);
         setLoading(false);
       })
@@ -66,13 +57,9 @@ export default function Results() {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: [
-          userResults?.food_emissions || 0,
-          userResults?.retail_emissions || 0,
-          userResults?.transportation_emissions || 0,
-          userResults?.electricity_emissions || 0,
-          userResults?.waste_emissions || 0,
-        ],
+        data: userResults
+          ? userResults.ratings.map((item) => item.value) // Using transformed data
+          : [0, 0, 0, 0, 0], // Default to 0
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
@@ -88,10 +75,10 @@ export default function Results() {
         <p className="text-center text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
             <div className="flex justify-center space-x-8">
-              <GaugeChart rating={userResults?.total_emissions || 0} />
+              <GaugeChart rating={userResults?.monthlyRating || 0} />
               <GaugeChart rating={120} />
             </div>
             <p className="text-gray-600">
@@ -105,7 +92,7 @@ export default function Results() {
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Comparison by Category</h2>
             <table className="w-full table-auto">
               <thead className="bg-gray-100">
@@ -116,36 +103,18 @@ export default function Results() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="px-4 py-2">Food</td>
-                  <td className="px-4 py-2 text-right">{userResults?.food_emissions || 0}</td>
-                  <td className="px-4 py-2 text-right">160</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2">Retail</td>
-                  <td className="px-4 py-2 text-right">{userResults?.retail_emissions || 0}</td>
-                  <td className="px-4 py-2 text-right">90</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2">Transportation</td>
-                  <td className="px-4 py-2 text-right">{userResults?.transportation_emissions || 0}</td>
-                  <td className="px-4 py-2 text-right">180</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2">Electricity</td>
-                  <td className="px-4 py-2 text-right">{userResults?.electricity_emissions || 0}</td>
-                  <td className="px-4 py-2 text-right">120</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2">Waste</td>
-                  <td className="px-4 py-2 text-right">{userResults?.waste_emissions || 0}</td>
-                  <td className="px-4 py-2 text-right">40</td>
-                </tr>
+                {userResults?.ratings.map((item, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-2">{item.category}</td>
+                    <td className="px-4 py-2 text-right">{item.value}</td>
+                    <td className="px-4 py-2 text-right">{njAverage.ratings[index].value}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-400">
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Monthly Sustainability Goals</h2>
             <ul>
               <li>
@@ -160,12 +129,12 @@ export default function Results() {
             </ul>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-200">
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Carbon Emissions</h2>
             <Pie data={pieData} height={100} />
             <p className="text-gray-600 text-sm">
               Your total monthly carbon emissions are{" "}
-              <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
+              <span className="text-green-500">{userResults?.monthlyRating || 0}</span> kg CO₂.
             </p>
           </div>
 
