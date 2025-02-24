@@ -1,4 +1,6 @@
 import json
+
+from flask import jsonify
 from app.database import get_db_connection
 
 # Load emission factors from JSON file
@@ -141,4 +143,10 @@ def get_total_emissions_by_id(id):
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
-    return json.dumps(rows)
+    return jsonify({"total_emissions": rows[0][6], "emissions_by_category": {
+        "food": rows[0][1],
+        "retail": rows[0][2],
+        "transportation": rows[0][3],
+        "electricity": rows[0][4],
+        "waste": rows[0][5]
+    }})
