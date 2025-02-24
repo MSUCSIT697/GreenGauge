@@ -1,4 +1,5 @@
 import json
+from backend.app.database import get_db_connection
 
 # Load emission factors from JSON file
 def load_emission_factors():
@@ -97,7 +98,7 @@ def get_food_emissions_by_id(id):
     conn.close()
     return json.dumps(rows)
 
-def get_retail_emissions(id):
+def get_retail_emissions_by_id(id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM retail_emissions WHERE id = %s", (id,))
@@ -106,7 +107,7 @@ def get_retail_emissions(id):
     conn.close()
     return json.dumps(rows)
 
-def get_transportation_emissions(id):        
+def get_transportation_emissions_by_id(id):        
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM transportation_emissions WHERE id = %s", (id,))
@@ -115,7 +116,7 @@ def get_transportation_emissions(id):
     conn.close()
     return json.dumps(rows)
 
-def get_electricity_emissions(id):
+def get_electricity_emissions_by_id(id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM electricity_emissions WHERE id = %s", (id,))
@@ -124,7 +125,7 @@ def get_electricity_emissions(id):
     conn.close()
     return json.dumps(rows)
 
-def get_waste_emissions(id):
+def get_waste_emissions_by_id(id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM waste_emissions WHERE id = %s", (id,))
@@ -133,7 +134,7 @@ def get_waste_emissions(id):
     conn.close()
     return json.dumps(rows)
 
-def get_total_emissions(id):
+def get_total_emissions_by_id(id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM total_emissions WHERE id = %s", (id,))
