@@ -95,6 +95,10 @@ export default function Dashboard() {
         <Link to="/reports" className="btn btn-primary">
           View Reports
         </Link>
+
+        <Link to="/results" className="btn btn-primary">
+          View Results
+        </Link>
       </div>
 
       {/* ✅ Upload Modal */}

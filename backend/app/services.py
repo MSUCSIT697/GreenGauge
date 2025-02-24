@@ -1,8 +1,11 @@
 import json
 
+from flask import jsonify
+from app.database import get_db_connection
+
 # Load emission factors from JSON file
 def load_emission_factors():
-    with open('emission_factors.json', 'r') as f:
+    with open('/var/www/backend/emission_factors.json', 'r') as f:
         return json.load(f)
 
 # Load the emission factors once when the application starts
@@ -50,3 +53,100 @@ def calculate_waste_emissions(data):
         total_emissions += amount * waste_factor
     return total_emissions
 
+def save_to_database(data, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO food_emissions (beef, chicken, vegetables)
+        VALUES (%s, %s, %s);
+    """, (data['food']['beef'], data['food']['chicken'], data['food']['vegetables']))
+
+    cursor.execute("""
+        INSERT INTO retail_emissions (electronics, clothing)
+        VALUES (%s, %s);
+    """, (data['retail']['electronics'], data['retail']['clothing']))
+
+    cursor.execute("""
+        INSERT INTO transportation_emissions (vehicle_type, distance, passengers)
+        VALUES (%s, %s, %s);
+    """, ("car", data['transportation']['car']['distance'], data['transportation']['car']['passengers']))
+
+    cursor.execute("""
+        INSERT INTO electricity_emissions (consumption_kwh, energy_source)
+        VALUES (%s, %s);
+    """, (data['electricity']['consumption_kwh'], data['electricity']['energy_source']))
+
+    cursor.execute("""
+        INSERT INTO waste_emissions (food_waste, paper, plastic, metal)
+        VALUES (%s, %s, %s, %s);
+    """, (data['waste']['food_waste'], data['waste']['paper'], data['waste']['plastic'], data['waste']['metal']))
+
+    cursor.execute("""
+        INSERT INTO total_emissions (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions)
+        VALUES (%s, %s, %s, %s, %s, %s);
+    """, (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def get_food_emissions_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM food_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return json.dumps(rows)
+
+def get_retail_emissions_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM retail_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return json.dumps(rows)
+
+def get_transportation_emissions_by_id(id):        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM transportation_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return json.dumps(rows)
+
+def get_electricity_emissions_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM electricity_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return json.dumps(rows)
+
+def get_waste_emissions_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM waste_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return json.dumps(rows)
+
+def get_total_emissions_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM total_emissions WHERE id = %s", (id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify({"total_emissions": rows[0][6], "emissions_by_category": {
+        "food": rows[0][1],
+        "retail": rows[0][2],
+        "transportation": rows[0][3],
+        "electricity": rows[0][4],
+        "waste": rows[0][5]
+    }})

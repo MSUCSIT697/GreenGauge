@@ -1,0 +1,74 @@
+name: Deploy Frontend and Backend to EC2
+
+on:
+  push:
+    branches:
+      - dev  # Deploy when code is pushed to 'dev' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1  # Adjust if necessary
+      FRONTEND_EC2_HOST: ${{ secrets.EC2_FRONTEND_IP }}
+      BACKEND_EC2_HOST: ${{ secrets.EC2_BACKEND_IP }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_PWD: ${{ secrets.DATABASE_PWD }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      #### SETUP SSH ACCESS ####
+      - name: Configure SSH Key
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+      #### FRONTEND DEPLOYMENT ####
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Frontend Dependencies and Build
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy Frontend to EC2
+        run: |
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo mkdir -p /var/www/frontend && sudo chmod -R 755 /var/www/frontend && sudo chown -R ubuntu:ubuntu /var/www/frontend/"
+          echo "Frontend Directory Created"
+
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./frontend/dist/* ubuntu@$FRONTEND_EC2_HOST:/var/www/frontend/
+          echo "Frontend Files Deployed"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted apache2"
+
+      #### BACKEND DEPLOYMENT ####
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+
+      - name: Deploy Backend to EC2
+        run: |
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo mkdir -p /var/www/backend && sudo chmod -R 755 /var/www/backend/ && sudo chown -R ubuntu:ubuntu /var/www/backend/"
+          echo "Backend Directory Created"
+
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r ./backend/* ubuntu@$FRONTEND_EC2_HOST:/var/www/backend/
+          echo "Backend Files Deployed"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo apt update && sudo apt install -y python3 python3-pip python3-venv"
+          echo "Installed Python"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "cd /var/www/backend && python3 -m venv venv && source venv/bin/activate && pip install -r /var/www/backend/requirements.txt"
+          echo "Installed Backend Dependencies"
+
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$FRONTEND_EC2_HOST "sudo systemctl restart apache2"
+          echo "Restarted Apache"

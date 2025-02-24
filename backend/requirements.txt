@@ -1,4 +1,6 @@
-flask
+Flask
+flask-cors
+flask-jwt-extended
 mysql-connector-python
-requests
-numpy
+python-dotenv
+bcrypt
