@@ -24,15 +24,18 @@ def calculate_emissions():
     total_emissions = food_emissions + retail_emissions + transportation_emissions + electricity_emissions + waste_emissions
 
     # Save to database
-    save_to_database(data, total_emissions, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions)
+    total_emissions_id = save_to_database(data, total_emissions, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions)
 
     # Return the response
-    return jsonify({"total_emissions": total_emissions, "emissions_by_category": {
-        "food": food_emissions,
-        "retail": retail_emissions,
-        "transportation": transportation_emissions,
-        "electricity": electricity_emissions,
-        "waste": waste_emissions
+    return jsonify({
+        "id": total_emissions_id,
+        "total_emissions": total_emissions, 
+        "emissions_by_category": {
+            "food": food_emissions,
+            "retail": retail_emissions,
+            "transportation": transportation_emissions,
+            "electricity": electricity_emissions,
+            "waste": waste_emissions
     }})
 
 @api_routes.route('/get_total_emissions/<int:id>', methods=['GET'])
