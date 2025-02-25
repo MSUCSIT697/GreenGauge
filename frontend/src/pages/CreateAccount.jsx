@@ -42,7 +42,7 @@ const CreateAccount = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-50">
+    <div className="bg-green-50 py-16 flex justify-center">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Create New Account</h2>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -55,10 +55,7 @@ const CreateAccount = () => {
               type="text"
               id="username"
               value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                console.log("Username updated:", e.target.value);
-              }}
+              onChange={(e) => setUsername(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
               required
             />
@@ -104,14 +101,14 @@ const CreateAccount = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600"
+            className="btn btn-primary w-full"
           >
             Create Account
           </button>
         </form>
         <p className="text-center mt-4">
           Already have an account?{' '}
-          <Link to="/sign-in" className="text-indigo-600 hover:underline">
+          <Link to="/sign-in" className="text-green-600 hover:underline">
             Sign In
           </Link>
         </p>

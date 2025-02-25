@@ -1,34 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import GaugeChart from "../components/GaugeChart";
+import JustGage from "justgage";
+import "raphael"; // Required for JustGage
 
 export default function Home() {
-  const [rating, setRating] = useState(50); // Default rating
-  const [isPositive, setIsPositive] = useState(true); // State to track the current choice
-  // const [status, setStatus] = useState(""); // Health Status message
+  const [gauge, setGauge] = useState(null);
+  const [userChoice, setUserChoice] = useState(null); // "yes" or "no"
 
-  // Handles button clicks
-  const handleGaugeChange = (increase) => {
-    if (increase) {
-      setRating((prev) => Math.min(prev + 10, 100)); // Max 100
-      setIsPositive(false); // No is selected
-    } else {
-      setRating((prev) => Math.max(prev - 10, 0)); // Min 0
-      setIsPositive(true); // Yes is selected
+  useEffect(() => {
+    // ✅ Initialize JustGage without labels
+    const newGauge = new JustGage({
+      id: "gaugeChart",
+      value: 50, // Default midpoint
+      min: 0,
+      max: 100,
+      title: "",
+      levelColors: ["#10b981", "#f09e41", "#ef4444"], // Green to red
+      gaugeWidthScale: 0.5, // ✅ Thinner gauge
+      pointer: true,
+      hideMinMax: true, // ✅ Hides numeric scale
+      textRenderer: function () {
+        return ""; // ✅ Ensures numbers are not displayed
+      },
+    });
+    setGauge(newGauge);
+  }, []);
+
+  const handleGaugeChange = (choice) => {
+    setUserChoice(choice);
+
+    if (gauge) {
+      if (choice === "yes") {
+        gauge.refresh(10); // ✅ Almost empty (Green - Low Emissions)
+      } else {
+        gauge.refresh(90); // ✅ Almost full (Red - High Emissions)
+      }
     }
   };
-
-  // Fetches health status from the backend
-  // const checkHealth = async () => {
-  //   try {
-  //     // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/health`);
-  //     const response = await fetch("https://greengauge.live/api/health");
-  //     const data = await response.json();
-  //     setStatus(data.status);
-  //   } catch (error) {
-  //     setStatus("Error fetching health status");
-  //   }
-  // };
 
   return (
     <div className="p-6 flex flex-col items-center">
@@ -52,23 +60,37 @@ export default function Home() {
         </div>
 
         {/* Gauge Chart Section */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <GaugeChart rating={rating} />
-          <p className="mt-2 font-semibold text-gray-900">
+        <div className="flex-1 flex flex-col items-center justify-center relative">
+          <div className="relative flex flex-col items-center">
+            <div id="gaugeChart" className="w-64 h-64"></div>
+          </div>
+
+          {/* ✅ Move the question & buttons **closer** to the gauge */}
+          <p className="mt-2 font-semibold text-gray-900 text-center">
             Do you want to help save the earth?
           </p>
 
           {/* Interactive Buttons */}
-          <div className="flex space-x-4 mt-2">
+          <div className="flex space-x-4 mt-1">
             <button
-              className={`btn ${isPositive ? "btn-accent" : "btn-error"}`}
-              onClick={() => handleGaugeChange(false)}
+              className={`btn ${
+                userChoice === "yes"
+                  ? "bg-green-300 text-white border-2 border-green-500 cursor-not-allowed"
+                  : "btn-success"
+              }`}
+              onClick={() => handleGaugeChange("yes")}
+              disabled={userChoice === "yes"}
             >
               Yes
             </button>
             <button
-              className={`btn ${!isPositive ? "btn-accent" : "btn-error"}`}
-              onClick={() => handleGaugeChange(true)}
+              className={`btn ${
+                userChoice === "no"
+                  ? "bg-red-300 text-white border-2 border-red-500 cursor-not-allowed"
+                  : "btn-error"
+              }`}
+              onClick={() => handleGaugeChange("no")}
+              disabled={userChoice === "no"}
             >
               No
             </button>
@@ -91,10 +113,3 @@ export default function Home() {
     </div>
   );
 }
-// {/* Health Status */}
-{/* <div className="mt-6">
-<button onClick={checkHealth} className="btn btn-primary">
-  Check Health Status
-</button>
-<p className="mt-2 text-gray-700">{status}</p>
-</div> */}

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import navigation hook
 
 export default function Settings() {
+  const navigate = useNavigate(); // ✅ Initialize navigation
+
   const [user, setUser] = useState({ name: "User", email: "user@example.com", password: "********" });
   const [profilePicture, setProfilePicture] = useState(""); 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -108,8 +111,10 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Return to Dashboard Button */}
-      <button className="btn btn-primary mt-8 w-full">Return to Dashboard</button>
+      {/* ✅ Fixed Return to Dashboard Button */}
+      <button className="btn btn-primary mt-8 w-full" onClick={() => navigate("/dashboard")}>
+        Return to Dashboard
+      </button>
     </div>
   );
 }
