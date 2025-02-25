@@ -59,7 +59,7 @@ def save_to_database(data, food_emissions, retail_emissions, transportation_emis
     # Step 1: Insert into total_emissions first to get the ID
     cursor.execute("""
         INSERT INTO total_emissions (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions)
-        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;
+        VALUES (%s, %s, %s, %s, %s, %s);
     """, (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions))
 
     total_emission_id = cursor.lastrowid  # Fetch the generated ID
