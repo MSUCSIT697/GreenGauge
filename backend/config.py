@@ -9,3 +9,4 @@ class Config:
     MYSQL_PASSWORD = os.getenv("RDS_PASSWORD")
     MYSQL_EMISSIONS_DB = 'emissions_db'
     MYSQL_PORT = os.getenv("RDS_PORT")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

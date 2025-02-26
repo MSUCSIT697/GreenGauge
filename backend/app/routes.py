@@ -8,8 +8,8 @@ from app.services import (
     get_total_emissions_by_id,
     save_to_database
 )
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.database import get_db_connection  # Assuming you refactored DB connection
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from app.database import get_db_connection  # Ensure you refactored DB connection
 import bcrypt
 
 api_routes = Blueprint('api_routes', __name__)
@@ -112,7 +112,6 @@ def login():
         db.close()
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user[0].encode('utf-8')):
-            from flask_jwt_extended import create_access_token
             access_token = create_access_token(identity=email)
             return jsonify({'message': 'Login successful', 'token': access_token}), 200
         else:
