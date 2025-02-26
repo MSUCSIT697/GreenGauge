@@ -93,7 +93,7 @@ export default function Results() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold">Comparison by Category</h2>
+            <h2 className="font-semibold pb-5">Comparison by Category</h2>
             <table className="w-full table-auto">
               <thead className="bg-gray-100">
                 <tr>
@@ -115,7 +115,7 @@ export default function Results() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold">Monthly Sustainability Goals</h2>
+            <h2 className="font-semibold pb-4">Monthly Sustainability Goals</h2>
             <ul>
               <li>
                 <span className="text-green-500">&#8226;</span> Try Carpooling or switching to a more fuel-efficient route
@@ -129,9 +129,9 @@ export default function Results() {
             </ul>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold">Carbon Emissions</h2>
-            <Pie data={pieData} height={100} />
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
+            <h2 className="font-semibold pb-4">Carbon Emissions</h2>
+            <Pie data={pieData} height={50} />
             <p className="text-gray-600 text-sm">
               Your total monthly carbon emissions are{" "}
               <span className="text-green-500">{userResults?.monthlyRating || 0}</span> kg CO₂.

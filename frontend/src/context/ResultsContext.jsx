@@ -1,21 +1,12 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 const ResultsContext = createContext();
 
 export function ResultsProvider({ children }) {
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState([]);
 
-  // Fetch Latest Results on App Load
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/latest-results`)
-      .then((response) => response.json())
-      .then((data) => setResults(data))
-      .catch((error) => console.error("Error fetching latest results:", error));
-  }, []);
-
-  // Function to Update Results After Upload/Calculation
-  const updateResults = (newResults) => {
-    setResults(newResults);
+  const updateResults = (newResult) => {
+    setResults((prevResults) => [newResult, ...prevResults]); // Stores new results at the top
   };
 
   return (
@@ -25,7 +16,6 @@ export function ResultsProvider({ children }) {
   );
 }
 
-// Custom Hook to Use Results
 export function useResults() {
   return useContext(ResultsContext);
 }

@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+// 1. Modify UploadModal.jsx to log PDF results
+import { useState } from "react";
 import { useResults } from "../context/ResultsContext";
 
 export default function UploadModal({ isOpen, onClose }) {
@@ -15,13 +16,21 @@ export default function UploadModal({ isOpen, onClose }) {
     files.forEach((file) => formData.append("file", file));
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/upload-pdf`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-      updateResults(data.latestResults); // Updates global state
+      
+      const reportEntry = {
+        id: Date.now(), // Unique ID for tracking
+        uploadType: "pdf",
+        results: data,
+        date: new Date().toLocaleString()
+      };
+      
+      updateResults(reportEntry); // Update global state
       onClose();
     } catch (error) {
       alert("Upload failed. Please try again.");

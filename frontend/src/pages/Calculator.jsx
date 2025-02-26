@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useResults } from "../context/ResultsContext";
 
 export default function Calculator() {
   const navigate = useNavigate();
 
+  const { updateResults } = useResults();
   const categories = ["Transportation", "Electricity", "Food", "Retail", "Waste"];
   const [currentTab, setCurrentTab] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
@@ -75,7 +77,22 @@ export default function Calculator() {
 
   const confirmSubmission = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API request
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+    
+      const data = await response.json();
+    
+      const reportEntry = {
+        id: Date.now(),
+        uploadType: "calculator",
+        results: data,
+        date: new Date().toLocaleString(),
+      };
+    
+      updateResults(reportEntry);
 
       setSuccessModal(true);
       setIsSubmitted(true);
@@ -109,7 +126,7 @@ export default function Calculator() {
         <label className="block text-lg font-semibold">Enter your zip code:</label>
         <input
           type="text"
-          className={`input input-bordered w-full mt-2 ${
+          className={`bg-white input input-bordered w-full mt-2 ${
             showError && zipCode.length !== 5 ? "border-red-500" : ""
           }`}
           value={zipCode}
@@ -124,7 +141,7 @@ export default function Calculator() {
             key={index}
             className={`px-6 py-2 text-lg rounded-t-md transition-all ${
               currentTab === index
-                ? "bg-white font-bold border border-b-0 border-gray-300"
+                ? "bg-white font-bold border border-b-0 border-primary"
                 : "hover:bg-white hover:shadow-md"
             }`}
             onClick={() => handleTabClick(index)}
