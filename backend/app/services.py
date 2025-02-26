@@ -162,22 +162,29 @@ def get_total_emissions_by_id(id):
     }})    
 
 def addNewUser(username, email, hashed_password):
-    db = get_db_connection()
-    if db:
-        with db.cursor() as cursor:
-            cursor.execute("INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
-            db.commit()
-        db.close()
-        return 201
-    else:
-        return 500
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
+    conn.commit()
+    cursor.close()
+    conn.close()
     
 def getPasswordByEmail(email):
-    db = get_db_connection()
-    if db and not email:
-        with db.cursor() as cursor:
-            cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
-            user = cursor.fetchone()
-        db.close()
-        return user[0] if user else None
+    conn = get_db_connection()
+    if conn is not None:
+        cursor = conn.cursor()
+        cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
+        password_hash = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if password_hash is None:
+            print(f"No user found with email: {email}")
+            return None  # Return None or handle this case accordingly
+
+        # Ensure that password_hash is a tuple and then access the first element
+        password = password_hash[0] if password_hash else None
+        if password is None:
+            print(f"Password for email {email} not found.")
+            return None
+        return password
     return None

@@ -89,14 +89,10 @@ def signup():
 
     try:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        status = addNewUser(username, email, hashed_password)
-        
-        if status == 201:
-            return jsonify({'message': 'User created successfully'}), 201
-        else:
-            return jsonify({'error': 'Failed to create user'}), 500
+        addNewUser(username, email, hashed_password)
+        return jsonify({'message': 'User created successfully'}), 201
     except Exception as err:
-        return jsonify({'error': str(err)}), 500
+        return jsonify({'error : Failed to create user :: ': str(err)}), 500
 
 # ✅ User Login
 @api_routes.route('/login', methods=['POST'])
@@ -108,7 +104,7 @@ def login():
     storedPassword = getPasswordByEmail(email)
 
     if not storedPassword:
-        return jsonify({'error': 'Error fetching store password'}), 500
+        return jsonify({'error': 'Invalid email or password'}), 401
     
     if bcrypt.checkpw(password.encode('utf-8'), storedPassword.encode('utf-8')):
         access_token = create_access_token(identity=email)
