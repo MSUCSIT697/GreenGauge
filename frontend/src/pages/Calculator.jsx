@@ -13,6 +13,7 @@ export default function Calculator() {
   const [zipCode, setZipCode] = useState("");
   const [submissionError, setSubmissionError] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionId, setSubmissionId] = useState(null);
   const [showError, setShowError] = useState(false);
 
   const [errorModal, setErrorModal] = useState(false);
@@ -32,7 +33,7 @@ export default function Calculator() {
 
   const [formData, setFormData] = useState({
     transportation: {
-      car: { distance: "", vehicle_type: "gasoline", passengers: 1 },
+      car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, // TODO: Add passenger field
       truck: { distance: "", passengers: 1 },
       bus: { distance: "", passengers: 10 },
       train: { distance: "", passengers: 50 },
@@ -42,6 +43,8 @@ export default function Calculator() {
     retail: { electronics: "", clothing: "", toys: "", furniture: "" },
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
+
+  const endpoint = `${import.meta.env.VITE_API_URL}/api//calculate_emissions`;
 
   const handleChange = (category, field, value) => {
     setFormData((prev) => ({
@@ -77,23 +80,34 @@ export default function Calculator() {
 
   const confirmSubmission = async () => {
     try {
+      console.log("Submitting Data:", formData);
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-    
+
       const data = await response.json();
-    
+      console.log("Server Response:", data);
+
+      // Store results and update global state
       const reportEntry = {
         id: Date.now(),
         uploadType: "calculator",
         results: data,
         date: new Date().toLocaleString(),
       };
-    
+
       updateResults(reportEntry);
 
+      if (response.ok) {
+        console.log("Data submitted successfully!");
+        setSubmissionId(result.id);
+      } else {
+        console.log(`Error: ${result.message}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API request
       setSuccessModal(true);
       setIsSubmitted(true);
       window.location.href = "#success_modal";
@@ -486,7 +500,7 @@ export default function Calculator() {
           <h3 className="text-lg font-bold">Submission Successful</h3>
           <p>Your results will be displayed on the next page.</p>
           <div className="modal-action">
-            <button onClick={() => navigate("/results")} className="btn">
+            <button onClick={() => navigate(`/results/${submissionId}`)} className="btn">
               View Results
             </button>
           </div>

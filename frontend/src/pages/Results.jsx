@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
+import { useParams } from "react-router-dom";
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { id } = useParams();
 
   const njAverage = {
     monthlyRating: 85,
@@ -21,7 +23,7 @@ export default function Results() {
   };
 
   useEffect(() => {
-    const endpoint = `${import.meta.env.VITE_API_URL}/api/get_total_emissions/1`; // Fixed syntax
+    const endpoint = `${import.meta.env.VITE_API_URL}/api/get_total_emissions/${id}`; // Fixed syntax
 
     fetch(endpoint)
       .then((res) => {
@@ -30,19 +32,19 @@ export default function Results() {
       })
       .then((data) => {
         if (!data || !data.total_emissions) throw new Error("No data found.");
-
+        console.log("API data:", data);
         // Transform API data
         const transformedData = {
           monthlyRating: data.total_emissions,
           ratings: [
-            { category: "Electricity", value: data.emissions_by_category.electricity_emissions },
-            { category: "Transportation", value: data.emissions_by_category.transportation_emissions },
-            { category: "Waste", value: data.emissions_by_category.waste_emissions },
-            { category: "Food", value: data.emissions_by_category.food_emissions },
-            { category: "Retail", value: data.emissions_by_category.retail_emissions },
+            { category: "Electricity", value: data.emissions_by_category.electricity },
+            { category: "Transportation", value: data.emissions_by_category.transportation },
+            { category: "Waste", value: data.emissions_by_category.waste },
+            { category: "Food", value: data.emissions_by_category.food },
+            { category: "Retail", value: data.emissions_by_category.retail },
           ],
         };
-
+        console.log("Transformed data:", transformedData);
         setUserResults(transformedData);
         setLoading(false);
       })
@@ -105,8 +107,8 @@ export default function Results() {
               <tbody>
                 {userResults?.ratings.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2">{item.category}</td>
-                    <td className="px-4 py-2 text-right">{item.value}</td>
+                    <td className="px-4 py-2">{userResults.ratings[index].category}</td>
+                    <td className="px-4 py-2 text-right">{userResults.ratings[index].value}</td>
                     <td className="px-4 py-2 text-right">{njAverage.ratings[index].value}</td>
                   </tr>
                 ))}
