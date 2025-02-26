@@ -52,15 +52,15 @@ def calculate_waste_emissions(data):
         total_emissions += float(amount) * waste_factor
     return total_emissions
 
-def save_to_database(data, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions):
+def save_to_database(data, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     # Step 1: Insert into total_emissions first to get the ID
     cursor.execute("""
-        INSERT INTO total_emissions (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions)
-        VALUES (%s, %s, %s, %s, %s, %s);
-    """, (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions))
+        INSERT INTO total_emissions (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s);
+    """, (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id))
 
     total_emission_id = cursor.lastrowid  # Fetch the generated ID
 
@@ -159,4 +159,25 @@ def get_total_emissions_by_id(id):
         "transportation": rows[0][3],
         "electricity": rows[0][4],
         "waste": rows[0][5]
-    }})
+    }})    
+
+def addNewUser(username, email, hashed_password):
+    db = get_db_connection()
+    if db:
+        with db.cursor() as cursor:
+            cursor.execute("INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
+            db.commit()
+        db.close()
+        return 201
+    else:
+        return 500
+    
+def getPasswordByEmail(email):
+    db = get_db_connection()
+    if db and not email:
+        with db.cursor() as cursor:
+            cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+        db.close()
+        return user[0] if user else None
+    return None

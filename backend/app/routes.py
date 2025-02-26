@@ -1,15 +1,16 @@
 from flask import Blueprint, request, jsonify
 from app.services import (
+    addNewUser,
     calculate_food_emissions,
     calculate_retail_emissions,
     calculate_transportation_emissions,
     calculate_electricity_emissions,
     calculate_waste_emissions,
     get_total_emissions_by_id,
+    getPasswordByEmail,
     save_to_database
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
-from app.database import get_db_connection  # Ensure you refactored DB connection
 import bcrypt
 
 api_routes = Blueprint('api_routes', __name__)
@@ -24,6 +25,7 @@ def health_check():
 @jwt_required()
 def calculate_emissions():
     data = request.get_json()
+    current_user = get_jwt_identity()  # Gets logged-in user ID or None
 
     # Calculate emissions
     food_emissions = calculate_food_emissions(data['food'])
@@ -41,16 +43,19 @@ def calculate_emissions():
         waste_emissions
     ])
 
-    # Save to database
-    total_emissions_id = save_to_database(
-        data,
-        total_emissions,
-        food_emissions,
-        retail_emissions,
-        transportation_emissions,
-        electricity_emissions,
-        waste_emissions
-    )
+    # Save to database if user is logged in
+    if current_user:
+        profile_id = getPasswordByEmail(current_user)
+        total_emissions_id = save_to_database(
+            data,
+            total_emissions,
+            food_emissions,
+            retail_emissions,
+            transportation_emissions,
+            electricity_emissions,
+            waste_emissions,
+            profile_id
+        )
 
     # Return the response
     return jsonify({
@@ -82,18 +87,14 @@ def signup():
     if not username or not email or not password:
         return jsonify({'error': 'All fields are required'}), 400
 
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
     try:
-        db = get_db_connection()
-        if db:
-            with db.cursor() as cursor:
-                cursor.execute("INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
-                db.commit()
-            db.close()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        status = addNewUser(username, email, hashed_password)
+        
+        if status == 201:
             return jsonify({'message': 'User created successfully'}), 201
         else:
-            return jsonify({'error': 'Database connection failed'}), 500
+            return jsonify({'error': 'Failed to create user'}), 500
     except Exception as err:
         return jsonify({'error': str(err)}), 500
 
@@ -104,21 +105,17 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    db = get_db_connection()
-    if db:
-        with db.cursor() as cursor:
-            cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
-            user = cursor.fetchone()
-        db.close()
+    storedPassword = getPasswordByEmail(email)
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[0].encode('utf-8')):
-            access_token = create_access_token(identity=email)
-            return jsonify({'message': 'Login successful', 'token': access_token}), 200
-        else:
-            return jsonify({'error': 'Invalid email or password'}), 401
+    if not storedPassword:
+        return jsonify({'error': 'Error fetching store password'}), 500
+    
+    if bcrypt.checkpw(password.encode('utf-8'), storedPassword.encode('utf-8')):
+        access_token = create_access_token(identity=email)
+        return jsonify({'message': 'Login successful', 'token': access_token}), 200
     else:
-        return jsonify({'error': 'Database connection failed'}), 500
-
+        return jsonify({'error': 'Invalid email or password'}), 401
+    
 # ✅ Protected route example
 @api_routes.route('/protected', methods=['GET'])
 @jwt_required()
