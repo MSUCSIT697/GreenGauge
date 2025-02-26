@@ -77,9 +77,10 @@ def signup():
     data = request.json
     email = data.get('email')
     password = data.get('password')
+    username = data.get('username')
 
-    if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if not username or not email or not password:
+        return jsonify({'error': 'All fields are required'}), 400
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -87,7 +88,7 @@ def signup():
         db = get_db_connection()
         if db:
             with db.cursor() as cursor:
-                cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, hashed_password))
+                cursor.execute("INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
                 db.commit()
             db.close()
             return jsonify({'message': 'User created successfully'}), 201
@@ -106,7 +107,7 @@ def login():
     db = get_db_connection()
     if db:
         with db.cursor() as cursor:
-            cursor.execute("SELECT password_hash FROM users WHERE email = %s", (email,))
+            cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
         db.close()
 

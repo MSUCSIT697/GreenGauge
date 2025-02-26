@@ -44,7 +44,7 @@ export default function Calculator() {
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
 
-  const endpoint = `${import.meta.env.VITE_API_URL}/api//calculate_emissions`;
+  const endpoint = `${import.meta.env.VITE_API_URL}/api/calculate_emissions`;
 
   const handleChange = (category, field, value) => {
     setFormData((prev) => ({
