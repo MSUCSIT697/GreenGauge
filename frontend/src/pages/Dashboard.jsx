@@ -48,7 +48,7 @@ export default function Dashboard() {
       )}
 
       {/* ✅ Dashboard Section with Frames */}
-      <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row justify-between space-x-4 px-4">
+      <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row justify-between space-x-4 px-4 items-center">
         {/* Rating Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center">
           <GaugeChart rating={latestReport ? latestReport.results.total_emissions : 50} />
@@ -57,7 +57,7 @@ export default function Dashboard() {
 
         {/* Ratings by Category Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center">
-          <h2 className="font-semibold text-gray-900 mb-4">Ratings by Category</h2>
+          <h2 className="font-semibold text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8">
             {latestReport
               ? latestReport.results.ratings.map((item, index) => (
@@ -74,26 +74,26 @@ export default function Dashboard() {
                 ))}
           </ul>
         </div>
-      </div>
 
-      {/* Sustainability Goals Frame */}
-      <div className="bg-gray-50 p-4 rounded-lg flex flex-col mt-4">
-        <h2 className="font-semibold text-gray-900 text-center">Monthly Sustainability Goals</h2>
-        <ul className="mt-1 space-y-2 px-8 text-left">
-          {latestReport
-            ? latestReport.results.sustainabilityGoals.map((goal, index) => (
-                <li key={index} className="flex items-center px-4">
-                  <span className="text-green-500 mr-2">•</span>
-                  <span className="text-left">{goal.text}</span>
-                </li>
-              ))
-            : ["Try Carpooling", "Reduce Meat Intake", "Use Eco-friendly Brands"].map((goal, index) => (
-                <li key={index} className="flex items-center px-4">
-                  <span className="text-green-500 mr-2">•</span>
-                  <span className="text-left">{goal}</span>
-                </li>
-              ))}
-        </ul>
+        {/* Sustainability Goals Frame */}
+        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center">
+          <h2 className="font-semibold text-gray-900">Monthly Sustainability Goals</h2>
+          <ul className="mt-1 space-y-2 px-8 text-left">
+            {latestReport
+              ? latestReport.results.sustainabilityGoals.map((goal, index) => (
+                  <li key={index} className="flex items-center px-4">
+                    <span className="text-green-500 mr-2">•</span>
+                    <span className="text-left">{goal.text}</span>
+                  </li>
+                ))
+              : ["Try Carpooling", "Reduce Meat Intake", "Use Eco-friendly Brands"].map((goal, index) => (
+                  <li key={index} className="flex items-center px-4">
+                    <span className="text-green-500 mr-2">•</span>
+                    <span className="text-left">{goal}</span>
+                  </li>
+                ))}
+          </ul>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 pb-16 mt-4">
@@ -109,11 +109,9 @@ export default function Dashboard() {
         <Link to="/calculator" className="btn btn-primary">
           Manual Calculator
         </Link>
-
         <Link to="/reports" className="btn btn-primary">
           View Reports
         </Link>
-
         <Link to="/results" className="btn btn-primary">
           View Results
         </Link>

@@ -47,11 +47,13 @@ export default function Calculator() {
   const endpoint = `${import.meta.env.VITE_API_URL}/api/calculate_emissions`;
 
   const handleChange = (category, field, value) => {
+    if (value < 0) return; // ✅ Prevent negative values
     setFormData((prev) => ({
       ...prev,
       [category]: { ...prev[category], [field]: value },
     }));
   };
+  
 
   const isFormValid = () => {
     return Object.values(formData).every((category) =>
@@ -81,33 +83,32 @@ export default function Calculator() {
   const confirmSubmission = async () => {
     try {
       console.log("Submitting Data:", formData);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+  
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
+  
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
+  
       const data = await response.json();
       console.log("Server Response:", data);
-
-      // Store results and update global state
+  
+      // ✅ Ensure results are properly stored and updated
       const reportEntry = {
         id: Date.now(),
         uploadType: "calculator",
         results: data,
         date: new Date().toLocaleString(),
       };
-
+  
       updateResults(reportEntry);
-
-      if (response.ok) {
-        console.log("Data submitted successfully!");
-        setSubmissionId(result.id);
-      } else {
-        console.log(`Error: ${result.message}`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API request
+      setSubmissionId(reportEntry.id); // ✅ Fix: Set correct submission ID
+  
+      console.log("Data submitted successfully!");
       setSuccessModal(true);
       setIsSubmitted(true);
       window.location.href = "#success_modal";
@@ -117,6 +118,7 @@ export default function Calculator() {
       window.location.href = "#error_modal";
     }
   };
+  
 
   const handleTabClick = (index) => {
     setCurrentTab(index);
@@ -500,9 +502,10 @@ export default function Calculator() {
           <h3 className="text-lg font-bold">Submission Successful</h3>
           <p>Your results will be displayed on the next page.</p>
           <div className="modal-action">
-            <button onClick={() => navigate(`/results/${submissionId}`)} className="btn">
-              View Results
-            </button>
+          <button onClick={() => navigate(`/results/${submissionId}`)} className="btn">
+            View Results
+          </button>
+
           </div>
         </div>
       </div>
