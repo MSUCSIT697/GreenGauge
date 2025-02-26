@@ -25,7 +25,13 @@ export default function Results() {
   useEffect(() => {
     const endpoint = `${import.meta.env.VITE_API_URL}/api/get_total_emissions/${id}`; // Fixed syntax
 
-    fetch(endpoint)
+    fetch(endpoint, {
+      method: "GET",
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
       .then((res) => {
         if (!res.ok) throw new Error("API response error");
         return res.json();
