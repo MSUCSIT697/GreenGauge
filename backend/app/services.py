@@ -188,3 +188,16 @@ def getPasswordByEmail(email):
             return None
         return password
     return None
+
+def getIdByEmail(email):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+    id = cursor.fetchone()
+    if not id:
+        cursor.close()
+        conn.close()
+        return {"error": "Invalid profile_id, user does not exist."}, 400  # Avoid inserting invalid user_id
+    cursor.close()
+    conn.close()
+    return id[0]

@@ -7,11 +7,15 @@ from app.services import (
     calculate_electricity_emissions,
     calculate_waste_emissions,
     get_total_emissions_by_id,
+    getIdByEmail,
     getPasswordByEmail,
     save_to_database
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 import bcrypt
+from flask import current_app
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 api_routes = Blueprint('api_routes', __name__)
 
@@ -45,7 +49,7 @@ def calculate_emissions():
 
     # Save to database if user is logged in
     if current_user:
-        profile_id = getPasswordByEmail(current_user)
+        profile_id = getIdByEmail(current_user)
         total_emissions_id = save_to_database(
             data,
             total_emissions,
@@ -112,7 +116,7 @@ def login():
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
     
-# ✅ Protected route example
+# # ✅ Protected route example
 @api_routes.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():

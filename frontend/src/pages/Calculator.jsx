@@ -109,7 +109,7 @@ export default function Calculator() {
       };
   
       updateResults(reportEntry);
-      setSubmissionId(reportEntry.id); // ✅ Fix: Set correct submission ID
+      setSubmissionId(result.id); // ✅ Fix: Set correct submission ID
   
       console.log("Data submitted successfully!");
       setSuccessModal(true);
