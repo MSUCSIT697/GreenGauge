@@ -48,7 +48,7 @@ def calculate_emissions():
 
     token = verify_token()
     if token:
-        current_user = token['identity']
+        current_user = token['sub']
     else:
         current_user = None
 
