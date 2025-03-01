@@ -93,13 +93,17 @@ export default function Calculator() {
         body: JSON.stringify(formData),
       });
   
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
-      }
-  
       const data = await response.json();
       console.log("Server Response:", data);
   
+      if (response.ok) {
+        console.log("Data submitted successfully!");
+        localStorage.setItem("emissionData", JSON.stringify(data));
+      } else {
+        console.log(`Error: ${result.message}`);
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
+
       // ✅ Ensure results are properly stored and updated
       const reportEntry = {
         id: Date.now(),
@@ -109,9 +113,6 @@ export default function Calculator() {
       };
   
       updateResults(reportEntry);
-      setSubmissionId(result.id); // ✅ Fix: Set correct submission ID
-  
-      console.log("Data submitted successfully!");
       setSuccessModal(true);
       setIsSubmitted(true);
       window.location.href = "#success_modal";
@@ -505,7 +506,7 @@ export default function Calculator() {
           <h3 className="text-lg font-bold">Submission Successful</h3>
           <p>Your results will be displayed on the next page.</p>
           <div className="modal-action">
-          <button onClick={() => navigate(`/results/${submissionId}`)} className="btn">
+          <button onClick={() => navigate(`/results`)} className="btn">
             View Results
           </button>
 

@@ -27,7 +27,7 @@ export default function App() {
             <Route path="calculator" element={<Calculator />} />
             <Route path="profile" element={<Profile />} />
             <Route path="faqs" element={<FAQs />} />
-            <Route path="results/:id" element={<Results />} />
+            <Route path="results" element={<Results />} />
           </Route>
         </Routes>
     </ResultsProvider>

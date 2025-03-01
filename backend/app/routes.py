@@ -19,6 +19,22 @@ from jwt.exceptions import InvalidTokenError
 
 api_routes = Blueprint('api_routes', __name__)
 
+# Function to check for JWT token
+def verify_token():
+    auth_header = request.headers.get('Authorization')
+    
+    if auth_header is None:
+        return None  # No Authorization header found, treat as guest user
+
+    try:
+        # Extract and decode the JWT token
+        token = auth_header.split()[1]  # Token comes after "Bearer "
+        decoded_token = jwt.decode(token, current_app.config["JWT_SECRET_KEY"], algorithms=["HS256"])
+        return decoded_token
+    except Exception as e:
+        return None
+
+
 # ✅ Health check endpoint
 @api_routes.route('/health', methods=["GET"])
 def health_check():
@@ -26,10 +42,15 @@ def health_check():
 
 # ✅ Calculate Emissions
 @api_routes.route('/calculate_emissions', methods=['POST'])
-@jwt_required()
 def calculate_emissions():
     data = request.get_json()
-    current_user = get_jwt_identity()  # Gets logged-in user ID or None
+    # current_user = get_jwt_identity()  # Gets logged-in user ID or None
+
+    token = verify_token()
+    if token:
+        current_user = token['identity']
+    else:
+        current_user = None
 
     # Calculate emissions
     food_emissions = calculate_food_emissions(data['food'])
@@ -48,22 +69,33 @@ def calculate_emissions():
     ])
 
     # Save to database if user is logged in
-    if current_user:
+    # if current_user:
+        # profile_id = getIdByEmail(current_user)
+        # total_emissions_id = save_to_database(
+        #     data,
+        #     total_emissions,
+        #     food_emissions,
+        #     retail_emissions,
+        #     transportation_emissions,
+        #     electricity_emissions,
+        #     waste_emissions,
+        #     profile_id
+        # )
+    if(current_user):
         profile_id = getIdByEmail(current_user)
         total_emissions_id = save_to_database(
-            data,
-            total_emissions,
-            food_emissions,
-            retail_emissions,
-            transportation_emissions,
-            electricity_emissions,
-            waste_emissions,
-            profile_id
+        data,
+        total_emissions,
+        food_emissions,
+        retail_emissions,
+        transportation_emissions,
+        electricity_emissions,
+        waste_emissions,
+        profile_id
         )
-
+    
     # Return the response
     return jsonify({
-        "id": total_emissions_id,
         "total_emissions": total_emissions,
         "emissions_by_category": {
             "food": food_emissions,

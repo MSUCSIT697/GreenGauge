@@ -3,13 +3,11 @@ import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
-import { useParams } from "react-router-dom";
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { id } = useParams();
 
   const njAverage = {
     monthlyRating: 85,
@@ -23,42 +21,37 @@ export default function Results() {
   };
 
   useEffect(() => {
-    const endpoint = `${import.meta.env.VITE_API_URL}/api/get_total_emissions/${id}`; // Fixed syntax
+    // Get stored emission data
+    const storedData = localStorage.getItem("emissionData");
 
-    fetch(endpoint, {
-      method: "GET",
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("API response error");
-        return res.json();
-      })
-      .then((data) => {
-        if (!data || !data.total_emissions) throw new Error("No data found.");
-        console.log("API data:", data);
-        // Transform API data
-        const transformedData = {
-          monthlyRating: data.total_emissions,
-          ratings: [
-            { category: "Electricity", value: data.emissions_by_category.electricity },
-            { category: "Transportation", value: data.emissions_by_category.transportation },
-            { category: "Waste", value: data.emissions_by_category.waste },
-            { category: "Food", value: data.emissions_by_category.food },
-            { category: "Retail", value: data.emissions_by_category.retail },
-          ],
-        };
-        console.log("Transformed data:", transformedData);
-        setUserResults(transformedData);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching results:", error);
-        setError("Failed to load results.");
-        setLoading(false);
-      });
+if (storedData) {
+  const parsedData = JSON.parse(storedData);  // Parse the string to a JavaScript object
+  console.log("Stored data:", parsedData);
+
+  // Ensure 'emissions_by_category' is not undefined
+  if (parsedData.emissions_by_category) {
+    const transformedData = {
+      monthlyRating: parsedData.total_emissions,
+      ratings: [
+        { category: "Electricity", value: parsedData.emissions_by_category.electricity },
+        { category: "Transportation", value: parsedData.emissions_by_category.transportation },
+        { category: "Waste", value: parsedData.emissions_by_category.waste },
+        { category: "Food", value: parsedData.emissions_by_category.food },
+        { category: "Retail", value: parsedData.emissions_by_category.retail },
+      ],
+    };
+    setUserResults(transformedData);
+  } else {
+    console.log("Error: emissions_by_category is undefined.");
+    setError("Failed to load results: emissions_by_category is missing.");
+  }
+  
+  setLoading(false);
+} else {
+  console.log("Error fetching results:");
+  setError("Failed to load results.");
+  setLoading(false);
+}
   }, []);
 
   const pieData = {
