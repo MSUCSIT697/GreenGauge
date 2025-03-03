@@ -51,8 +51,9 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row justify-between space-x-4 px-4 items-center">
         {/* Rating Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-          <GaugeChart rating={latestReport ? latestReport.results.total_emissions : 50} />
-          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p>
+          {/* Avg individual in US emits 1125-1333 kg CO2e per month. so map accordingly */}
+          <GaugeChart rating={latestReport ? (latestReport.results.total_emissions > 1333 ? 80 : (latestReport.results.total_emissions < 1125 ? 25 : 50)) : 50} />
+          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p> 
         </div>
 
         {/* Ratings by Category Frame */}

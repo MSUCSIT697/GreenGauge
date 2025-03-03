@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
+import { useResults } from '../context/ResultsContext';
+
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { results } = useResults();
 
   const njAverage = {
     monthlyRating: 85,
@@ -22,30 +25,13 @@ export default function Results() {
 
   useEffect(() => {
     // Get stored emission data
-    const storedData = localStorage.getItem("emissionData");
+    const storedData = results;
+    console.log("Stored data from results context :: ", storedData[0].results);
+    const emission_data = storedData[0].results;
 
-if (storedData) {
-  const parsedData = JSON.parse(storedData);  // Parse the string to a JavaScript object
-  console.log("Stored data:", parsedData);
-
-  // Ensure 'emissions_by_category' is not undefined
-  if (parsedData.emissions_by_category) {
-    const transformedData = {
-      monthlyRating: parsedData.total_emissions,
-      ratings: [
-        { category: "Electricity", value: parsedData.emissions_by_category.electricity },
-        { category: "Transportation", value: parsedData.emissions_by_category.transportation },
-        { category: "Waste", value: parsedData.emissions_by_category.waste },
-        { category: "Food", value: parsedData.emissions_by_category.food },
-        { category: "Retail", value: parsedData.emissions_by_category.retail },
-      ],
-    };
-    setUserResults(transformedData);
-  } else {
-    console.log("Error: emissions_by_category is undefined.");
-    setError("Failed to load results: emissions_by_category is missing.");
-  }
-  
+if (emission_data) {
+  console.log("Stored data :: ", emission_data);
+  setUserResults(emission_data);
   setLoading(false);
 } else {
   console.log("Error fetching results:");

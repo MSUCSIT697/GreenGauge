@@ -4,8 +4,8 @@ import { useResults } from "../context/ResultsContext";
 
 export default function Calculator() {
   const navigate = useNavigate();
-
   const { updateResults } = useResults();
+
   const categories = ["Transportation", "Electricity", "Food", "Retail", "Waste"];
   const [currentTab, setCurrentTab] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
@@ -83,7 +83,7 @@ export default function Calculator() {
   const confirmSubmission = async () => {
     try {
       console.log("Submitting Data:", formData);
-  
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { 
@@ -92,26 +92,45 @@ export default function Calculator() {
         },
         body: JSON.stringify(formData),
       });
-  
+
       const data = await response.json();
       console.log("Server Response:", data);
-  
+
       if (response.ok) {
         console.log("Data submitted successfully!");
-        localStorage.setItem("emissionData", JSON.stringify(data));
       } else {
         console.log(`Error: ${result.message}`);
         throw new Error(`API Error: ${response.status} - ${response.statusText}`);
       }
 
+      const transformedData = {
+        monthlyRating: data.total_emissions,
+        ratings: [
+          { category: "Electricity", value: data.emissions_by_category.electricity },
+          { category: "Transportation", value: data.emissions_by_category.transportation },
+          { category: "Waste", value: data.emissions_by_category.waste },
+          { category: "Food", value: data.emissions_by_category.food },
+          { category: "Retail", value: data.emissions_by_category.retail },
+        ],
+        // TODO :: Add sustainability goals
+        sustainabilityGoals: [
+          { text: "Reduce electricity consumption by 10%." },
+          { text: "Reduce transportation emissions by 5%." },
+          { text: "Reduce waste production by 15%." }
+        ]
+      };
+
       // ✅ Ensure results are properly stored and updated
       const reportEntry = {
         id: Date.now(),
         uploadType: "calculator",
-        results: data,
+        results: transformedData,
         date: new Date().toLocaleString(),
       };
-  
+
+      console.log("New Report Entry:", reportEntry);
+      console.log("Updating Results Context :: ", reportEntry.results);
+
       updateResults(reportEntry);
       setSuccessModal(true);
       setIsSubmitted(true);
