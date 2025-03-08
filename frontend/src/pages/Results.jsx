@@ -3,50 +3,52 @@ import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
-import { useResults } from '../context/ResultsContext';
-
+import { useResults } from "../context/ResultsContext";
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { results } = useResults();
+  const roundToThousandths = (num) => {
+    return num ? Number(num.toFixed(3)) : 0; // Ensures it always returns a number
+  };
+  
 
-  const njAverage = {
-    monthlyRating: 85,
+  // ✅ Hardcoded U.S. Average Midpoint for Gauge
+  const USA_AVG_MIDPOINT = 1225; // Midpoint based on your provided scale
+
+  // ✅ Default U.S. Monthly Average Data
+  const usAverage = {
+    monthlyRating: USA_AVG_MIDPOINT, // Always midpoint
     ratings: [
-      { category: "Electricity", value: -5 },
-      { category: "Transportation", value: 15 },
-      { category: "Waste", value: -10 },
-      { category: "Food", value: 12 },
-      { category: "Retail", value: 8 },
+      { category: "Electricity", value: 375 },
+      { category: "Transportation", value: 458 },
+      { category: "Waste", value: 62 },
+      { category: "Food", value: 209 },
+      { category: "Retail", value: 209 },
     ],
   };
 
   useEffect(() => {
-    // Get stored emission data
-    const storedData = results;
-    console.log("Stored data from results context :: ", storedData[0].results);
-    const emission_data = storedData[0].results;
-
-if (emission_data) {
-  console.log("Stored data :: ", emission_data);
-  setUserResults(emission_data);
-  setLoading(false);
-} else {
-  console.log("Error fetching results:");
-  setError("Failed to load results.");
-  setLoading(false);
-}
-  }, []);
+    if (results.length > 0) {
+      const latestResult = results[0].results;
+      console.log("Stored data from results context:", latestResult);
+      setUserResults(latestResult);
+    } else {
+      console.log("No stored results available.");
+      setError("No results available. Please perform a calculation.");
+    }
+    setLoading(false);
+  }, [results]);
 
   const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
         data: userResults
-          ? userResults.ratings.map((item) => item.value) // Using transformed data
-          : [0, 0, 0, 0, 0], // Default to 0
+          ? userResults.ratings.map((item) => item.value)
+          : [0, 0, 0, 0, 0], // Default to 0 if no data
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
@@ -56,29 +58,33 @@ if (emission_data) {
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {/* ✅ Error Handling for Missing Data */}
+      {error && <p className="text-red-600 text-center mt-5">{error}</p>}
 
+      {/* ✅ Show Loading Screen While Fetching Data */}
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
-      ) : (
+      ) : userResults ? (
         <>
+          {/* ✅ Gauge Comparison Section */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
             <div className="flex justify-center space-x-8">
-              <GaugeChart rating={userResults?.monthlyRating || 0} />
-              <GaugeChart rating={120} />
+              {/* ✅ First Gauge - User Results */}
+              <div className="flex flex-col items-center">
+                <GaugeChart rating={roundToThousandths(userResults?.monthlyRating || USA_AVG_MIDPOINT)} />
+                <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint Results</p>
+              </div>
+
+              {/* ✅ Second Gauge - U.S. Average Gauge (Midpoint Hardcoded) */}
+              <div className="flex flex-col items-center">
+                <GaugeChart rating={USA_AVG_MIDPOINT} />
+                <p className="mt-2 font-semibold text-gray-900">USA Average</p>
+              </div>
             </div>
-            <p className="text-gray-600">
-              This result was generated from a{" "}
-              {userResults?.calculation_method === "manual" ? (
-                <span className="text-green-500">manual calculation</span>
-              ) : (
-                <span className="text-blue-500">PDF scan</span>
-              )}
-              .
-            </p>
           </div>
 
+          {/* ✅ Comparison by Category */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold pb-5">Comparison by Category</h2>
             <table className="w-full table-auto">
@@ -86,21 +92,22 @@ if (emission_data) {
                 <tr>
                   <th className="px-4 py-2">Category</th>
                   <th className="px-4 py-2 text-right">Your Monthly Carbon Emissions</th>
-                  <th className="px-4 py-2 text-right">Average NJ Resident Monthly Carbon Emissions</th>
+                  <th className="px-4 py-2 text-right">USA Average Monthly Carbon Emissions</th>
                 </tr>
               </thead>
               <tbody>
                 {userResults?.ratings.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2">{userResults.ratings[index].category}</td>
-                    <td className="px-4 py-2 text-right">{userResults.ratings[index].value}</td>
-                    <td className="px-4 py-2 text-right">{njAverage.ratings[index].value}</td>
+                    <td className="px-4 py-2">{item.category}</td>
+                    <td className="px-4 py-2 text-right">{item.value}</td>
+                    <td className="px-4 py-2 text-right">{usAverage.ratings[index].value}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
+          {/* ✅ Monthly Sustainability Goals */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold pb-4">Monthly Sustainability Goals</h2>
             <ul>
@@ -116,8 +123,9 @@ if (emission_data) {
             </ul>
           </div>
 
+          {/* ✅ Carbon Emissions Breakdown */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
-            <h2 className="font-semibold pb-4">Carbon Emissions</h2>
+            <h2 className="font-semibold pb-4">Carbon Emissions Breakdown</h2>
             <Pie data={pieData} height={50} />
             <p className="text-gray-600 text-sm">
               Your total monthly carbon emissions are{" "}
@@ -125,11 +133,14 @@ if (emission_data) {
             </p>
           </div>
 
+          {/* ✅ Navigation Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
             <Link to="/reports" className="btn btn-primary">View Reports</Link>
             <Link to="/dashboard" className="btn btn-primary">Return to Dashboard</Link>
           </div>
         </>
+      ) : (
+        <p className="text-red-600 text-center mt-5">No valid results found. Please try again.</p>
       )}
     </div>
   );

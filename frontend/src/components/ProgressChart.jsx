@@ -1,20 +1,31 @@
-//chart for 1 year still has to be fixed
-
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title } from "chart.js";
+import {
+  Chart as ChartJS,
+  LineElement,
+  LinearScale,
+  TimeScale,
+  CategoryScale,
+  PointElement,
+  Title,
+  Tooltip,
+} from "chart.js";
 import "chartjs-adapter-date-fns";
 
-ChartJS.register(LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title);
+ChartJS.register(
+  LineElement,
+  LinearScale,
+  TimeScale,
+  CategoryScale,
+  PointElement,
+  Title,
+  Tooltip
+);
 
+export default function ProgressChart({ data = [], maxScale = 2450 }) {
+  
+  const [timeFrame, setTimeFrame] = useState("3M");
 
-export default function ProgressChart({ data, maxScale = 1000 }) {
-  console.log("ProgressChart received data:", data); // ✅ Move inside function
-
-  const [timeFrame, setTimeFrame] = useState("3M"); // Default to 1 year
-
-
-  // Default placeholder data if no progress is recorded yet
   const defaultData = [
     { date: "2024-10-01", value: 100 },
     { date: "2024-11-15", value: 150 },
@@ -24,24 +35,17 @@ export default function ProgressChart({ data, maxScale = 1000 }) {
     { date: "2025-02-15", value: 350 },
   ];
 
-  // Use real data if available, otherwise use placeholder
-  const progressData = data.length > 0 
-  ? data.map(entry => ({ date: entry.date, value: entry.value }))
-  : defaultData;
+  // Combine real user data and default data
+  let allData = data.length > 0 ? [...defaultData, ...data] : defaultData;
 
+  // ✅ Sort data chronologically
+  allData = allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Format dates for better display
-  const formattedData = progressData.map((entry) => ({
-    ...entry,
-    formattedDate: new Date(entry.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-  }));
-
-  // Filter data based on selected time frame
+  // Set cutoff date based on selected timeframe
   const now = new Date();
   const cutoffDate = new Date();
   cutoffDate.setHours(0, 0, 0, 0);
-  
-  // Adjust cutoff date based on selected time frame
+
   if (timeFrame === "1M") {
     cutoffDate.setMonth(now.getMonth() - 1);
   } else if (timeFrame === "3M") {
@@ -50,57 +54,56 @@ export default function ProgressChart({ data, maxScale = 1000 }) {
     cutoffDate.setMonth(now.getMonth() - 6);
   } else if (timeFrame === "1Y") {
     cutoffDate.setFullYear(now.getFullYear() - 1);
-    cutoffDate.setDate(cutoffDate.getDate() + 1); // ✅ Ensures it includes the full last 12 months
+    cutoffDate.setMonth(now.getMonth());
+    cutoffDate.setDate(1);
   }
-  
-  // ✅ Debugging Log
-  console.log("Cutoff date for", timeFrame, "view:", cutoffDate);
-  
-  
-  
-  
-  // Ensure correct data is included
-  const filteredData = progressData.filter(entry => {
+
+  // ✅ Filter data based on selected timeframe, but keep last known point
+  let filteredData = allData.filter((entry) => {
     const entryDate = new Date(entry.date);
-    const includeEntry = entryDate >= cutoffDate && entryDate <= now;
-  
-    console.log(`Checking entry: ${entry.date} | Date: ${entryDate} | Included: ${includeEntry}`);
-    
-    return includeEntry; // ✅ Ensures all correct data is included
+    return entryDate >= cutoffDate && entryDate <= now;
   });
-  
-  
-  console.log("Filtered Data for", timeFrame, ":", filteredData);
-  
-  
+
+  // ✅ Ensure `1M` has at least 2 points to maintain trend visualization
+  if (timeFrame === "1M" && filteredData.length === 1 && allData.length > 1) {
+    filteredData = allData.slice(-2);
+  }
+
+  // ✅ Ensure longer timeframes show the last known point for continuity
+  if (filteredData.length === 0) {
+    filteredData = [allData[allData.length - 1]];
+  }
+
   const chartData = {
-    labels: filteredData.length > 0 
-      ? filteredData.map(entry => new Date(entry.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })) 
-      : defaultData.map(entry => new Date(entry.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })),
-    
+    labels: filteredData.map((entry) =>
+      new Date(entry.date).toLocaleDateString("en-US", {
+        month: timeFrame === "1Y" ? "short" : "short",
+        year: timeFrame === "1Y" ? "numeric" : undefined,
+        day: timeFrame === "1M" ? "numeric" : undefined,
+      })
+    ),
     datasets: [
       {
         label: "Total Emissions Over Time",
-        data: filteredData.length > 0 
-          ? filteredData.map(entry => ({ x: new Date(entry.date), y: entry.value })) 
-          : defaultData.map(entry => ({ x: new Date(entry.date), y: entry.value })),
+        data: filteredData.map((entry) => ({
+          x: new Date(entry.date),
+          y: entry.value,
+        })),
         borderColor: "green",
         borderWidth: 2,
         fill: false,
+        tension: 0.3, // ✅ Smoother line transitions
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointBackgroundColor: "green",
+        pointBorderColor: "white",
+        pointBorderWidth: 2,
       },
     ],
   };
-  
-  console.log("Filtered Data for", timeFrame, ":", filteredData);
-  console.log("Chart Labels (X-Axis):", chartData.labels);
-  console.log("Chart Dataset Values:", chartData.datasets[0].data);
-  
-
-  console.log("Final progressData sent to chart:", progressData);
 
   return (
-    <div className="h-80"> {/* Reduced height */}
-      {/* Time Frame Selector */}
+    <div className="h-80">
       <div className="flex justify-end space-x-2 mb-2">
         {["1M", "3M", "6M", "1Y"].map((frame) => (
           <button
@@ -115,7 +118,6 @@ export default function ProgressChart({ data, maxScale = 1000 }) {
         ))}
       </div>
 
-      {/* Chart */}
       <Line
         data={chartData}
         options={{
@@ -125,11 +127,18 @@ export default function ProgressChart({ data, maxScale = 1000 }) {
             x: {
               type: "time",
               time: {
-                unit: timeFrame === "1M" ? "day" : timeFrame === "3M" ? "week" : "month",
-                tooltipFormat: "MMM dd",
+                unit:
+                  timeFrame === "1M"
+                    ? "day"
+                    : timeFrame === "3M"
+                    ? "week"
+                    : timeFrame === "1Y"
+                    ? "month"
+                    : "month",
+                tooltipFormat: timeFrame === "1Y" ? "MMM yyyy" : "MMM dd",
               },
-              min: cutoffDate, // ✅ This needs modification
-              max: new Date(),
+              min: cutoffDate,
+              max: now,
               title: {
                 display: true,
                 text: "Date",
@@ -137,11 +146,23 @@ export default function ProgressChart({ data, maxScale = 1000 }) {
             },
             y: { min: 0, max: maxScale },
           },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const { x, y } = context.raw;
+                  const date = new Date(x).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  });
+                  return `${date}: ${y} kg CO2e`;
+                },
+              },
+            },
+          },
         }}
       />
-
-
-
     </div>
   );
 }
