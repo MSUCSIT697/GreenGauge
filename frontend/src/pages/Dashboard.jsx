@@ -4,6 +4,9 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal"; // ✅ Import modal
 import { useResults } from "../context/ResultsContext";
+import RecommendationSystem from "../components/Recommendations";
+
+
 
 
 export default function Dashboard() {
