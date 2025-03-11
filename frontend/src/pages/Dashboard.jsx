@@ -64,7 +64,7 @@ export default function Dashboard() {
         {/* Rating Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center h-full min-h-[250px]">
           <div className="flex-grow flex flex-col justify-center items-center w-full">
-            <GaugeChart 
+            <GaugeChart id="dashboardGauge"
               rating={
                 roundToThousandths(
                   latestReport 

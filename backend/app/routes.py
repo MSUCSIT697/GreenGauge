@@ -154,3 +154,23 @@ def login():
 def protected():
     current_user = get_jwt_identity()
     return jsonify({'message': f'Hello, {current_user}! This is a protected route.'}), 200
+
+
+## Loads past results when user logs in
+@api_routes.route('/get_user_results', methods=['GET'])
+@jwt_required()
+def get_user_results():
+    """Retrieve all saved emissions results for the logged-in user."""
+    current_user = get_jwt_identity()  # Get the logged-in user's email
+
+    if not current_user:
+        return jsonify({'error': 'User not authenticated'}), 401
+
+    user_id = getIdByEmail(current_user)  # Get user ID from email
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Fetch all stored results for this user
+    results = get_total_emissions_by_id(user_id)
+
+    return jsonify({'results': results}), 200

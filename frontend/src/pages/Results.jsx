@@ -4,6 +4,9 @@ import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import { useResults } from "../context/ResultsContext";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
@@ -14,7 +17,7 @@ export default function Results() {
     return num ? Number(num.toFixed(3)) : 0; // Ensures it always returns a number
   };
   
-
+  
   // ✅ Hardcoded U.S. Average Midpoint for Gauge
   const USA_AVG_MIDPOINT = 1225; // Midpoint based on your provided scale
 
@@ -32,11 +35,17 @@ export default function Results() {
 
   useEffect(() => {
     if (results.length > 0) {
-      const latestResult = results[0].results;
-      console.log("Stored data from results context:", latestResult);
-      setUserResults(latestResult);
+      const latestResult = results[0]?.results;
+      if (latestResult) {
+        console.log("✅ Stored data from results context:", latestResult);
+        setUserResults(latestResult);
+        setError(null); // ✅ Reset errors if data exists
+      } else {
+        console.warn("⚠️ No valid results found in context.");
+        setError("No valid results found. Please perform a calculation.");
+      }
     } else {
-      console.log("No stored results available.");
+      console.warn("⚠️ No stored results available.");
       setError("No results available. Please perform a calculation.");
     }
     setLoading(false);
@@ -46,13 +55,14 @@ export default function Results() {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults
+        data: userResults?.ratings
           ? userResults.ratings.map((item) => item.value)
-          : [0, 0, 0, 0, 0], // Default to 0 if no data
+          : [0, 0, 0, 0, 0], // ✅ Default if missing
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
   };
+  
 
   return (
     <div className="container mx-auto p-6">
@@ -72,13 +82,13 @@ export default function Results() {
             <div className="flex justify-center space-x-8">
               {/* ✅ First Gauge - User Results */}
               <div className="flex flex-col items-center">
-                <GaugeChart rating={roundToThousandths(userResults?.monthlyRating || USA_AVG_MIDPOINT)} />
+                <GaugeChart id="userGauge" rating={roundToThousandths(userResults?.monthlyRating || USA_AVG_MIDPOINT)} />
                 <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint Results</p>
               </div>
 
               {/* ✅ Second Gauge - U.S. Average Gauge (Midpoint Hardcoded) */}
               <div className="flex flex-col items-center">
-                <GaugeChart rating={USA_AVG_MIDPOINT} />
+                <GaugeChart id="avgGauge" rating={USA_AVG_MIDPOINT} />
                 <p className="mt-2 font-semibold text-gray-900">USA Average</p>
               </div>
             </div>
