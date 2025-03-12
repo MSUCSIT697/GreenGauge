@@ -4,11 +4,19 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal"; // ✅ Import modal
 import { useResults } from "../context/ResultsContext";
+import RecommendationSystem from "../components/Recommendations";
+
+
+
 
 export default function Dashboard() {
   const [progressData, setProgressData] = useState([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false); // ✅ State for modal
   const { results } = useResults(); // ✅ Get stored results
+  const roundToThousandths = (num) => {
+    return num ? Number(num.toFixed(3)) : 0; // Ensures it always returns a number
+  };
+  
 
   const latestReport = results.length > 0 ? results[0] : null; // ✅ Use latest stored report
 
@@ -23,16 +31,19 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-    // Use stored results if available, otherwise use default data
-    setProgressData(
-      results.length > 0
-        ? results.map(report => ({
-            date: report.date,
-            value: report.results.total_emissions,
-          }))
-        : defaultData
-    );
+    if (results.length > 0) {
+      const formattedData = results.map(report => ({
+        date: report.date,
+        value: roundToThousandths(report.results.total_emissions) // ✅ Ensures proper formatting
+      }));
+      setProgressData(formattedData);
+    } else {
+      setProgressData(defaultData);
+    }
+    console.log("Raw Results Data: ", results);
+    console.log("Processed Data Sent to ProgressChart:", progressData);
   }, [results]);
+
 
   console.log("Processed Data Sent to ProgressChart:", progressData);
 
@@ -47,18 +58,33 @@ export default function Dashboard() {
         </p>
       )}
 
-      {/* ✅ Dashboard Section with Frames */}
-      <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row justify-between space-x-4 px-4 items-center">
+      {/* ✅ Dashboard Section - Fixed Equal Heights */}
+      <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 w-full min-h-[250px]">
+        
         {/* Rating Frame */}
-        <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-          <GaugeChart rating={latestReport ? latestReport.results.total_emissions : 50} />
-          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p>
+        <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center h-full min-h-[250px]">
+          <div className="flex-grow flex flex-col justify-center items-center w-full">
+            <GaugeChart id="dashboardGauge"
+              rating={
+                roundToThousandths(
+                  latestReport 
+                    ? latestReport.results.total_emissions > 1333 
+                      ? 80 
+                      : latestReport.results.total_emissions < 1125 
+                        ? 25 
+                        : 50
+                    : 50
+                  )
+              } 
+            />
+          </div>
+          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p> 
         </div>
 
         {/* Ratings by Category Frame */}
-        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center">
-          <h2 className="font-semibold text-gray-900">Ratings by Category</h2>
-          <ul className="mt-1 text-gray-700 space-y-1 px-8">
+        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
+          <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
+          <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
             {latestReport
               ? latestReport.results.ratings.map((item, index) => (
                   <li key={index} className="flex justify-between items-center px-4">
@@ -76,9 +102,9 @@ export default function Dashboard() {
         </div>
 
         {/* Sustainability Goals Frame */}
-        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center">
-          <h2 className="font-semibold text-gray-900">Monthly Sustainability Goals</h2>
-          <ul className="mt-1 space-y-2 px-8 text-left">
+        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
+          <h2 className="font-semibold pb-2 text-gray-900">Monthly Sustainability Goals</h2>
+          <ul className="mt-1 space-y-2 px-8 text-left flex flex-col justify-between">
             {latestReport
               ? latestReport.results.sustainabilityGoals.map((goal, index) => (
                   <li key={index} className="flex items-center px-4">
@@ -96,6 +122,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ✅ Progress Tracker (Updated with Correct Data) */}
       <div className="bg-white rounded-lg shadow-md p-6 pb-16 mt-4">
         <h2 className="font-semibold text-gray-900">Progress Tracker:</h2>
         <ProgressChart data={progressData} maxScale={1000} />

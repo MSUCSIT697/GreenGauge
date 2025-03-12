@@ -7,13 +7,33 @@ from app.services import (
     calculate_electricity_emissions,
     calculate_waste_emissions,
     get_total_emissions_by_id,
+    getIdByEmail,
     getPasswordByEmail,
     save_to_database
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 import bcrypt
+from flask import current_app
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 api_routes = Blueprint('api_routes', __name__)
+
+# Function to check for JWT token
+def verify_token():
+    auth_header = request.headers.get('Authorization')
+    
+    if auth_header is None:
+        return None  # No Authorization header found, treat as guest user
+
+    try:
+        # Extract and decode the JWT token
+        token = auth_header.split()[1]  # Token comes after "Bearer "
+        decoded_token = jwt.decode(token, current_app.config["JWT_SECRET_KEY"], algorithms=["HS256"])
+        return decoded_token
+    except Exception as e:
+        return None
+
 
 # ✅ Health check endpoint
 @api_routes.route('/health', methods=["GET"])
@@ -22,10 +42,15 @@ def health_check():
 
 # ✅ Calculate Emissions
 @api_routes.route('/calculate_emissions', methods=['POST'])
-@jwt_required()
 def calculate_emissions():
     data = request.get_json()
-    current_user = get_jwt_identity()  # Gets logged-in user ID or None
+    # current_user = get_jwt_identity()  # Gets logged-in user ID or None
+
+    token = verify_token()
+    if token:
+        current_user = token['sub']
+    else:
+        current_user = None
 
     # Calculate emissions
     food_emissions = calculate_food_emissions(data['food'])
@@ -44,22 +69,33 @@ def calculate_emissions():
     ])
 
     # Save to database if user is logged in
-    if current_user:
-        profile_id = getPasswordByEmail(current_user)
+    # if current_user:
+        # profile_id = getIdByEmail(current_user)
+        # total_emissions_id = save_to_database(
+        #     data,
+        #     total_emissions,
+        #     food_emissions,
+        #     retail_emissions,
+        #     transportation_emissions,
+        #     electricity_emissions,
+        #     waste_emissions,
+        #     profile_id
+        # )
+    if(current_user):
+        profile_id = getIdByEmail(current_user)
         total_emissions_id = save_to_database(
-            data,
-            total_emissions,
-            food_emissions,
-            retail_emissions,
-            transportation_emissions,
-            electricity_emissions,
-            waste_emissions,
-            profile_id
+        data,
+        total_emissions,
+        food_emissions,
+        retail_emissions,
+        transportation_emissions,
+        electricity_emissions,
+        waste_emissions,
+        profile_id
         )
-
+    
     # Return the response
     return jsonify({
-        "id": total_emissions_id,
         "total_emissions": total_emissions,
         "emissions_by_category": {
             "food": food_emissions,
@@ -112,9 +148,29 @@ def login():
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
     
-# ✅ Protected route example
+# # ✅ Protected route example
 @api_routes.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify({'message': f'Hello, {current_user}! This is a protected route.'}), 200
+
+
+## Loads past results when user logs in
+@api_routes.route('/get_user_results', methods=['GET'])
+@jwt_required()
+def get_user_results():
+    """Retrieve all saved emissions results for the logged-in user."""
+    current_user = get_jwt_identity()  # Get the logged-in user's email
+
+    if not current_user:
+        return jsonify({'error': 'User not authenticated'}), 401
+
+    user_id = getIdByEmail(current_user)  # Get user ID from email
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Fetch all stored results for this user
+    results = get_total_emissions_by_id(user_id)
+
+    return jsonify({'results': results}), 200
