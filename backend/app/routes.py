@@ -203,3 +203,21 @@ def get_user_results():
     finally:
         cursor.close()
         conn.close()
+
+    @api_routes.route('/get_user_profile', methods=['GET'])
+    def get_user_profile():
+        token = verify_token()
+        if not token:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        email = token["sub"]
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT username, email FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({"username": user[0], "email": user[1]}), 200

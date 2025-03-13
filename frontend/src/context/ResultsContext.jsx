@@ -9,31 +9,22 @@ export function ResultsProvider({ children }) {
   useEffect(() => {
     const fetchUserResults = async () => {
       const token = localStorage.getItem("token");
-
       if (!token) {
-        console.warn("⚠️ No authentication token found. User may not be logged in.");
+        console.warn("⚠️ No authentication token found.");
         return;
       }
 
+      // ✅ Remove trailing slash from API base URL
+      const API_BASE = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
+        const response = await fetch(`${API_BASE}/api/get_user_results`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           }
         });
-
-        if (response.status === 401) {
-          console.warn("⚠️ Unauthorized: User must log in.");
-          return;
-        }
-
-        if (response.status === 404) {
-          console.warn("⚠️ No results found for this user.");
-          setResults([]); // Set results to empty array instead of crashing
-          return;
-        }
 
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
@@ -48,10 +39,11 @@ export function ResultsProvider({ children }) {
     };
 
     fetchUserResults();
-  }, []);
+  }, []); // Runs only once on component mount
 
+  // ✅ Function to update results in the state dynamically
   const updateResults = (newResult) => {
-    setResults((prevResults) => [newResult, ...prevResults]); // Stores new results at the top
+    setResults((prevResults) => [newResult, ...prevResults]); // Adds new results at the top
   };
 
   return (
@@ -61,6 +53,7 @@ export function ResultsProvider({ children }) {
   );
 }
 
+// ✅ Custom hook to access results context
 export function useResults() {
   return useContext(ResultsContext);
 }
