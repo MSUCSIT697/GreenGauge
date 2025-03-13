@@ -18,6 +18,10 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 from app.database import get_db_connection
 
+from flask import Flask, request, render_template, jsonify
+from categorization.pdf_processor import process_pdf
+from flask_cors import CORS
+
 api_routes = Blueprint('api_routes', __name__)
 
 # ✅ Function to verify JWT Token
@@ -157,67 +161,35 @@ def protected():
 # ✅ Fetch past user results
 @api_routes.route('/api/get_user_results', methods=['GET'])
 def get_user_results():
-    token = verify_token()
-    if not token:
-        print("🚨 ERROR: Unauthorized access to user results")
-        return jsonify({"error": "Unauthorized"}), 401
+    """Retrieve all saved emissions results for the logged-in user."""
+    current_user = get_jwt_identity()  # Get the logged-in user's email
 
-    current_user_email = token['sub']
-    profile_id = getIdByEmail(current_user_email)
+    if not current_user:
+        return jsonify({'error': 'User not authenticated'}), 401
 
-    if not profile_id:
-        return jsonify({"error": "User not found"}), 404
+    user_id = getIdByEmail(current_user)  # Get user ID from email
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    # Fetch all stored results for this user
+    results = get_total_emissions_by_id(user_id)
 
+    return jsonify({'results': results}), 200
+
+@api_routes.route('/upload', methods=['POST'])
+def handle_upload():
+    if 'pdf' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+        
+    file = request.files['pdf']
     try:
-        cursor.execute("SELECT * FROM total_emissions WHERE profile_id = %s", (profile_id,))
-        results = cursor.fetchall()
-
-        print(f"📊 Retrieved {len(results)} results for user {current_user_email}")
-
-        if not results:
-            return jsonify({"error": "No results found"}), 404
-
-        # Convert results to JSON format
-        results_data = []
-        for row in results:
-            results_data.append({
-                "id": row[0],
-                "profile_id": row[1],
-                "total_emissions": row[2],
-                "food": row[3],
-                "retail": row[4],
-                "transportation": row[5],
-                "electricity": row[6],
-                "waste": row[7],
-                "timestamp": row[8]  # Assuming column index 8 stores the date
-            })
-
-        return jsonify(results_data), 200
-
+        result = process_pdf(file.stream)
+        return jsonify({
+            "status": "success",
+            "data": result['transactions'],
+            "totals": result['totals'],
+            "footprint": result['footprint'],
+            "dates": result['dates']
+        })
     except Exception as e:
-        print(f"🚨 Database Query Error: {e}")
         return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
-    @api_routes.route('/get_user_profile', methods=['GET'])
-    def get_user_profile():
-        token = verify_token()
-        if not token:
-            return jsonify({"error": "Unauthorized"}), 401
-
-        email = token["sub"]
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT username, email FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        return jsonify({"username": user[0], "email": user[1]}), 200

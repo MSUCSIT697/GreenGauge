@@ -6,6 +6,7 @@ import tempfile
 import os
 from flask import jsonify
 
+
 # Configure Tesseract path (Windows specific)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
