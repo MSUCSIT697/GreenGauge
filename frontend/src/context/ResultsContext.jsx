@@ -9,12 +9,12 @@ export function ResultsProvider({ children }) {
   useEffect(() => {
     const fetchUserResults = async () => {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
-        console.error("No authentication token found. User may not be logged in.");
+        console.warn("⚠️ No authentication token found. User may not be logged in.");
         return;
       }
-    
+
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
           method: "GET",
@@ -23,11 +23,22 @@ export function ResultsProvider({ children }) {
             "Authorization": `Bearer ${token}`
           }
         });
-    
+
+        if (response.status === 401) {
+          console.warn("⚠️ Unauthorized: User must log in.");
+          return;
+        }
+
+        if (response.status === 404) {
+          console.warn("⚠️ No results found for this user.");
+          setResults([]); // Set results to empty array instead of crashing
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
-    
+
         const data = await response.json();
         console.log("✅ Retrieved results:", data);
         setResults(data);
@@ -35,7 +46,6 @@ export function ResultsProvider({ children }) {
         console.error("🚨 Error fetching user results:", error);
       }
     };
-    
 
     fetchUserResults();
   }, []);

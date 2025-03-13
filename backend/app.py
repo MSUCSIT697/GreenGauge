@@ -1,9 +1,13 @@
 from flask import Flask, request, render_template, jsonify
 from categorization.pdf_processor import process_pdf
 from flask_cors import CORS
+from app.routes import api_routes  # ✅ Import API routes
 
 app = Flask(__name__)
-CORS(app)  # Only needed if using separate frontend
+CORS(app)  # Enable CORS for frontend communication
+
+# ✅ Register API routes
+app.register_blueprint(api_routes, url_prefix="/api")
 
 @app.route('/')
 def dashboard():
@@ -29,4 +33,3 @@ def handle_upload():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-    
