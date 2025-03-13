@@ -8,28 +8,34 @@ export function ResultsProvider({ children }) {
   // ✅ Fetch stored results from the backend on user login
   useEffect(() => {
     const fetchUserResults = async () => {
-      const token = localStorage.getItem("token"); // Ensure we have the user's JWT token
-      if (!token) return; // No user logged in
-
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        console.error("No authentication token found. User may not be logged in.");
+        return;
+      }
+    
       try {
-        const response = await fetch("/api/get_user_results", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
-          },
+            "Authorization": `Bearer ${token}`
+          }
         });
-
+    
         if (!response.ok) {
-          throw new Error("Failed to fetch user results");
+          throw new Error(`API request failed with status ${response.status}`);
         }
-
+    
         const data = await response.json();
-        setResults(data.results || []); // Store fetched results in context
+        console.log("✅ Retrieved results:", data);
+        setResults(data);
       } catch (error) {
-        console.error("Error fetching user results:", error);
+        console.error("🚨 Error fetching user results:", error);
       }
     };
+    
 
     fetchUserResults();
   }, []);

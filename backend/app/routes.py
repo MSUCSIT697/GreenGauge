@@ -16,10 +16,11 @@ import bcrypt
 from flask import current_app
 import jwt
 from jwt.exceptions import InvalidTokenError
+from app.database import get_db_connection
 
 api_routes = Blueprint('api_routes', __name__)
 
-# Function to check for JWT token
+# ✅ Function to verify JWT Token
 def verify_token():
     auth_header = request.headers.get('Authorization')
     
@@ -27,7 +28,6 @@ def verify_token():
         return None  # No Authorization header found, treat as guest user
 
     try:
-        # Extract and decode the JWT token
         token = auth_header.split()[1]  # Token comes after "Bearer "
         decoded_token = jwt.decode(token, current_app.config["JWT_SECRET_KEY"], algorithms=["HS256"])
         return decoded_token
@@ -35,31 +35,36 @@ def verify_token():
         return None
 
 
-# ✅ Health check endpoint
+# ✅ Health Check
 @api_routes.route('/health', methods=["GET"])
 def health_check():
     return jsonify({"status": "ok"}), 200
+
 
 # ✅ Calculate Emissions
 @api_routes.route('/calculate_emissions', methods=['POST'])
 def calculate_emissions():
     data = request.get_json()
-    # current_user = get_jwt_identity()  # Gets logged-in user ID or None
 
+    # ✅ Step 1: Verify JWT Token
     token = verify_token()
     if token:
         current_user = token['sub']
+        profile_id = getIdByEmail(current_user)
+        
+        if not profile_id:
+            print("🚨 ERROR: Could not retrieve profile ID for user:", current_user)
+            return jsonify({"error": "Invalid user"}), 401  # Return error if profile ID not found
     else:
-        current_user = None
+        profile_id = None  # Allow guest users to calculate emissions without storing
 
-    # Calculate emissions
+    # ✅ Step 2: Calculate emissions
     food_emissions = calculate_food_emissions(data['food'])
     retail_emissions = calculate_retail_emissions(data['retail'])
     transportation_emissions = calculate_transportation_emissions(data['transportation'])
     electricity_emissions = calculate_electricity_emissions(data['electricity'])
     waste_emissions = calculate_waste_emissions(data['waste'])
 
-    # Total emissions
     total_emissions = sum([
         food_emissions,
         retail_emissions,
@@ -68,33 +73,22 @@ def calculate_emissions():
         waste_emissions
     ])
 
-    # Save to database if user is logged in
-    # if current_user:
-        # profile_id = getIdByEmail(current_user)
-        # total_emissions_id = save_to_database(
-        #     data,
-        #     total_emissions,
-        #     food_emissions,
-        #     retail_emissions,
-        #     transportation_emissions,
-        #     electricity_emissions,
-        #     waste_emissions,
-        #     profile_id
-        # )
-    if(current_user):
-        profile_id = getIdByEmail(current_user)
+    # ✅ Step 3: Save results to the database (ONLY IF USER IS LOGGED IN)
+    if profile_id:
         total_emissions_id = save_to_database(
-        data,
-        total_emissions,
-        food_emissions,
-        retail_emissions,
-        transportation_emissions,
-        electricity_emissions,
-        waste_emissions,
-        profile_id
+            data,
+            total_emissions,
+            food_emissions,
+            retail_emissions,
+            transportation_emissions,
+            electricity_emissions,
+            waste_emissions,
+            profile_id
         )
-    
-    # Return the response
+
+        print(f"✅ Successfully stored results for user {current_user} with record ID {total_emissions_id}")
+
+    # ✅ Step 4: Return JSON response
     return jsonify({
         "total_emissions": total_emissions,
         "emissions_by_category": {
@@ -106,11 +100,13 @@ def calculate_emissions():
         }
     })
 
-# ✅ Get total emissions by ID
+
+# ✅ Get total emissions by ID (Protected Route)
 @api_routes.route('/get_total_emissions/<int:id>', methods=['GET'])
 @jwt_required()
 def get_total_emissions(id):
     return get_total_emissions_by_id(id)
+
 
 # ✅ User Signup
 @api_routes.route('/signup', methods=['POST'])
@@ -128,7 +124,8 @@ def signup():
         addNewUser(username, email, hashed_password)
         return jsonify({'message': 'User created successfully'}), 201
     except Exception as err:
-        return jsonify({'error : Failed to create user :: ': str(err)}), 500
+        return jsonify({'error': f'Failed to create user: {str(err)}'}), 500
+
 
 # ✅ User Login
 @api_routes.route('/login', methods=['POST'])
@@ -147,8 +144,9 @@ def login():
         return jsonify({'message': 'Login successful', 'token': access_token}), 200
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
-    
-# # ✅ Protected route example
+
+
+# ✅ Protected route (Example)
 @api_routes.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
@@ -156,21 +154,52 @@ def protected():
     return jsonify({'message': f'Hello, {current_user}! This is a protected route.'}), 200
 
 
-## Loads past results when user logs in
-@api_routes.route('/get_user_results', methods=['GET'])
-@jwt_required()
+# ✅ Fetch past user results
+@api_routes.route('/api/get_user_results', methods=['GET'])
 def get_user_results():
-    """Retrieve all saved emissions results for the logged-in user."""
-    current_user = get_jwt_identity()  # Get the logged-in user's email
+    token = verify_token()
+    if not token:
+        print("🚨 ERROR: Unauthorized access to user results")
+        return jsonify({"error": "Unauthorized"}), 401
 
-    if not current_user:
-        return jsonify({'error': 'User not authenticated'}), 401
+    current_user_email = token['sub']
+    profile_id = getIdByEmail(current_user_email)
 
-    user_id = getIdByEmail(current_user)  # Get user ID from email
-    if not user_id:
-        return jsonify({'error': 'User not found'}), 404
+    if not profile_id:
+        return jsonify({"error": "User not found"}), 404
 
-    # Fetch all stored results for this user
-    results = get_total_emissions_by_id(user_id)
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    return jsonify({'results': results}), 200
+    try:
+        cursor.execute("SELECT * FROM total_emissions WHERE profile_id = %s", (profile_id,))
+        results = cursor.fetchall()
+
+        print(f"📊 Retrieved {len(results)} results for user {current_user_email}")
+
+        if not results:
+            return jsonify({"error": "No results found"}), 404
+
+        # Convert results to JSON format
+        results_data = []
+        for row in results:
+            results_data.append({
+                "id": row[0],
+                "profile_id": row[1],
+                "total_emissions": row[2],
+                "food": row[3],
+                "retail": row[4],
+                "transportation": row[5],
+                "electricity": row[6],
+                "waste": row[7],
+                "timestamp": row[8]  # Assuming column index 8 stores the date
+            })
+
+        return jsonify(results_data), 200
+
+    except Exception as e:
+        print(f"🚨 Database Query Error: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()

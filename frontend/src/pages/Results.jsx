@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
@@ -12,18 +13,15 @@ export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { results } = useResults();
-  const roundToThousandths = (num) => {
-    return num ? Number(num.toFixed(3)) : 0; // Ensures it always returns a number
-  };
-  
-  
+  const { results, updateResults } = useResults(); 
+  const navigate = useNavigate();
+
   // ✅ Hardcoded U.S. Average Midpoint for Gauge
-  const USA_AVG_MIDPOINT = 1225; // Midpoint based on your provided scale
+  const USA_AVG_MIDPOINT = 1225; 
 
   // ✅ Default U.S. Monthly Average Data
   const usAverage = {
-    monthlyRating: USA_AVG_MIDPOINT, // Always midpoint
+    monthlyRating: USA_AVG_MIDPOINT, 
     ratings: [
       { category: "Electricity", value: 375 },
       { category: "Transportation", value: 458 },
@@ -33,113 +31,92 @@ export default function Results() {
     ],
   };
 
+  // ✅ Fetch user results from API
   useEffect(() => {
-    if (results.length > 0) {
-      const latestResult = results[0]?.results;
-      if (latestResult) {
-        console.log("✅ Stored data from results context:", latestResult);
-        setUserResults(latestResult);
-        setError(null); // ✅ Reset errors if data exists
-      } else {
-        console.warn("⚠️ No valid results found in context.");
-        setError("No valid results found. Please perform a calculation.");
-      }
-    } else {
-      console.warn("⚠️ No stored results available.");
-      setError("No results available. Please perform a calculation.");
-    }
-    setLoading(false);
-  }, [results]);
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+      alert("Session expired. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    const fetchResults = async () => {
+      try {
+        console.log("Fetching user results...");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Received results from API:", data);
+
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+
+        setUserResults(data); 
+        updateResults(data); // ✅ Ensure results are stored in context
+        setError(null);
+      } catch (err) {
+        console.error("🚨 Error fetching user results:", err);
+        setError("Failed to fetch results.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [navigate, updateResults]); 
+
+  // ✅ Pie Chart Data (Fix incorrect object reference)
   const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults?.ratings
-          ? userResults.ratings.map((item) => item.value)
-          : [0, 0, 0, 0, 0], // ✅ Default if missing
+        data: userResults?.emissions_by_category
+          ? Object.values(userResults.emissions_by_category)
+          : [0, 0, 0, 0, 0], 
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
   };
-  
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
-      {/* ✅ Error Handling for Missing Data */}
+      {/* ✅ Error Handling */}
       {error && <p className="text-red-600 text-center mt-5">{error}</p>}
 
-      {/* ✅ Show Loading Screen While Fetching Data */}
+      {/* ✅ Show Loading While Fetching */}
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
       ) : userResults ? (
         <>
-          {/* ✅ Gauge Comparison Section */}
+          {/* ✅ Display Gauge Comparison */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
             <div className="flex justify-center space-x-8">
-              {/* ✅ First Gauge - User Results */}
               <div className="flex flex-col items-center">
-                <GaugeChart id="userGauge" rating={roundToThousandths(userResults?.monthlyRating || USA_AVG_MIDPOINT)} />
-                <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint Results</p>
-              </div>
-
-              {/* ✅ Second Gauge - U.S. Average Gauge (Midpoint Hardcoded) */}
-              <div className="flex flex-col items-center">
-                <GaugeChart id="avgGauge" rating={USA_AVG_MIDPOINT} />
-                <p className="mt-2 font-semibold text-gray-900">USA Average</p>
+                <GaugeChart id="userGauge" rating={userResults?.total_emissions || 0} />
+                <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint</p>
               </div>
             </div>
           </div>
 
-          {/* ✅ Comparison by Category */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-5">Comparison by Category</h2>
-            <table className="w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2">Category</th>
-                  <th className="px-4 py-2 text-right">Your Monthly Carbon Emissions</th>
-                  <th className="px-4 py-2 text-right">USA Average Monthly Carbon Emissions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userResults?.ratings.map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">{item.category}</td>
-                    <td className="px-4 py-2 text-right">{item.value}</td>
-                    <td className="px-4 py-2 text-right">{usAverage.ratings[index].value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ✅ Monthly Sustainability Goals */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-4">Monthly Sustainability Goals</h2>
-            <ul>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try Carpooling or switching to a more fuel-efficient route
-              </li>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try Reducing meat intake and opting for local produce
-              </li>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try to reduce non-essential purchases or choose eco-friendly brands
-              </li>
-            </ul>
-          </div>
-
-          {/* ✅ Carbon Emissions Breakdown */}
+          {/* ✅ Pie Chart for Emissions Breakdown */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
             <h2 className="font-semibold pb-4">Carbon Emissions Breakdown</h2>
             <Pie data={pieData} height={50} />
             <p className="text-gray-600 text-sm">
-              Your total monthly carbon emissions are{" "}
-              <span className="text-green-500">{userResults?.monthlyRating || 0}</span> kg CO₂.
+              Your total monthly carbon emissions:{" "}
+              <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
             </p>
           </div>
 
