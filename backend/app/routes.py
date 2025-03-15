@@ -106,10 +106,11 @@ def calculate_emissions():
 
 
 # ✅ Get total emissions by ID (Protected Route)
-@api_routes.route('/get_total_emissions/<int:id>', methods=['GET'])
+@api_routes.route('/get_total_emissions/<int:user_id>', methods=['GET'])
 @jwt_required()
-def get_total_emissions(id):
-    return get_total_emissions_by_id(id)
+def get_total_emissions(user_id):
+    return get_total_emissions_by_id(user_id)
+
 
 
 # ✅ User Signup
@@ -160,15 +161,17 @@ def protected():
 
 # ✅ Fetch past user results
 @api_routes.route('/get_user_results', methods=['GET'])
+@jwt_required()
 def get_user_results():
     """Retrieve all saved emissions results for the logged-in user."""
-    current_user = get_jwt_identity()  # Get the logged-in user's email
+    current_user = get_jwt_identity()
 
     if not current_user:
         return jsonify({'error': 'User not authenticated'}), 401
 
-    user_id = getIdByEmail(current_user)  # Get user ID from email
+    user_id = getIdByEmail(current_user)
     if not user_id:
+        print(f"🚨 Debug: getIdByEmail({current_user}) returned {user_id}")
         return jsonify({'error': 'User not found'}), 404
 
     # Fetch all stored results for this user

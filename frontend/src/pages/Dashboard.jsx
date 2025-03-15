@@ -31,17 +31,38 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-    if (results.length > 0) {
-      const formattedData = results.map(report => ({
-        date: report.date,
-        value: roundToThousandths(report.results.total_emissions) // ✅ Ensures proper formatting
-      }));
-      setProgressData(formattedData);
-    } else {
-      setProgressData(defaultData);
-    }
-    console.log("Raw Results Data: ", results);
-    console.log("Processed Data Sent to ProgressChart:", progressData);
+    const fetchResults = async () => {
+      console.log("Fetching user results...");
+      
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No token found, redirecting to login.");
+        navigate("/signin");
+        return;
+      }
+  
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+  
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+  
+        const data = await response.json();
+        console.log("✅ Retrieved user results:", data);
+        setResults(data.results);
+      } catch (error) {
+        console.error("🚨 Error fetching user results:", error);
+      }
+    };
+  
+    fetchResults();
   }, [results]);
 
 

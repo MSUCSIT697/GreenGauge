@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useResults } from "../context/ResultsContext"; // Import results context
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setResults } = useResults(); // Get function to update results from context
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,16 +21,36 @@ const SignIn = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        navigate("/dashboard");
+        console.log("✅ Login successful:", data);
+        localStorage.setItem("token", data.token); // Store token for authentication
+
+        // ✅ Fetch past results right after login
+        const resultsResponse = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${data.token}`
+          }
+        });
+
+        const resultsData = await resultsResponse.json();
+        if (resultsResponse.ok) {
+          console.log("✅ Retrieved past results:", resultsData.results);
+          setResults(resultsData.results); // Update context with fresh results
+        } else {
+          console.error("🚨 Error fetching past results:", resultsData.error);
+        }
+
+        navigate("/dashboard"); // Redirect user
       } else {
         setError(data.error || "Invalid credentials");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("🚨 Error:", error);
       setError("Failed to connect to the server. Please try again later.");
     }
   };
+
 
   return (
     <div className="bg-green-50 py-16 flex justify-center">

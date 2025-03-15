@@ -144,14 +144,64 @@ export default function Calculator() {
   };
   
 
-  const handleConfirmSubmission = () => {
+  const handleConfirmSubmission = async () => {
     if (!isFormValid()) {
       console.log("🚨 Form is STILL INVALID. Blocking submission.");
       return;
     }
+  
     setConfirmModal(false);
-    setSuccessModal(true);
+    
+    // ✅ Construct the payload for the API
+    const payload = {
+      zip_code: zipCode,
+      transportation: formData.transportation,
+      electricity: formData.electricity,
+      food: formData.food,
+      retail: formData.retail,
+      waste: formData.waste,
+    };
+  
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No authentication token found. Redirecting to sign-in.");
+        navigate("/signin");
+        return;
+      }
+  
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        console.log("✅ Calculation successful:", data);
+  
+        // ✅ Update the results in context
+        updateResults(data);
+  
+        // ✅ Show success message
+        setPopupMessage("✅ Calculation submitted successfully!");
+        setSuccessModal(true);
+      } else {
+        console.error("🚨 Calculation failed:", data.error);
+        setPopupMessage("❌ Failed to calculate emissions. Please try again.");
+        setErrorModal(true);
+      }
+    } catch (error) {
+      console.error("🚨 Error submitting calculation:", error);
+      setPopupMessage("⚠️ A network error occurred. Please try again later.");
+      setErrorModal(true);
+    }
   };
+  
   
   
 
