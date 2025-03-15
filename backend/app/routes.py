@@ -159,7 +159,7 @@ def protected():
 
 
 # ✅ Fetch past user results
-@api_routes.route('/api/get_user_results', methods=['GET'])
+@api_routes.route('/get_user_results', methods=['GET'])
 def get_user_results():
     """Retrieve all saved emissions results for the logged-in user."""
     current_user = get_jwt_identity()  # Get the logged-in user's email

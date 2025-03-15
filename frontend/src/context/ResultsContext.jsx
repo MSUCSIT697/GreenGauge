@@ -18,7 +18,7 @@ export function ResultsProvider({ children }) {
       const API_BASE = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
       try {
-        const response = await fetch(`${API_BASE}/api/get_user_results`, {
+        const response = await fetch(`${API_BASE}/get_user_results`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
