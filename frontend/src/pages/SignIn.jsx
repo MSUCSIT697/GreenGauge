@@ -1,18 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useResults } from "../context/ResultsContext"; // ✅ Import Results Context
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { updateResults } = useResults(); // ✅ Fetch user results after login
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -22,6 +24,11 @@ const SignIn = () => {
 
       if (response.ok) {
         localStorage.setItem("token", data.token);
+        
+        // ✅ Fetch user's past results **right after login**
+        await updateResults();
+
+        // ✅ Redirect user to the dashboard
         navigate("/dashboard");
       } else {
         setError(data.error || "Invalid credentials");
@@ -64,10 +71,7 @@ const SignIn = () => {
               required
             />
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary w-full"
-          >
+          <button type="submit" className="btn btn-primary w-full">
             Login
           </button>
         </form>

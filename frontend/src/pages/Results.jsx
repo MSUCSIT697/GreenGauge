@@ -1,52 +1,87 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
-import { useResults } from '../context/ResultsContext';
+import { useResults } from "../context/ResultsContext";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Results() {
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { results } = useResults();
+  const { results, updateResults } = useResults(); 
+  const navigate = useNavigate();
 
-  const njAverage = {
-    monthlyRating: 85,
+  // ✅ Hardcoded U.S. Average Midpoint for Gauge
+  const USA_AVG_MIDPOINT = 1225; 
+
+  // ✅ Default U.S. Monthly Average Data
+  const usAverage = {
+    monthlyRating: USA_AVG_MIDPOINT, 
     ratings: [
-      { category: "Electricity", value: -5 },
-      { category: "Transportation", value: 15 },
-      { category: "Waste", value: -10 },
-      { category: "Food", value: 12 },
-      { category: "Retail", value: 8 },
+      { category: "Electricity", value: 375 },
+      { category: "Transportation", value: 458 },
+      { category: "Waste", value: 62 },
+      { category: "Food", value: 209 },
+      { category: "Retail", value: 209 },
     ],
   };
 
+  // ✅ Fetch user results from API
   useEffect(() => {
-    // Get stored emission data
-    const storedData = results;
-    console.log("Stored data from results context :: ", storedData[0].results);
-    const emission_data = storedData[0].results;
+    const token = localStorage.getItem("token");
 
-if (emission_data) {
-  console.log("Stored data :: ", emission_data);
-  setUserResults(emission_data);
-  setLoading(false);
-} else {
-  console.log("Error fetching results:");
-  setError("Failed to load results.");
-  setLoading(false);
-}
-  }, []);
+    if (!token) {
+      alert("Session expired. Please log in again.");
+      navigate("/login");
+      return;
+    }
 
+    const fetchResults = async () => {
+      try {
+        console.log("Fetching user results...");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Received results from API:", data);
+
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+
+        setUserResults(data); 
+        updateResults(data); // ✅ Ensure results are stored in context
+        setError(null);
+      } catch (err) {
+        console.error("🚨 Error fetching user results:", err);
+        setError("Failed to fetch results.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [navigate, updateResults]); 
+
+  // ✅ Pie Chart Data (Fix incorrect object reference)
   const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults
-          ? userResults.ratings.map((item) => item.value) // Using transformed data
-          : [0, 0, 0, 0, 0], // Default to 0
+        data: userResults?.emissions_by_category
+          ? Object.values(userResults.emissions_by_category)
+          : [0, 0, 0, 0, 0], 
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
@@ -56,80 +91,43 @@ if (emission_data) {
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {/* ✅ Error Handling */}
+      {error && <p className="text-red-600 text-center mt-5">{error}</p>}
 
+      {/* ✅ Show Loading While Fetching */}
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
-      ) : (
+      ) : userResults ? (
         <>
+          {/* ✅ Display Gauge Comparison */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
             <div className="flex justify-center space-x-8">
-              <GaugeChart rating={userResults?.monthlyRating || 0} />
-              <GaugeChart rating={120} />
+              <div className="flex flex-col items-center">
+                <GaugeChart id="userGauge" rating={userResults?.total_emissions || 0} />
+                <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint</p>
+              </div>
             </div>
-            <p className="text-gray-600">
-              This result was generated from a{" "}
-              {userResults?.calculation_method === "manual" ? (
-                <span className="text-green-500">manual calculation</span>
-              ) : (
-                <span className="text-blue-500">PDF scan</span>
-              )}
-              .
-            </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-5">Comparison by Category</h2>
-            <table className="w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2">Category</th>
-                  <th className="px-4 py-2 text-right">Your Monthly Carbon Emissions</th>
-                  <th className="px-4 py-2 text-right">Average NJ Resident Monthly Carbon Emissions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userResults?.ratings.map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">{userResults.ratings[index].category}</td>
-                    <td className="px-4 py-2 text-right">{userResults.ratings[index].value}</td>
-                    <td className="px-4 py-2 text-right">{njAverage.ratings[index].value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-4">Monthly Sustainability Goals</h2>
-            <ul>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try Carpooling or switching to a more fuel-efficient route
-              </li>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try Reducing meat intake and opting for local produce
-              </li>
-              <li>
-                <span className="text-green-500">&#8226;</span> Try to reduce non-essential purchases or choose eco-friendly brands
-              </li>
-            </ul>
-          </div>
-
+          {/* ✅ Pie Chart for Emissions Breakdown */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
-            <h2 className="font-semibold pb-4">Carbon Emissions</h2>
+            <h2 className="font-semibold pb-4">Carbon Emissions Breakdown</h2>
             <Pie data={pieData} height={50} />
             <p className="text-gray-600 text-sm">
-              Your total monthly carbon emissions are{" "}
-              <span className="text-green-500">{userResults?.monthlyRating || 0}</span> kg CO₂.
+              Your total monthly carbon emissions:{" "}
+              <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
             </p>
           </div>
 
+          {/* ✅ Navigation Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
             <Link to="/reports" className="btn btn-primary">View Reports</Link>
             <Link to="/dashboard" className="btn btn-primary">Return to Dashboard</Link>
           </div>
         </>
+      ) : (
+        <p className="text-red-600 text-center mt-5">No valid results found. Please try again.</p>
       )}
     </div>
   );

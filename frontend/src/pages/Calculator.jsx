@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useResults } from "../context/ResultsContext";
+import TransportationTab from "../components/Tabs/TransportationTab";
+import ElectricityTab from "../components/Tabs/ElectricityTab";
+import FoodTab from "../components/Tabs/FoodTab";
+import RetailTab from "../components/Tabs/RetailTab";
+import WasteTab from "../components/Tabs/WasteTab";
+import Modals from "../components/Modals"; // ✅ Import centralized modals
 
 export default function Calculator() {
   const navigate = useNavigate();
@@ -9,156 +15,221 @@ export default function Calculator() {
   const categories = ["Transportation", "Electricity", "Food", "Retail", "Waste"];
   const [currentTab, setCurrentTab] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
-  const [confirmingSubmission, setConfirmingSubmission] = useState(false);
   const [zipCode, setZipCode] = useState("");
-  const [submissionError, setSubmissionError] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submissionId, setSubmissionId] = useState(null);
-  const [showError, setShowError] = useState(false);
-
   const [errorModal, setErrorModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
-
-  const validNJZipCodes = [/^07/, /^08/];
-  const [isFromNJ, setIsFromNJ] = useState(false);
+  const [showError, setShowError] = useState({
+    zipCode: false,
+    transportation: false,
+    electricity: false,
+    food: false,
+    retail: false,
+    waste: false,
+  });
 
   const handleZipChange = (zip) => {
     if (/^\d{0,5}$/.test(zip)) {
       setZipCode(zip);
+      
+      // ✅ If zip code reaches 5 digits, remove the error outline
       if (zip.length === 5) {
-        setIsFromNJ(validNJZipCodes.some((regex) => regex.test(zip)));
+        setShowError((prev) => ({ ...prev, zipCode: false }));
       }
     }
   };
+  
 
   const [formData, setFormData] = useState({
-    transportation: {
-      car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, // TODO: Add passenger field
-      truck: { distance: "", passengers: 1 },
-      bus: { distance: "", passengers: 10 },
-      train: { distance: "", passengers: 50 },
-    },
+    transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, truck: { distance: "" }, bus: { distance: "" }, train: { distance: "" } },
     electricity: { consumption_kwh: "", energy_source: "natural_gas" },
     food: { beef: "", chicken: "", vegetables: "", rice: "", pork: "" },
     retail: { electronics: "", clothing: "", toys: "", furniture: "" },
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
 
-  const endpoint = `${import.meta.env.VITE_API_URL}/api/calculate_emissions`;
+  const handleChange = (category, field, value, subField = null) => {
+    setFormData((prev) => {
+      const updatedFormData = {
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [field]: subField
+            ? { ...prev[category][field], [subField]: value ? parseFloat(value) || 0 : 0 }
+            : value ? parseFloat(value) || 0 : 0,
+        },
+      };
+  
+      console.log("Updated formData:", updatedFormData); // ✅ Debugging
+  
+      return updatedFormData;
+    });
+  };
+  
+  
 
-  const handleChange = (category, field, value) => {
-    if (value < 0) return; // ✅ Prevent negative values
-    setFormData((prev) => ({
-      ...prev,
-      [category]: { ...prev[category], [field]: value },
-    }));
+  const isFormValid = (data = formData) => {
+    if (zipCode.length !== 5) return false;
+  
+    return Object.keys(data).every((category) =>
+      Object.values(data[category]).some((value) => {
+        if (typeof value === "object") return Object.values(value).some((sub) => !isNaN(sub) && Number(sub) > 0);
+        return !isNaN(value) && Number(value) > 0;
+      })
+    );
+  };
+  
+  
+
+  const handleSubmit = () => {
+    let newErrors = { 
+      zipCode: false, 
+      transportation: false, 
+      electricity: false, 
+      food: false, 
+      retail: false, 
+      waste: false 
+    };
+    let isValid = true;
+  
+    // ✅ Ensure Zip Code is Valid
+    if (zipCode.length !== 5) {
+      newErrors.zipCode = true;
+      isValid = false;
+    }
+  
+    // ✅ Check Each Category for at Least One Valid Entry
+    Object.keys(formData).forEach((category) => {
+      let hasValidEntry = false;
+  
+      Object.values(formData[category]).forEach((value) => {
+        if (typeof value === "object") {
+          if (Object.values(value).some((subValue) => !isNaN(subValue) && Number(subValue) > 0)) {
+            hasValidEntry = true;
+          }
+        } else {
+          if (!isNaN(value) && Number(value) > 0) {
+            hasValidEntry = true;
+          }
+        }
+      });
+  
+      if (!hasValidEntry) {
+        newErrors[category] = true;
+        isValid = false;
+      }
+    });
+  
+    // ✅ 🚨 Ensure TransportationTab Highlights Correctly
+    const transportHasValue = Object.values(formData.transportation).some(
+      (vehicle) => vehicle.distance && Number(vehicle.distance) > 0
+    );
+    if (!transportHasValue) {
+      newErrors.transportation = true; // ✅ Mark it as needing highlight
+      isValid = false;
+    }
+  
+    // ✅ If Form is Invalid, Show Error Modal and Stop Submission
+    if (!isValid) {
+      setShowError(newErrors);
+      setPopupMessage("⚠️ Please enter your zip code and at least one value per category before submitting.");
+      setErrorModal(true);
+      return;
+    }
+  
+    // ✅ If Form is Valid, Reset Errors and Proceed
+    setShowError({ zipCode: false, transportation: false, electricity: false, food: false, retail: false, waste: false });
+    setPopupMessage("Are you sure you want to submit?");
+    setConfirmModal(true);
   };
   
 
-  const isFormValid = () => {
-    return Object.values(formData).every((category) =>
-      Object.values(category).every((value) => value !== "")
-    );
-  };
-
-  const handleNext = () => {
-    setCurrentTab(currentTab + 1);
-  };
-
-  const handleSubmit = () => {
-    const allFieldsFilled = isFormValid();
-
-    if (zipCode.length !== 5 || !allFieldsFilled) {
-      setShowError(true);
-      setPopupMessage("Please fill all fields before submitting.");
-      window.location.href = "#error_modal";
+  const handleConfirmSubmission = async () => {
+    if (!isFormValid()) {
+      console.log("🚨 Form is STILL INVALID. Blocking submission.");
       return;
     }
-
-    setPopupMessage("Are you sure you want to submit?");
-    setConfirmingSubmission(true);
-    window.location.href = "#confirm_modal";
-  };
-
-  const confirmSubmission = async () => {
+  
+    setConfirmModal(false);
+    
+    // ✅ Construct the payload for the API
+    const payload = {
+      zip_code: zipCode,
+      transportation: formData.transportation,
+      electricity: formData.electricity,
+      food: formData.food,
+      retail: formData.retail,
+      waste: formData.waste,
+    };
+  
     try {
-      console.log("Submitting Data:", formData);
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      console.log("Server Response:", data);
-
-      if (response.ok) {
-        console.log("Data submitted successfully!");
-      } else {
-        console.log(`Error: ${result.message}`);
-        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No authentication token found. Redirecting to sign-in.");
+        navigate("/signin");
+        return;
       }
-
-      const transformedData = {
-        monthlyRating: data.total_emissions,
-        ratings: [
-          { category: "Electricity", value: data.emissions_by_category.electricity },
-          { category: "Transportation", value: data.emissions_by_category.transportation },
-          { category: "Waste", value: data.emissions_by_category.waste },
-          { category: "Food", value: data.emissions_by_category.food },
-          { category: "Retail", value: data.emissions_by_category.retail },
-        ],
-        // TODO :: Add sustainability goals
-        sustainabilityGoals: [
-          { text: "Reduce electricity consumption by 10%." },
-          { text: "Reduce transportation emissions by 5%." },
-          { text: "Reduce waste production by 15%." }
-        ]
-      };
-
-      // ✅ Ensure results are properly stored and updated
-      const reportEntry = {
-        id: Date.now(),
-        uploadType: "calculator",
-        results: transformedData,
-        date: new Date().toLocaleString(),
-      };
-
-      console.log("New Report Entry:", reportEntry);
-      console.log("Updating Results Context :: ", reportEntry.results);
-
-      updateResults(reportEntry);
-      setSuccessModal(true);
-      setIsSubmitted(true);
-      window.location.href = "#success_modal";
+  
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        console.log("✅ Calculation successful:", data);
+  
+        // ✅ Update the results in context
+        updateResults(data);
+  
+        // ✅ Show success message
+        setPopupMessage("✅ Calculation submitted successfully!");
+        setSuccessModal(true);
+      } else {
+        console.error("🚨 Calculation failed:", data.error);
+        setPopupMessage("❌ Failed to calculate emissions. Please try again.");
+        setErrorModal(true);
+      }
     } catch (error) {
-      console.error("Error submitting data:", error);
+      console.error("🚨 Error submitting calculation:", error);
+      setPopupMessage("⚠️ A network error occurred. Please try again later.");
       setErrorModal(true);
-      window.location.href = "#error_modal";
     }
   };
+  
+  
   
 
   const handleTabClick = (index) => {
     setCurrentTab(index);
   };
 
-  const isTabValid = () => {
-    return Object.values(formData[categories[currentTab].toLowerCase()]).every(
-      (value) => value !== ""
-    );
+  const renderTabContent = () => {
+    switch (currentTab) {
+      case 0:
+        return <TransportationTab formData={formData} handleChange={handleChange} showError={showError} />;
+      case 1:
+        return <ElectricityTab formData={formData} handleChange={handleChange} showError={showError} />;
+      case 2:
+        return <FoodTab formData={formData} handleChange={handleChange} showError={showError} />;
+      case 3:
+        return <RetailTab formData={formData} handleChange={handleChange} showError={showError} />;
+      case 4:
+        return <WasteTab formData={formData} handleChange={handleChange} showError={showError} />;
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900">Manual Calculator:</h1>
-      <p className="text-gray-600 mb-4">
-        Please answer the questions below. The more information you provide, the better the accuracy!
-      </p>
+      <p className="text-gray-600 mb-4">Provide the required details to calculate your carbon footprint.</p>
 
       {/* Zip Code Input */}
       <div className="mb-4">
@@ -166,7 +237,7 @@ export default function Calculator() {
         <input
           type="text"
           className={`bg-white input input-bordered w-full mt-2 ${
-            showError && zipCode.length !== 5 ? "border-red-500" : ""
+            showError.zipCode ? "border-red-500" : ""
           }`}
           value={zipCode}
           onChange={(e) => handleZipChange(e.target.value)}
@@ -179,9 +250,7 @@ export default function Calculator() {
           <button
             key={index}
             className={`px-6 py-2 text-lg rounded-t-md transition-all ${
-              currentTab === index
-                ? "bg-white font-bold border border-b-0 border-primary"
-                : "hover:bg-white hover:shadow-md"
+              currentTab === index ? "bg-white font-bold border border-b-0 border-primary" : "hover:bg-white hover:shadow-md"
             }`}
             onClick={() => handleTabClick(index)}
           >
@@ -191,347 +260,39 @@ export default function Calculator() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white shadow-md rounded-b-lg p-6 -mt-px">
-        {currentTab === 0 && (
-          <div>
-            <h2 className="text-lg font-semibold">Transportation</h2>
-            <label className="block">Car Distance (miles):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.transportation.car.distance === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.transportation.car.distance}
-              onChange={(e) =>
-                handleChange("transportation", "car", {
-                  ...formData.transportation.car,
-                  distance: e.target.value,
-                })
-              }
-            />
-            <label className="block">Truck Distance (miles):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.transportation.truck.distance === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.transportation.truck.distance}
-              onChange={(e) =>
-                handleChange("transportation", "truck", {
-                  ...formData.transportation.truck,
-                  distance: e.target.value,
-                })
-              }
-            />
-            <label className="block">Bus Distance (miles):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.transportation.bus.distance === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.transportation.bus.distance}
-              onChange={(e) =>
-                handleChange("transportation", "bus", {
-                  ...formData.transportation.bus,
-                  distance: e.target.value,
-                })
-              }
-            />
-            <label className="block">Train Distance (miles):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.transportation.train.distance === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.transportation.train.distance}
-              onChange={(e) =>
-                handleChange("transportation", "train", {
-                  ...formData.transportation.train,
-                  distance: e.target.value,
-                })
-              }
-            />
-          </div>
-        )}
+      <div className="bg-white shadow-md rounded-b-lg p-6 -mt-px">{renderTabContent()}</div>
 
-        {currentTab === 1 && (
-          <div>
-            <h2 className="text-lg font-semibold">Electricity</h2>
-            <label className="block">Annual Electricity Consumption (kWh):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.electricity.consumption_kwh === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.electricity.consumption_kwh}
-              onChange={(e) =>
-                handleChange("electricity", "consumption_kwh", e.target.value)
-              }
-            />
-            <label className="block">Energy Source:</label>
-            <select
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.electricity.energy_source === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.electricity.energy_source}
-              onChange={(e) =>
-                handleChange("electricity", "energy_source", e.target.value)
-              }
-            >
-              <option value="natural_gas">Natural Gas</option>
-              <option value="coal">Coal</option>
-              <option value="solar">Solar</option>
-              <option value="wind">Wind</option>
-              <option value="hydro">Hydro</option>
-            </select>
-          </div>
-        )}
-
-        {currentTab === 2 && (
-          <div>
-            <h2 className="text-lg font-semibold">Food Consumption</h2>
-            <label className="block">Beef (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.food.beef === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.food.beef}
-              onChange={(e) => handleChange("food", "beef", e.target.value)}
-            />
-            <label className="block">Chicken (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.food.chicken === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.food.chicken}
-              onChange={(e) => handleChange("food", "chicken", e.target.value)}
-            />
-            <label className="block">Vegetables (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.food.vegetables === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.food.vegetables}
-              onChange={(e) => handleChange("food", "vegetables", e.target.value)}
-            />
-            <label className="block">Rice (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.food.rice === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.food.rice}
-              onChange={(e) => handleChange("food", "rice", e.target.value)}
-            />
-            <label className="block">Pork (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.food.pork === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.food.pork}
-              onChange={(e) => handleChange("food", "pork", e.target.value)}
-            />
-          </div>
-        )}
-
-        {currentTab === 3 && (
-          <div>
-            <h2 className="text-lg font-semibold">Retail Purchases</h2>
-            <label className="block">Electronics (items per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.retail.electronics === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.retail.electronics}
-              onChange={(e) => handleChange("retail", "electronics", e.target.value)}
-            />
-            <label className="block">Clothing (items per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.retail.clothing === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.retail.clothing}
-              onChange={(e) => handleChange("retail", "clothing", e.target.value)}
-            />
-            <label className="block">Toys (items per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.retail.toys === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.retail.toys}
-              onChange={(e) => handleChange("retail", "toys", e.target.value)}
-            />
-            <label className="block">Furniture (items per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.retail.furniture === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.retail.furniture}
-              onChange={(e) => handleChange("retail", "furniture", e.target.value)}
-            />
-          </div>
-        )}
-
-        {currentTab === 4 && (
-          <div>
-            <h2 className="text-lg font-semibold">Waste Production</h2>
-            <label className="block">Food Waste (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.waste.food_waste === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.waste.food_waste}
-              onChange={(e) => handleChange("waste", "food_waste", e.target.value)}
-            />
-            <label className="block">Paper Waste (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.waste.paper === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.waste.paper}
-              onChange={(e) => handleChange("waste", "paper", e.target.value)}
-            />
-            <label className="block">Plastic Waste (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.waste.plastic === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.waste.plastic}
-              onChange={(e) => handleChange("waste", "plastic", e.target.value)}
-            />
-            <label className="block">Glass Waste (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.waste.glass === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.waste.glass}
-              onChange={(e) => handleChange("waste", "glass", e.target.value)}
-            />
-            <label className="block">Metal Waste (lbs per year):</label>
-            <input
-              type="number"
-              className={`input input-bordered w-full mt-2 ${
-                showError && formData.waste.metal === ""
-                  ? "border-red-500"
-                  : ""
-              }`}
-              value={formData.waste.metal}
-              onChange={(e) => handleChange("waste", "metal", e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-6">
-          {currentTab > 0 && (
-            <button className="btn btn-secondary" onClick={() => setCurrentTab(currentTab - 1)}>
-              Back
-            </button>
-          )}
-          {currentTab < categories.length - 1 ? (
-            <button className="btn btn-primary ml-auto" onClick={handleNext}>
-              Continue
-            </button>
-          ) : (
-            <button className="btn btn-success ml-auto" onClick={handleSubmit}>
-              Submit
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Confirmation Modal */}
-      <div className="modal" id="confirm_modal">
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Confirm Submission</h3>
-          <p className="py-4">{popupMessage}</p>
-          <div className="modal-action">
-            <button className="btn" onClick={confirmSubmission}>
-              Confirm
-            </button>
-            <a href="#" className="btn">
-              Cancel
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Modal */}
-      <div className="modal" id="error_modal">
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Error</h3>
-          <p className="py-4">Please fill all fields before submitting.</p>
-          <div className="modal-action">
-            <a href="#" className="btn">
-              Close
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Success Modal */}
-      <div className="modal" id="success_modal">
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Submission Successful</h3>
-          <p>Your results will be displayed on the next page.</p>
-          <div className="modal-action">
-          <button onClick={() => navigate(`/results`)} className="btn">
-            View Results
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6">
+        {currentTab > 0 && (
+          <button className="btn btn-secondary" onClick={() => setCurrentTab(currentTab - 1)}>
+            Back
           </button>
-
-          </div>
-        </div>
+        )}
+        {currentTab < categories.length - 1 ? (
+          <button className="btn btn-primary ml-auto" onClick={() => setCurrentTab(currentTab + 1)}>
+            Continue
+          </button>
+        ) : (
+          <button className="btn btn-success ml-auto" onClick={handleSubmit}>
+            Submit
+          </button>
+        )}
       </div>
+
+      {/* Modals (Centralized) */}
+      <Modals
+        errorModal={errorModal}
+        setErrorModal={setErrorModal}
+        confirmModal={confirmModal}
+        setConfirmModal={setConfirmModal}
+        successModal={successModal}
+        setSuccessModal={setSuccessModal}
+        popupMessage={popupMessage}
+        handleConfirmSubmission={handleConfirmSubmission}
+        navigate={navigate}
+      />
+
     </div>
   );
 }
