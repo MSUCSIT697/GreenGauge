@@ -17,7 +17,7 @@ from flask import current_app
 import jwt
 from jwt.exceptions import InvalidTokenError
 from app.database import get_db_connection
-
+from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from categorization.pdf_processor import process_pdf
 from flask_cors import CORS
@@ -49,6 +49,7 @@ def health_check():
 @api_routes.route('/calculate_emissions', methods=['POST'])
 def calculate_emissions():
     data = request.get_json()
+    current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # ✅ Step 1: Verify JWT Token
     token = verify_token()
@@ -94,15 +95,16 @@ def calculate_emissions():
 
     # ✅ Step 4: Return JSON response
     return jsonify({
-        "total_emissions": total_emissions,
-        "emissions_by_category": {
-            "food": food_emissions,
-            "retail": retail_emissions,
-            "transportation": transportation_emissions,
-            "electricity": electricity_emissions,
-            "waste": waste_emissions
-        }
-    })
+                "total_emissions": total_emissions,  # Total emissions (from column 0)
+                "create_ts": current_timestamp, 
+                "emissions": [
+                    {"category": "Electricity", "value": electricity_emissions},  # Electricity emissions (column 4)
+                    {"category": "Transportation", "value": transportation_emissions},  # Transportation emissions (column 3)
+                    {"category": "Waste", "value": waste_emissions},  # Waste emissions (column 5)
+                    {"category": "Food", "value": food_emissions},  # Food emissions (column 1)
+                    {"category": "Retail", "value": retail_emissions}  # Retail emissions (column 2)
+                ]
+            })
 
 
 # ✅ Get total emissions by ID (Protected Route)

@@ -20,6 +20,8 @@ export default function Dashboard() {
 
   const latestReport = results.length > 0 ? results[0] : null; // ✅ Use latest stored report
 
+  console.log("Latest Report:", latestReport);
+
   // Default placeholder data if no results exist
   const defaultData = [
     { date: "2024-01-01", value: 100 },
@@ -89,9 +91,9 @@ export default function Dashboard() {
               rating={
                 roundToThousandths(
                   latestReport 
-                    ? latestReport.results.total_emissions > 1333 
+                    ? latestReport.total_emissions > 1333 
                       ? 80 
-                      : latestReport.results.total_emissions < 1125 
+                      : latestReport.total_emissions < 1125 
                         ? 25 
                         : 50
                     : 50
@@ -107,7 +109,7 @@ export default function Dashboard() {
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
             {latestReport
-              ? latestReport.results.ratings.map((item, index) => (
+              ? latestReport.emissions.map((item, index) => (
                   <li key={index} className="flex justify-between items-center px-4">
                     <span className="text-gray-700 flex-1 text-left">{item.category}</span>
                     <span className="text-gray-500 w-16 text-right">{item.value}</span>
@@ -117,26 +119,6 @@ export default function Dashboard() {
                   <li key={index} className="flex justify-between items-center px-4">
                     <span className="text-gray-700 flex-1 text-left">{category}</span>
                     <span className="text-gray-500 w-16 text-right">0</span>
-                  </li>
-                ))}
-          </ul>
-        </div>
-
-        {/* Sustainability Goals Frame */}
-        <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
-          <h2 className="font-semibold pb-2 text-gray-900">Monthly Sustainability Goals</h2>
-          <ul className="mt-1 space-y-2 px-8 text-left flex flex-col justify-between">
-            {latestReport
-              ? latestReport.results.sustainabilityGoals.map((goal, index) => (
-                  <li key={index} className="flex items-center px-4">
-                    <span className="text-green-500 mr-2">•</span>
-                    <span className="text-left">{goal.text}</span>
-                  </li>
-                ))
-              : ["Try Carpooling", "Reduce Meat Intake", "Use Eco-friendly Brands"].map((goal, index) => (
-                  <li key={index} className="flex items-center px-4">
-                    <span className="text-green-500 mr-2">•</span>
-                    <span className="text-left">{goal}</span>
                   </li>
                 ))}
           </ul>

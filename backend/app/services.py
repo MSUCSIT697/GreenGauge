@@ -10,20 +10,23 @@ def load_emission_factors():
 # Load the emission factors once when the application starts
 EMISSION_FACTORS = load_emission_factors()
 
+def convert_to_zero(value):
+    return 0 if not value else value
+
 # Emission Calculation Functions
 def calculate_food_emissions(data):
     # Loop through the food data, calculate emissions based on the emission_factor
     total_emissions = 0
     for item, amount in data.items():
         food_factor = EMISSION_FACTORS["food"].get(item, {}).get("emission_factor", 0)
-        total_emissions += float(amount) * food_factor
+        total_emissions += float(convert_to_zero(amount)) * food_factor
     return total_emissions
 
 def calculate_retail_emissions(data):
     total_emissions = 0
     for item, quantity in data.items():
         retail_factor = EMISSION_FACTORS["retail"].get(item, {}).get("emission_factor", 0)
-        total_emissions += float(quantity) * retail_factor
+        total_emissions += float(convert_to_zero(quantity)) * retail_factor
     return total_emissions
 
 def calculate_transportation_emissions(data):
@@ -33,23 +36,27 @@ def calculate_transportation_emissions(data):
             # We are expecting "vehicle_type" within each car
             vehicle_type = details["vehicle_type"]
             emission_factor = EMISSION_FACTORS["transportation"]["car"].get(vehicle_type, {}).get("emission_factor", 0)
-            total_emissions += float(details["distance"]) * emission_factor * float(details["passengers"])
+            total_emissions += float(convert_to_zero(details["distance"])) * emission_factor 
+            # * float(convert_to_zero(details["passengers"]))
         else:
             # For truck, bus, train, subway, etc.
             emission_factor = EMISSION_FACTORS["transportation"].get(vehicle, {}).get("emission_factor", 0)
-            total_emissions += float(details["distance"]) * emission_factor * float(details["passengers"])
+            total_emissions += float(convert_to_zero((details["distance"]))) * emission_factor 
+            # * float(convert_to_zero(details["passengers"]))
     return total_emissions
 
 def calculate_electricity_emissions(data):
+    total_emissions = 0
     energy_source = data["energy_source"]
     emission_factor = EMISSION_FACTORS["electricity"].get(energy_source, {}).get("emission_factor", 0)
-    return float(data["consumption_kwh"]) * emission_factor
+    total_emissions = float(convert_to_zero(data["consumption_kwh"])) * emission_factor
+    return total_emissions
 
 def calculate_waste_emissions(data):
     total_emissions = 0
     for waste_type, amount in data.items():
         waste_factor = EMISSION_FACTORS["waste"].get(waste_type, {}).get("emission_factor", 0)
-        total_emissions += float(amount) * waste_factor
+        total_emissions += float(convert_to_zero(amount)) * waste_factor
     return total_emissions
 
 def save_to_database(data, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id):
@@ -153,17 +160,18 @@ def get_total_emissions_by_id(id):
     rows = cursor.fetchall()
     result = []
     for row in rows:
-        result.append({
-            "total_emissions": row[6],  # Total emissions from the 7th column (index 6)
-            "create_ts": row[8],         # Timestamp from the 8th column (index 7)
-            "emissions_by_category": {
-                "food": row[1],           # Food emissions from the 2nd column (index 1)
-                "retail": row[2],         # Retail emissions from the 3rd column (index 2)
-                "transportation": row[3], # Transportation emissions from the 4th column (index 3)
-                "electricity": row[4],    # Electricity emissions from the 5th column (index 4)
-                "waste": row[5]           # Waste emissions from the 6th column (index 5)
-            }
-        })
+        result.append(
+            {
+                "total_emissions": row[6],  # Total emissions (from column 0)
+                "create_ts": row[8], 
+                "emissions": [
+                    {"category": "Electricity", "value": row[4]},  # Electricity emissions (column 4)
+                    {"category": "Transportation", "value": row[3]},  # Transportation emissions (column 3)
+                    {"category": "Waste", "value": row[5]},  # Waste emissions (column 5)
+                    {"category": "Food", "value": row[1]},  # Food emissions (column 1)
+                    {"category": "Retail", "value": row[2]}  # Retail emissions (column 2)
+                ]
+            })
     cursor.close()
     conn.close()
     return result   
