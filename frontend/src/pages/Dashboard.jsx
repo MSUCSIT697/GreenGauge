@@ -2,47 +2,32 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
-import UploadModal from "../components/UploadModal"; // ✅ Import modal
+import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
 import RecommendationSystem from "../components/Recommendations";
 
-
-
-
 export default function Dashboard() {
   const [progressData, setProgressData] = useState([]);
-  const [isUploadOpen, setIsUploadOpen] = useState(false); // ✅ State for modal
-  const { results } = useResults(); // ✅ Get stored results
-  const roundToThousandths = (num) => {
-    return num ? Number(num.toFixed(3)) : 0; // Ensures it always returns a number
-  };
-  
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const { results, updateResults } = useResults();
 
-  const latestReport = results.length > 0 ? results[0] : null; // ✅ Use latest stored report
+  const roundToThousandths = (num) => (num ? Number(num.toFixed(3)) : 0);
+
+  const latestReport = results.length > 0 ? results[0] : null;
 
   console.log("Latest Report:", latestReport);
-
-  // Default placeholder data if no results exist
-  const defaultData = [
-    { date: "2024-01-01", value: 100 },
-    { date: "2024-01-15", value: 150 },
-    { date: "2024-02-01", value: 200 },
-    { date: "2024-02-15", value: 250 },
-    { date: "2024-03-01", value: 300 },
-    { date: "2024-03-15", value: 350 },
-  ];
 
   useEffect(() => {
     const fetchResults = async () => {
       console.log("Fetching user results...");
-      
+
       const token = localStorage.getItem("token");
       if (!token) {
         console.warn("⚠️ No token found, redirecting to login.");
-        navigate("/signin");
+        navigate("/sign-in");
         return;
       }
-  
+
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}get_user_results`, {
           method: "GET",
@@ -51,87 +36,76 @@ export default function Dashboard() {
             "Authorization": `Bearer ${token}`
           }
         });
-  
+
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
-  
+
         const data = await response.json();
         console.log("✅ Retrieved user results:", data);
-        setResults(data.results);
+
+        updateResults(data.results || []); // ✅ Pass results directly to avoid unnecessary fetching
       } catch (error) {
         console.error("🚨 Error fetching user results:", error);
       }
     };
-  
+
     fetchResults();
-  }, [results]);
-
-
-  console.log("Processed Data Sent to ProgressChart:", progressData);
+  }, []); // ✅ Runs only once when the component mounts
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900">My Dashboard :</h1>
 
-      {/* ✅ Unified Error & Warning Message */}
       {results.length === 0 && (
         <p className="text-yellow-600 mt-4">
           Using default values. Perform your first calculation or upload a PDF to get personalized data.
         </p>
       )}
 
-      {/* ✅ Dashboard Section - Fixed Equal Heights */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 w-full min-h-[250px]">
-        
-        {/* Rating Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center h-full min-h-[250px]">
-          <div className="flex-grow flex flex-col justify-center items-center w-full">
-            <GaugeChart id="dashboardGauge"
-              rating={
-                roundToThousandths(
-                  latestReport 
-                    ? latestReport.total_emissions > 1333 
-                      ? 80 
-                      : latestReport.total_emissions < 1125 
-                        ? 25 
-                        : 50
+          <GaugeChart
+            id="dashboardGauge"
+            rating={roundToThousandths(
+              latestReport
+                ? latestReport.total_emissions > 1333
+                  ? 80
+                  : latestReport.total_emissions < 1125
+                    ? 25
                     : 50
-                  )
-              } 
-            />
-          </div>
-          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p> 
+                : 50
+            )}
+          />
+          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p>
         </div>
 
-        {/* Ratings by Category Frame */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
-            {latestReport
-              ? latestReport.emissions.map((item, index) => (
-                  <li key={index} className="flex justify-between items-center px-4">
-                    <span className="text-gray-700 flex-1 text-left">{item.category}</span>
-                    <span className="text-gray-500 w-16 text-right">{item.value}</span>
-                  </li>
-                ))
-              : ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
-                  <li key={index} className="flex justify-between items-center px-4">
-                    <span className="text-gray-700 flex-1 text-left">{category}</span>
-                    <span className="text-gray-500 w-16 text-right">0</span>
-                  </li>
-                ))}
+            {(latestReport?.emissions || []).map((item, index) => (
+              <li key={index} className="flex justify-between items-center px-4">
+                <span className="text-gray-700 flex-1 text-left">{item.category}</span>
+                <span className="text-gray-500 w-16 text-right">{item.value}</span>
+              </li>
+            ))}
+
+            {(!latestReport || !latestReport.emissions) &&
+              ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
+                <li key={index} className="flex justify-between items-center px-4">
+                  <span className="text-gray-700 flex-1 text-left">{category}</span>
+                  <span className="text-gray-500 w-16 text-right">0</span>
+                </li>
+              ))}
           </ul>
         </div>
       </div>
 
-      {/* ✅ Progress Tracker (Updated with Correct Data) */}
       <div className="bg-white rounded-lg shadow-md p-6 pb-16 mt-4">
         <h2 className="font-semibold text-gray-900">Progress Tracker:</h2>
         <ProgressChart data={progressData} maxScale={1000} />
       </div>
 
-      {/* ✅ Action Buttons */}
       <div className="flex justify-center space-x-4 mt-6">
         <button className="btn btn-primary" onClick={() => setIsUploadOpen(true)}>
           Upload New PDF
@@ -147,7 +121,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* ✅ Upload Modal */}
       <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
     </div>
   );
