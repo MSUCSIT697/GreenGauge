@@ -42,7 +42,7 @@ export default function Dashboard() {
       }
   
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}get_user_results`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -166,7 +166,7 @@ def get_total_emissions_by_id(id):
         })
     cursor.close()
     conn.close()
-    return jsonify(result)    
+    return result   
 
 def addNewUser(username, email, hashed_password):
     conn = get_db_connection()

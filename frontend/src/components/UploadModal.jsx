@@ -16,7 +16,7 @@ export default function UploadModal({ isOpen, onClose }) {
     files.forEach((file) => formData.append("file", file));
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/calculate_emissions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
         method: "POST",
         body: formData,
       });

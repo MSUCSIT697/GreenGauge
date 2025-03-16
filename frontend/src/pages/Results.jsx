@@ -44,7 +44,7 @@ export default function Results() {
     const fetchResults = async () => {
       try {
         console.log("Fetching user results...");
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get_user_results`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
