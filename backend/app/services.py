@@ -149,17 +149,24 @@ def get_waste_emissions_by_id(id):
 def get_total_emissions_by_id(id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM total_emissions WHERE id = %s", (id,))
+    cursor.execute("SELECT * FROM total_emissions WHERE profile_id = %s", (id,))
     rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append({
+            "total_emissions": row[6],  # Total emissions from the 7th column (index 6)
+            "create_ts": row[8],         # Timestamp from the 8th column (index 7)
+            "emissions_by_category": {
+                "food": row[1],           # Food emissions from the 2nd column (index 1)
+                "retail": row[2],         # Retail emissions from the 3rd column (index 2)
+                "transportation": row[3], # Transportation emissions from the 4th column (index 3)
+                "electricity": row[4],    # Electricity emissions from the 5th column (index 4)
+                "waste": row[5]           # Waste emissions from the 6th column (index 5)
+            }
+        })
     cursor.close()
     conn.close()
-    return jsonify({"total_emissions": rows[0][6], "emissions_by_category": {
-        "food": rows[0][1],
-        "retail": rows[0][2],
-        "transportation": rows[0][3],
-        "electricity": rows[0][4],
-        "waste": rows[0][5]
-    }})    
+    return jsonify(result)    
 
 def addNewUser(username, email, hashed_password):
     conn = get_db_connection()
