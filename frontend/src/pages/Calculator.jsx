@@ -170,7 +170,7 @@ export default function Calculator() {
         return;
       }
   
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/calculate_emissions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
