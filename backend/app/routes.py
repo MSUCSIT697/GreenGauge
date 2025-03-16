@@ -161,6 +161,7 @@ def protected():
 
 # ✅ Fetch past user results
 @api_routes.route('/get_user_results', methods=['GET'])
+@jwt_required()
 def get_user_results():
     """Retrieve all saved emissions results for the logged-in user."""
     current_user = get_jwt_identity()
