@@ -1,9 +1,9 @@
-import { useState } from "react"; // ✅ Only import this once
-import { useResults } from "../context/ResultsContext"; // ✅ Import global results
+import { useState } from "react";
+import { useResults } from "../context/ResultsContext";
 import { Link } from "react-router-dom";
 
 export default function Reports() {
-  const { results } = useResults(); // Retrieve reports from context
+  const { results } = useResults();
 
   return (
     <div className="p-6">
@@ -12,20 +12,26 @@ export default function Reports() {
         <thead>
           <tr className="bg-gray-100">
             <th className="border border-gray-300 px-4 py-2">Report Date</th>
-            <th className="border border-gray-300 px-4 py-2">Upload Type</th>
+            <th className="border border-gray-300 px-4 py-2">Upload Type / File Name</th>
             <th className="border border-gray-300 px-4 py-2">View Report</th>
           </tr>
         </thead>
         <tbody>
           {results.length === 0 ? (
             <tr>
-              <td colSpan="3" className="text-center text-gray-500 p-4">No reports available yet.</td>
+              <td colSpan="3" className="text-center text-gray-500 p-4">
+                No reports available yet.
+              </td>
             </tr>
           ) : (
             results.map((report) => (
               <tr key={report.id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{report.date}</td>
-                <td className="border border-gray-300 px-4 py-2">{report.uploadType}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {new Date(report.create_ts).toLocaleDateString()} {/* ✅ Fix date formatting */}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {report.uploadType} {report.fileName ? `(${report.fileName})` : ""}
+                </td>
                 <td className="border border-gray-300 px-4 py-2">
                   <Link to="/results" state={{ report }} className="text-blue-600 hover:underline">
                     View Results

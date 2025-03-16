@@ -5,9 +5,10 @@ const ResultsContext = createContext();
 
 export function ResultsProvider({ children }) {
   const [results, setResults] = useState([]);
+  const [emissionsHistory, setEmissionsHistory] = useState([]); // ✅ Store emissions history
   const navigate = useNavigate();
 
-  // ✅ Function to fetch stored results from the backend
+  // ✅ Fetch stored results from backend if logged in
   const fetchUserResults = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -23,8 +24,8 @@ export function ResultsProvider({ children }) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+          "Authorization": `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -33,7 +34,12 @@ export function ResultsProvider({ children }) {
 
       const data = await response.json();
       console.log("✅ Retrieved results:", data);
-      setResults(data.results || []);
+
+      // ✅ Prevent unnecessary state updates
+      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+        setResults(data.results || []);
+        setEmissionsHistory(data.results.map((r) => r.total_emissions)); // ✅ Store emissions for tracking
+      }
     } catch (error) {
       console.error("🚨 Error fetching user results:", error);
     }
@@ -42,20 +48,32 @@ export function ResultsProvider({ children }) {
   // ✅ Fetch results on mount if user is logged in
   useEffect(() => {
     fetchUserResults();
-  }, []); 
+  }, []); // ✅ Runs only once
 
   // ✅ Function to update results dynamically
-  const updateResults = async (newResult = null) => {
+  const updateResults = async (newResult = null, uploadType = "Manual Entry", fileName = null) => {
     if (newResult) {
-      setResults((prevResults) => [newResult, ...prevResults]); // Adds new result to the top
+      const updatedResult = {
+        ...newResult,
+        uploadType, // ✅ Store whether it's manual or from an upload
+        fileName, // ✅ Store filename if applicable
+        recommendations: generateRecommendations(newResult.emissions_by_category), // ✅ Attach recommendations
+      };
+
+      setResults((prevResults) => {
+        const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
+        return isDuplicate ? prevResults : [updatedResult, ...prevResults];
+      });
+
+      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]); // ✅ Update emissions history
+      console.log("✅ Updated results and emissions history:", updatedResult);
     }
-  
-    // ✅ Fetch latest results from the backend
+
     await fetchUserResults();
   };
 
   return (
-    <ResultsContext.Provider value={{ results, updateResults }}>
+    <ResultsContext.Provider value={{ results, updateResults, emissionsHistory }}>
       {children}
     </ResultsContext.Provider>
   );
