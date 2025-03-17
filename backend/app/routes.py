@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.services import (
     addNewUser,
     calculate_food_emissions,
+    calculate_guest_emissions,
     calculate_retail_emissions,
     calculate_transportation_emissions,
     calculate_electricity_emissions,
@@ -104,6 +105,32 @@ def calculate_emissions():
                     {"category": "Food", "value": food_emissions},  # Food emissions (column 1)
                     {"category": "Retail", "value": retail_emissions}  # Retail emissions (column 2)
                 ]
+            })
+
+# ✅ Get total emissions for Guest Users
+@api_routes.route('/guest_emissions', methods=['POST'])
+def guest_emissions():
+    data = request.get_json()
+
+    print("🚨 Debug: Received data for guest emissions calculation:", data)
+
+    current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    emissions = calculate_guest_emissions(data)
+    print("🚨 Debug: Calculated emissions for guest user:", emissions)
+
+    total_emissions = sum(emissions.values())
+    print("🚨 Debug: Calculated total emissions for guest user:", total_emissions)
+    return jsonify({
+                "total_emissions": total_emissions,  # Total emissions (from column 0)
+                "create_ts": current_timestamp, 
+                "emissions": [
+                    {"category": "Electricity", "value": emissions.get('electricity', 0)},
+                    {"category": "Transportation", "value": emissions.get('car', 0)},
+                    {"category": "Water", "value": emissions.get('water', 0)},
+                    {"category": "Food", "value": emissions.get('food', 0)},
+                    {"category": "Flight Travel", "value": emissions.get('flight_travel', 0)}
+        ]
             })
 
 

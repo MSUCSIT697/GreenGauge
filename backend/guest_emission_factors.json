@@ -1,0 +1,64 @@
+{
+    "food": {
+      "omnivore": {
+        "emission_factor": 10.23, 
+        "unit": "kg CO2e per day"
+      },
+      "vegetarian": {
+        "emission_factor": 4.47, 
+        "unit": "kg CO2e per day"
+      },
+      "vegan": {
+        "emission_factor": 2.38, 
+        "unit": "kg CO2e per day"
+      }
+    },
+    "flight_travel": {
+      "very_often": {
+        "emission_factor": 1.67, 
+        "frequency": 12,
+        "unit": "kg CO2e per person per dollar"
+      },
+      "fairly": {
+        "emission_factor": 1.67, 
+        "frequency": 6,
+        "unit": "kg CO2e per person per dollar"
+      },
+      "rarely": {
+        "emission_factor": 1.67, 
+        "frequency": 1,
+        "unit": "kg CO2e per person per dollar"
+      }
+    },
+    "car": {
+      "miles": {
+        "emission_factor": 0.336,
+        "unit": "kg CO2e per mile"
+      },
+      "gas": {
+        "emission_factor": 2.05,
+        "unit": "kg CO2e per dollar"
+      }
+    },
+    "water": {
+      "hot": {
+        "emission_factor": 15.63,
+        "unit": "kg CO2e per dollar"
+      },
+      "cold": {
+        "emission_factor": 0.193,
+        "unit": "kg CO2e per dollar"
+      }
+    },
+    "electricity": {
+      "power": {
+        "emission_factor": 0.386,
+        "unit": "kg CO2e per kWh"
+      },
+      "bill": {
+        "emission_factor": 1.93,
+        "unit": "kg CO2e per dollar"
+      }
+    }
+  }
+  

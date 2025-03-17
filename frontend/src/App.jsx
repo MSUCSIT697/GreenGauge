@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/ForgotPassword";  // ✅ Import ForgotPasswo
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import Calculator from "./pages/Calculator";
+import GuestCalculator from "./pages/GuestCalculator";
 import Profile from "./pages/Profile";
 import FAQs from "./pages/FAQs";
 import Results from "./pages/Results";
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="forgot-password" element={<ForgotPassword />} /> {/* ✅ Add Forgot Password Route */}
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="guest-calculator" element={<GuestCalculator />} />
             <Route path="calculator" element={<Calculator />} />
             <Route path="profile" element={<Profile />} />
             <Route path="faqs" element={<FAQs />} />

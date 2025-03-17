@@ -10,8 +10,66 @@ def load_emission_factors():
 # Load the emission factors once when the application starts
 EMISSION_FACTORS = load_emission_factors()
 
+# Load emission factors from JSON file
+def load_guest_emission_factors():
+    with open('/var/www/backend/guest_emission_factors.json', 'r') as f:
+        return json.load(f)
+
+# Load the emission factors once when the application starts
+GUEST_EMISSION_FACTORS = load_guest_emission_factors()
+
+
 def convert_to_zero(value):
     return 0 if not value else value
+
+def calculate_guest_emissions(data):
+    # Initialize total carbon emissions
+    emissions = {
+        "food": 0,
+        "flight_travel": 0,
+        "car": 0,
+        "water": 0,
+        "electricity": 0
+    }
+    
+    # Calculate Food Emissions
+    if data['food']['omnivore'] == 'yes':
+        emissions['food'] += GUEST_EMISSION_FACTORS['food']['omnivore']['emission_factor'] * 30
+    if data['food']['vegetarian'] == 'yes':
+        emissions['food'] += GUEST_EMISSION_FACTORS['food']['vegetarian']['emission_factor'] * 30
+    if data['food']['vegan'] == 'yes':
+        emissions['food'] += GUEST_EMISSION_FACTORS['food']['vegan']['emission_factor'] * 30
+    
+    # Calculate Flight Travel Emissions
+    if data['flight_travel']['very_often'] == 'yes':
+        emissions['flight_travel'] += (GUEST_EMISSION_FACTORS['flight_travel']['very_often']['emission_factor'] * 
+                                            GUEST_EMISSION_FACTORS['flight_travel']['very_often']['frequency'] * 100) 
+    if data['flight_travel']['fairly'] == 'yes':
+        emissions['flight_travel'] += (GUEST_EMISSION_FACTORS['flight_travel']['fairly']['emission_factor'] * 
+                                            GUEST_EMISSION_FACTORS['flight_travel']['fairly']['frequency'] * 100) 
+    if data['flight_travel']['rarely'] == 'yes':
+        emissions['flight_travel'] += (GUEST_EMISSION_FACTORS['flight_travel']['rarely']['emission_factor'] * 
+                                            GUEST_EMISSION_FACTORS['flight_travel']['rarely']['frequency'] * 100) 
+    
+    # Calculate Car Emissions
+    if 'miles' in data['car'] and data['car']['miles'] is not None:
+        emissions['car'] += float(convert_to_zero(data['car']['miles'])) * GUEST_EMISSION_FACTORS['car']['miles']['emission_factor']
+    if 'gas' in data['car'] and data['car']['gas'] is not None:
+        emissions['car'] += float(convert_to_zero(data['car']['gas'])) * GUEST_EMISSION_FACTORS['car']['gas']['emission_factor']
+    
+    # Calculate Water Emissions
+    if 'hot' in data['water'] and data['water']['hot'] is not None:
+        emissions['water'] += float(convert_to_zero(data['water']['hot'])) * GUEST_EMISSION_FACTORS['water']['hot']['emission_factor']
+    if 'cold' in data['water'] and data['water']['cold'] is not None:
+        emissions['water'] += float(convert_to_zero(data['water']['cold'])) * GUEST_EMISSION_FACTORS['water']['cold']['emission_factor']
+    
+    # Calculate Electricity Emissions
+    if 'power' in data['electricity'] and data['electricity']['power'] is not None:
+        emissions['electricity'] += float(convert_to_zero(data['electricity']['power'])) * GUEST_EMISSION_FACTORS['electricity']['power']['emission_factor']
+    if 'bill' in data['electricity'] and data['electricity']['bill'] is not None:
+        emissions['electricity'] += float(convert_to_zero(data['electricity']['bill'])) * GUEST_EMISSION_FACTORS['electricity']['bill']['emission_factor']
+    
+    return emissions
 
 # Emission Calculation Functions
 def calculate_food_emissions(data):
