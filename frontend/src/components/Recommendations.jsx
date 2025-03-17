@@ -64,23 +64,33 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
     const [recommendations, setRecommendations] = useState([]);
 
     useEffect(() => {
-        if (!emissions || typeof emissions !== "object" || Object.keys(emissions).length === 0) {
+        console.log("📌 Checking emissions before processing:", emissions);
+    
+        if (!emissions || typeof emissions !== "object") {
+            console.warn("⚠️ Emissions data is invalid. Setting error.");
             setError(true);
             return;
         }
-
+    
+        if (Object.keys(emissions).length === 0) {
+            console.warn("⚠️ Emissions object is empty. No recommendations available.");
+            setRecommendations([]);
+            return;
+        }
+    
         try {
-            setRecommendations(storedRecommendations.length > 0 
+            const newRecommendations = storedRecommendations.length > 0 
                 ? storedRecommendations 
-                : generateRecommendations(emissions).slice(0, 3) // ✅ Fix: Limit to 3
-            );
+                : generateRecommendations(emissions).slice(0, 3); // ✅ Fix: Limit to 3
+            
+            console.log("📌 Generated recommendations:", newRecommendations);
+            setRecommendations(newRecommendations);
         } catch (err) {
             console.error("🚨 Error generating recommendations:", err);
             setError(true);
         }
-        console.log("📌 Received emissions data in Recommendations:", emissions);
-        console.log("📌 Stored recommendations:", storedRecommendations);
     }, [emissions, storedRecommendations]);
+    
 
     if (error) {
         return (

@@ -33,9 +33,9 @@ export function ResultsProvider({ children }) {
       return;
     }
 
-    const API_BASE = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, ""); // ✅ Remove trailing slash
-    const url = `${API_BASE}/get_user_results`;
-
+    const API_BASE = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, ""); 
+    const url = `${API_BASE}/get_user_results`.replace(/([^:]\/)\/+/g, "$1"); // ✅ Remove double slashes
+    
     try {
       console.log("Fetching from:", url);
       const response = await fetch(url, {
@@ -58,12 +58,21 @@ export function ResultsProvider({ children }) {
       const data = await response.json();
       console.log("✅ Retrieved user results:", data);
 
-      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
-        setResults(data.results || []);
-        setEmissionsHistory(data.results.map((r) => r.total_emissions));
+      if (data.results) {
+        const formattedResults = data.results.map((r) => ({
+          ...r,
+          emissions: r.emissions ?? {}, // ✅ Ensure emissions is always an object
+          recommendations: Array.isArray(r.recommendations) ? r.recommendations : [],
+        }));
+      
+        console.log("✅ Processed Results with Emissions:", formattedResults);
+      
+        setResults(formattedResults);
+        setEmissionsHistory(formattedResults.map((r) => r.total_emissions ?? 0));
         setHasFetchedResults(true);
-        localStorage.setItem("userResults", JSON.stringify(data.results)); // ✅ Persist results
+        localStorage.setItem("userResults", JSON.stringify(formattedResults)); // ✅ Store formatted results
       }
+      
     } catch (error) {
       console.error("🚨 Error fetching user results:", error);
     }

@@ -18,7 +18,13 @@ export default function Dashboard() {
 
   const latestReport = results.length > 0 ? results[0] : null;
 
-  console.log("Latest Report:", latestReport);
+  console.log("✅ Latest Report for Recommendations:", latestReport);
+  console.log("✅ Emissions Data Passed:", latestReport?.emissions);
+  console.log("✅ Stored Recommendations:", latestReport?.recommendations);
+  
+  // ✅ Ensure emissions are passed correctly
+  const emissionsData = latestReport?.emissions ?? {};
+  console.log("✅ Corrected Emissions Data:", emissionsData);
 
   // ✅ Fetch user results on mount
   // ✅ Move this function OUTSIDE useEffect to prevent re-creation
@@ -70,19 +76,23 @@ export default function Dashboard() {
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {
-    if (results.length === 0) return; // ✅ Prevent unnecessary updates
+    console.log("✅ Checking if results exist:", results);
+    if (results.length === 0) return;
 
     const userGeneratedResults = results.filter((result) => result.source === "manual" || result.source === "upload");
+    
+    console.log("✅ User-generated results:", userGeneratedResults);
 
     if (userGeneratedResults.length > 0) {
         setProgressData(
             userGeneratedResults.map((result) => ({
-                date: new Date(result.create_ts).toLocaleDateString(),
-                value: result.total_emissions,
+                date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
+                value: result.total_emissions ?? 0,
             }))
         );
     }
 }, [results]); 
+
 
   
 
@@ -141,15 +151,19 @@ export default function Dashboard() {
           {console.log("✅ Latest Report for Recommendations:", latestReport)}
           {console.log("✅ Emissions Data Passed:", latestReport?.emissions)}
           {console.log("✅ Stored Recommendations:", latestReport?.recommendations)}
-          {latestReport && latestReport.emissions ? (
-            
+          const emissionsData = latestReport?.emissions ?? {}; // ✅ Ensure emissions is always an object
+
+          {latestReport && typeof latestReport.emissions === "object" ? (
               <RecommendationSystem 
-                  emissions={latestReport.emissions} 
-                  storedRecommendations={latestReport.recommendations || []} // ✅ Ensure it's always an array
+                  emissions={emissionsData} 
+                  storedRecommendations={Array.isArray(latestReport.recommendations) ? latestReport.recommendations : []} 
               />
           ) : (
               <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
           )}
+
+
+
       </div>
       </div>
 
