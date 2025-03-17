@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
-import Recommendations from "../components/Recommendations"; 
+import RecommendationSystem from "../components/Recommendations";
 import { useResults } from "../context/ResultsContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 

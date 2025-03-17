@@ -53,6 +53,11 @@ export const generateRecommendations = (emissionsData = {}) => {
         return suggestions[category].strong;
     });
     
+    // ✅ Ensure at least one suggestion is returned
+    if (allSuggestions.length === 0) {
+        return ["Consider reducing your carbon footprint in various categories."];
+    }
+
     // ✅ Select only 3 random suggestions
     return allSuggestions.sort(() => 0.5 - Math.random()).slice(0, 3);
 };    
