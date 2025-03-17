@@ -21,58 +21,69 @@ export default function Dashboard() {
   console.log("Latest Report:", latestReport);
 
   // ✅ Fetch user results on mount
-  useEffect(() => {
-    const fetchResults = async () => {
-      console.log("Fetching user results...");
+  // ✅ Move this function OUTSIDE useEffect to prevent re-creation
+  const fetchResults = async () => {
+    console.log("Fetching user results...");
+    const token = localStorage.getItem("token");
 
-      const token = localStorage.getItem("token");
-
-      if (!token) {
+    if (!token) {
         console.warn("⚠️ No token found, prompting login.");
-        setShowLoginModal(true); // ✅ Show modal instead of redirecting immediately
+        setShowLoginModal(true);
         return;
-      }
+    }
 
-      try {
+    try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            console.warn("⚠️ Unauthorized! Redirecting to login...");
-            navigate("/sign-in"); // ✅ Redirect if not authorized
-          }
-          throw new Error(`API request failed with status ${response.status}`);
+            if (response.status === 401) {
+                console.warn("⚠️ Unauthorized! Redirecting to login...");
+                navigate("/sign-in");
+            }
+            throw new Error(`API request failed with status ${response.status}`);
         }
 
         const data = await response.json();
         console.log("✅ Retrieved user results:", data);
 
-        updateResults(data.results || []); // ✅ Store results properly
-      } catch (error) {
-        console.error("🚨 Error fetching user results:", error);
+      // ✅ Check if results have changed before updating state
+      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+        updateResults(data.results || []);
       }
-    };
+    } catch (error) {
+        console.error("🚨 Error fetching user results:", error);
+    }
+  };
 
+  // ✅ Run this only once when the page loads
+  useEffect(() => {
     fetchResults();
-  }, [navigate, updateResults]); // ✅ Dependencies ensure it runs properly
+  }, []);
+
+
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {
+    if (results.length === 0) return; // ✅ Prevent unnecessary updates
+
     const userGeneratedResults = results.filter((result) => result.source === "manual" || result.source === "upload");
-  
-    setProgressData(
-      userGeneratedResults.map((result) => ({
-        date: new Date(result.create_ts).toLocaleDateString(),
-        value: result.total_emissions,
-      }))
-    );
-  }, [results]); // ✅ Runs only when user-generated results change
+
+    if (userGeneratedResults.length > 0) {
+        setProgressData(
+            userGeneratedResults.map((result) => ({
+                date: new Date(result.create_ts).toLocaleDateString(),
+                value: result.total_emissions,
+            }))
+        );
+    }
+}, [results]); 
+
   
 
   return (

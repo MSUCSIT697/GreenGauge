@@ -24,10 +24,13 @@ export default function Reports() {
           ) : (
             results.map((report) => (
               <tr key={report.id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{new Date(report.create_ts).toLocaleDateString()}</td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {report.source === "upload" ? "File Upload" : "Manual Calculation"}
+                  {report.create_ts ? new Date(report.create_ts).toLocaleDateString() : "N/A"}
                 </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {report.source === "upload" ? "File Upload" : report.source === "manual" ? "Manual Calculation" : "Unknown"}
+                </td>
+
                 <td className="border border-gray-300 px-4 py-2">
                   <Link to="/results" state={{ report }} className="text-blue-600 hover:underline">
                     View Results

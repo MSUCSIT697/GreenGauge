@@ -3,15 +3,7 @@ import { Line } from "react-chartjs-2";
 import {Chart as ChartJS, LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip,} from "chart.js";
 import "chartjs-adapter-date-fns";
 
-ChartJS.register(
-  LineElement,
-  LinearScale,
-  TimeScale,
-  CategoryScale,
-  PointElement,
-  Title,
-  Tooltip
-);
+ChartJS.register( LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip);
 
 export default function ProgressChart({ data = [], maxScale = 2450 }) {
   
@@ -26,8 +18,10 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     { date: "2025-02-15", value: 350 },
   ];
 
-  // Combine real user data and default data
-  let allData = data.length > 0 ? [...defaultData, ...data] : defaultData;
+  // ✅ Only use defaultData if the user has not made a manual calculation or upload
+  const hasUserData = data.some(entry => entry.source === "manual" || entry.source === "upload");
+  let allData = hasUserData ? [...data] : defaultData;
+
 
   // ✅ Sort data chronologically
   allData = allData.sort((a, b) => new Date(a.date) - new Date(b.date));
