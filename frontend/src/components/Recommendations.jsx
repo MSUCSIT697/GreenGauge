@@ -78,6 +78,8 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
             console.error("🚨 Error generating recommendations:", err);
             setError(true);
         }
+        console.log("📌 Received emissions data in Recommendations:", emissions);
+        console.log("📌 Stored recommendations:", storedRecommendations);
     }, [emissions, storedRecommendations]);
 
     if (error) {

@@ -1,6 +1,6 @@
 import { useResults } from "../context/ResultsContext";
 import { Link } from "react-router-dom";
-import { RecommendationSystem } from "../components/Recommendations"; // ✅ Ensure correct import
+import RecommendationSystem from "../components/Recommendations"; // ✅ Use default import
 
 export default function Reports() {
   const { results } = useResults();

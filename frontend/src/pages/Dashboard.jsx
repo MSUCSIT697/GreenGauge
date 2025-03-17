@@ -4,7 +4,7 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
-import { RecommendationSystem } from "../components/Recommendations";
+import RecommendationSystem from "../components/Recommendations";
 import LoginPromptModal from "../components/LoginPromptModal"; 
 
 export default function Dashboard() {
@@ -138,7 +138,11 @@ export default function Dashboard() {
         {/* ✅ Recommendations Section */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Personalized Recommendations</h2>
+          {console.log("✅ Latest Report for Recommendations:", latestReport)}
+          {console.log("✅ Emissions Data Passed:", latestReport?.emissions)}
+          {console.log("✅ Stored Recommendations:", latestReport?.recommendations)}
           {latestReport && latestReport.emissions ? (
+            
               <RecommendationSystem 
                   emissions={latestReport.emissions} 
                   storedRecommendations={latestReport.recommendations || []} // ✅ Ensure it's always an array

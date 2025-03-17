@@ -7,68 +7,10 @@ const ResultsContext = createContext();
 export function ResultsProvider({ children }) {
   const [results, setResults] = useState([]);
   const [emissionsHistory, setEmissionsHistory] = useState([]);
-  const [hasFetchedResults, setHasFetchedResults] = useState(false); // ✅ Prevent infinite loop
+  const [hasFetchedResults, setHasFetchedResults] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Fetch stored results from backend ONLY if not already fetched
-  const fetchUserResults = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("⚠️ No authentication token found.");
-      return;
-    }
-  
-    // ✅ Check if results exist in localStorage before calling API
-    const storedResults = localStorage.getItem("userResults");
-    if (storedResults) {
-      console.log("✅ Loading results from localStorage...");
-      setResults(JSON.parse(storedResults));
-      return;
-    }
-  
-    console.log("Fetching from:", `${import.meta.env.VITE_API_URL}/get_user_results`);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-  
-      const data = await response.json();
-      console.log("✅ Retrieved results from API:", data);
-  
-      if (!data.results || data.results.length === 0) {
-        console.warn("⚠️ No results found, setting empty state.");
-        setResults([]);
-        localStorage.setItem("userResults", JSON.stringify([])); // ✅ Ensure localStorage is updated
-        return;
-      }
-  
-      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
-        setResults(data.results);
-        setEmissionsHistory(data.results.map((r) => r.total_emissions));
-  
-        // ✅ Store results in localStorage
-        localStorage.setItem("userResults", JSON.stringify(data.results));
-      }
-    } catch (error) {
-      console.error("🚨 Error fetching user results:", error);
-    }
-  };
-  
-
-  // ✅ Fetch results ONLY on first mount or refresh
-  useEffect(() => {
-    fetchUserResults();
-  }, []); // ✅ Runs only once when the component mounts
-
-  // ✅ Logout function (placed here)
+  // ✅ Logout function moved above fetchUserResults()
   const logoutUser = () => {
     console.log("🔄 Logging out user...");
     localStorage.removeItem("token");
@@ -79,7 +21,71 @@ export function ResultsProvider({ children }) {
     navigate("/sign-in");
   };
 
-  // ✅ Function to update results dynamically
+  // ✅ Fetch stored results from backend
+  const fetchUserResults = async () => {
+    if (hasFetchedResults) return; // ✅ Prevent duplicate fetches
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.warn("⚠️ No authentication token found.");
+      navigate("/sign-in"); // ✅ Redirect to login if no token
+      return;
+    }
+
+    const API_BASE = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, ""); // ✅ Remove trailing slash
+    const url = `${API_BASE}/get_user_results`;
+
+    try {
+      console.log("Fetching from:", url);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.warn("⚠️ Unauthorized! Logging out...");
+          logoutUser(); // ✅ Redirect on 401
+          return;
+        }
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Retrieved user results:", data);
+
+      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+        setResults(data.results || []);
+        setEmissionsHistory(data.results.map((r) => r.total_emissions));
+        setHasFetchedResults(true);
+        localStorage.setItem("userResults", JSON.stringify(data.results)); // ✅ Persist results
+      }
+    } catch (error) {
+      console.error("🚨 Error fetching user results:", error);
+    }
+  };
+
+  // ✅ Fetch results on mount (fixed async handling)
+  useEffect(() => {
+    const loadResults = async () => {
+      const storedResults = localStorage.getItem("userResults");
+      if (storedResults) {
+        console.log("✅ Loaded results from localStorage.");
+        setResults(JSON.parse(storedResults));
+        setEmissionsHistory(JSON.parse(storedResults).map((r) => r.total_emissions));
+        setHasFetchedResults(true);
+      } else {
+        await fetchUserResults();
+      }
+    };
+
+    loadResults();
+  }, []); // ✅ Runs only once when the component mounts
+
   const updateResults = async (newResult = null, source = "manual") => {
     if (newResult) {
       const updatedResult = {
@@ -87,26 +93,20 @@ export function ResultsProvider({ children }) {
         source: source || "manual",
         recommendations: generateRecommendations(newResult.emissions),
       };
-  
+      console.log("📝 Storing updated result with recommendations:", updatedResult);
+
       setResults((prevResults) => {
         const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
         const updatedResults = isDuplicate ? prevResults : [updatedResult, ...prevResults];
-  
-        // ✅ Store updated results in localStorage
-        localStorage.setItem("userResults", JSON.stringify(updatedResults));
-  
+
+        localStorage.setItem("userResults", JSON.stringify(updatedResults)); // ✅ Persist results
         return updatedResults;
       });
-  
+
       setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
-  
-      // ✅ Reset hasFetchedResults to allow fresh data fetches
-      setHasFetchedResults(false);
-      console.log("✅ Updated results and emissions history:", updatedResult);
+      console.log("✅ Updated results and stored in localStorage:", updatedResult);
     }
   };
-  
-
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory, fetchUserResults, logoutUser }}>

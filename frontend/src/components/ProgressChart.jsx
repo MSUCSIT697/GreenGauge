@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
-import {Chart as ChartJS, LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip,} from "chart.js";
+import { Chart as ChartJS, LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip } from "chart.js";
 import "chartjs-adapter-date-fns";
 
-ChartJS.register( LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip);
+ChartJS.register(LineElement, LinearScale, TimeScale, CategoryScale, PointElement, Title, Tooltip);
 
 export default function ProgressChart({ data = [], maxScale = 2450 }) {
   
@@ -18,16 +18,18 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     { date: "2025-02-15", value: 350 },
   ];
 
-  // ✅ Only use default data if the user has NOT made a calculation or upload
-  const hasUserData = data.length > 0; // ✅ Fix: Simply check if user data exists
-  let allData = hasUserData ? [...data] : defaultData;
+  // ✅ Retrieve stored emissions & check if user has results
+  const storedResults = JSON.parse(localStorage.getItem("userResults") || "[]");
+  const hasUserData = storedResults.length > 0 || data.length > 0;
+  let allData = hasUserData ? [...storedResults, ...data] : defaultData;
 
+  // ✅ Remove duplicates by ensuring unique dates
+  allData = [...new Map(allData.map(item => [item.date, item])).values()];
 
+  // ✅ Sort data chronologically (oldest → newest)
+  allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // ✅ Sort data chronologically
-  allData = allData.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Set cutoff date based on selected timeframe
+  // ✅ Set cutoff date based on timeframe selection
   const now = new Date();
   const cutoffDate = new Date();
   cutoffDate.setHours(0, 0, 0, 0);
@@ -44,24 +46,19 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     cutoffDate.setDate(1);
   }
 
-  // ✅ Filter data based on selected timeframe, but keep last known point
-  let filteredData = allData.filter((entry) => {
+  // ✅ Filter data based on timeframe, but always show last known entry
+  let filteredData = allData.filter(entry => {
     const entryDate = new Date(entry.date);
     return entryDate >= cutoffDate && entryDate <= now;
   });
 
-  // ✅ Ensure `1M` has at least 2 points to maintain trend visualization
-  if (timeFrame === "1M" && filteredData.length === 1 && allData.length > 1) {
-    filteredData = allData.slice(-2);
-  }
-
-  // ✅ Ensure longer timeframes show the last known point for continuity
-  if (filteredData.length === 0) {
-    filteredData = [allData[allData.length - 1]];
+  // ✅ Ensure at least one point is visible
+  if (filteredData.length === 0 && allData.length > 0) {
+    filteredData = [allData.at(-1)];
   }
 
   const chartData = {
-    labels: filteredData.map((entry) =>
+    labels: filteredData.map(entry =>
       new Date(entry.date).toLocaleDateString("en-US", {
         month: timeFrame === "1Y" ? "short" : "short",
         year: timeFrame === "1Y" ? "numeric" : undefined,
@@ -71,7 +68,7 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     datasets: [
       {
         label: "Total Emissions Over Time",
-        data: filteredData.map((entry) => ({
+        data: filteredData.map(entry => ({
           x: new Date(entry.date),
           y: entry.value,
         })),
@@ -91,7 +88,7 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
   return (
     <div className="h-80">
       <div className="flex justify-end space-x-2 mb-2">
-        {["1M", "3M", "6M", "1Y"].map((frame) => (
+        {["1M", "3M", "6M", "1Y"].map(frame => (
           <button
             key={frame}
             className={`px-3 py-1 rounded-md ${
@@ -135,7 +132,7 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
           plugins: {
             tooltip: {
               callbacks: {
-                label: (context) => {
+                label: context => {
                   const { x, y } = context.raw;
                   const date = new Date(x).toLocaleDateString("en-US", {
                     month: "short",
