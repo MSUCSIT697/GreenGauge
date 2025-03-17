@@ -19,18 +19,14 @@ export default function Reports() {
         <tbody>
           {results.length === 0 ? (
             <tr>
-              <td colSpan="3" className="text-center text-gray-500 p-4">
-                No reports available yet.
-              </td>
+              <td colSpan="3" className="text-center text-gray-500 p-4">No reports available yet.</td>
             </tr>
           ) : (
             results.map((report) => (
               <tr key={report.id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">{new Date(report.create_ts).toLocaleDateString()}</td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {new Date(report.create_ts).toLocaleDateString()} {/* ✅ Fix date formatting */}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {report.uploadType} {report.fileName ? `(${report.fileName})` : ""}
+                  {report.source === "upload" ? "File Upload" : "Manual Calculation"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
                   <Link to="/results" state={{ report }} className="text-blue-600 hover:underline">
@@ -41,6 +37,7 @@ export default function Reports() {
             ))
           )}
         </tbody>
+
       </table>
     </div>
   );

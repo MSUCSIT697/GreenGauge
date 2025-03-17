@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { generateRecommendations } from "../components/Recommendations";
 
 const ResultsContext = createContext();
 
@@ -51,26 +52,26 @@ export function ResultsProvider({ children }) {
   }, []); // ✅ Runs only once
 
   // ✅ Function to update results dynamically
-  const updateResults = async (newResult = null, uploadType = "Manual Entry", fileName = null) => {
+  const updateResults = async (newResult = null, source = "manual") => {
     if (newResult) {
       const updatedResult = {
         ...newResult,
-        uploadType, // ✅ Store whether it's manual or from an upload
-        fileName, // ✅ Store filename if applicable
-        recommendations: generateRecommendations(newResult.emissions_by_category), // ✅ Attach recommendations
+        source, // ✅ Store if it was "manual" or "upload"
+        recommendations: generateRecommendations(newResult.emissions_by_category),
       };
-
+  
       setResults((prevResults) => {
         const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
         return isDuplicate ? prevResults : [updatedResult, ...prevResults];
       });
-
-      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]); // ✅ Update emissions history
+  
+      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]); 
       console.log("✅ Updated results and emissions history:", updatedResult);
     }
-
+  
     await fetchUserResults();
   };
+  
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory }}>

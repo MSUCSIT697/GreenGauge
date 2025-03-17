@@ -4,7 +4,7 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
-import RecommendationSystem from "../components/Recommendations";
+import Recommendations from "../components/Recommendations";
 import LoginPromptModal from "../components/LoginPromptModal"; 
 
 export default function Dashboard() {
@@ -64,15 +64,16 @@ export default function Dashboard() {
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {
-    if (results.length > 0) {
-      setProgressData(
-        results.map((result) => ({
-          date: new Date(result.create_ts).toLocaleDateString(), // ✅ Convert timestamp to readable format
-          value: result.total_emissions, // ✅ Track total emissions
-        }))
-      );
-    }
-  }, [results]); // ✅ Runs whenever `results` change
+    const userGeneratedResults = results.filter((result) => result.source !== "default");
+  
+    setProgressData(
+      userGeneratedResults.map((result) => ({
+        date: new Date(result.create_ts).toLocaleDateString(),
+        value: result.total_emissions,
+      }))
+    );
+  }, [results]); // ✅ Runs only when user-generated results change
+  
 
   return (
     <div className="p-6">
