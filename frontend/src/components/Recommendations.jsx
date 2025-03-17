@@ -111,3 +111,5 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
 
 // ✅ Export both the component and function
 export default RecommendationSystem;
+export { RecommendationSystem }; // ✅ Named export for consistency
+

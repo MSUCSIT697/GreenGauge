@@ -4,7 +4,7 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
-import RecommendationSystem from "../components/Recommendations";
+import { RecommendationSystem } from "../components/Recommendations";
 import LoginPromptModal from "../components/LoginPromptModal"; 
 
 export default function Dashboard() {
