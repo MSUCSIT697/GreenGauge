@@ -54,24 +54,23 @@ export function ResultsProvider({ children }) {
   // ✅ Function to update results dynamically
   const updateResults = async (newResult = null, source = "manual") => {
     if (newResult) {
-      const updatedResult = {
-        ...newResult,
-        source, // ✅ Store if it was "manual" or "upload"
-        recommendations: generateRecommendations(newResult.emissions_by_category),
-      };
-  
-      setResults((prevResults) => {
-        const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
-        return isDuplicate ? prevResults : [updatedResult, ...prevResults];
-      });
-  
-      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]); 
-      console.log("✅ Updated results and emissions history:", updatedResult);
+        const updatedResult = {
+            ...newResult,
+            source, // ✅ Logs "manual" or "upload" correctly
+            recommendations: generateRecommendations(newResult.emissions),
+        };
+
+        setResults((prevResults) => {
+            const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
+            return isDuplicate ? prevResults : [updatedResult, ...prevResults];
+        });
+
+        setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
+        console.log("✅ Updated results and emissions history:", updatedResult);
     }
-  
+
     await fetchUserResults();
-  };
-  
+};
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory }}>

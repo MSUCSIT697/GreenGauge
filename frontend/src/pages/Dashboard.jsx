@@ -4,7 +4,7 @@ import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
-import Recommendations from "../components/Recommendations";
+import RecommendationSystem from "../components/Recommendations";
 import LoginPromptModal from "../components/LoginPromptModal"; 
 
 export default function Dashboard() {
@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {
-    const userGeneratedResults = results.filter((result) => result.source !== "default");
+    const userGeneratedResults = results.filter((result) => result.source === "manual" || result.source === "upload");
   
     setProgressData(
       userGeneratedResults.map((result) => ({
@@ -127,16 +127,15 @@ export default function Dashboard() {
         {/* ✅ Recommendations Section */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Personalized Recommendations</h2>
-          {latestReport?.recommendations ? (
-            <ul className="list-disc text-left pl-5 text-gray-700 space-y-1">
-              {latestReport.recommendations.map((rec, index) => (
-                <li key={index}>{rec}</li>
-              ))}
-            </ul>
+          {latestReport && latestReport.emissions ? (
+              <RecommendationSystem 
+                  emissions={latestReport.emissions} 
+                  storedRecommendations={latestReport.recommendations || []} // ✅ Ensure it's always an array
+              />
           ) : (
-            <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
+              <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
           )}
-        </div>
+      </div>
       </div>
 
       {/* ✅ Progress Tracker */}

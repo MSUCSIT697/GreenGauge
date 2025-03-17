@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from "react";
 
 // ✅ Moved `generateRecommendations` outside of the component & added default suggestions
-export const generateRecommendations = (emissionsData) => {
+export const generateRecommendations = (emissionsData = {}) => {
+    if (!emissionsData || typeof emissionsData !== "object") {
+        console.warn("⚠️ Invalid emissions data received, returning empty recommendations.");
+        return [];
+    }
+
+    const categoryAverages = {
+        "Transportation": { min: 5000, max: 6000, avg: 5500 },
+        "Energy Use": { min: 4000, max: 5000, avg: 4500 },
+        "Food and Diet": { min: 2000, max: 3000, avg: 2500 },
+        "Goods and Services": { min: 2000, max: 3000, avg: 2500 },
+        "Waste": { min: 500, max: 1000, avg: 750 }
+    };
+
     const suggestions = {
         "Transportation": {
             positive: ["You're using transport efficiently! Keep it up.", "Consider continuing to use public transport or biking."],
@@ -30,17 +43,17 @@ export const generateRecommendations = (emissionsData) => {
         }
     };
 
-    return Object.keys(emissionsData).map((category) => {
-        const userValue = emissionsData[category] ?? 0; // ✅ Handle undefined emissions values
+    return Object.keys(emissionsData).flatMap(category => {
+        const userValue = emissionsData[category] ?? 0;
         const avgData = categoryAverages[category] || { min: 0, avg: 0, max: 0 };
 
-        if (!avgData) return null;
-
-        if (userValue < avgData.min) return suggestions[category].positive.slice(0, 2);
-        if (userValue < avgData.avg) return suggestions[category].moderate.slice(0, 2);
-        return suggestions[category].strong.slice(0, 3);
-    }).flat();
+        if (!suggestions[category]) return [];
+        if (userValue < avgData.min) return suggestions[category].positive;
+        if (userValue < avgData.avg) return suggestions[category].moderate;
+        return suggestions[category].strong;
+    });
 };
+
 
 // ✅ Main Recommendation System Component
 const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
