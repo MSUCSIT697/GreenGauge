@@ -41,10 +41,10 @@ export default function Calculator() {
   
 
   const [formData, setFormData] = useState({
-    transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, truck: { distance: "" }, bus: { distance: "" }, train: { distance: "" } },
-    electricity: { consumption_kwh: "", energy_source: "natural_gas" },
-    food: { beef: "", chicken: "", vegetables: "", rice: "", pork: "" },
-    retail: { electronics: "", clothing: "", toys: "", furniture: "" },
+    transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, subway: { cost: "" }, bus: { cost: "" }, train: { cost: "" }, domestic_flight: { cost: "" }, international_flight: { cost: "" } },
+    electricity: { consumption: "", energy_source: "natural_gas" },
+    food: { consumption: 1, diet: "omnivore" },
+    retail: { electronics: "", clothing: "", kids: "", furniture: "", entertainment: "", home_supplies: "", medical_care: "", personal_care: "", pets: "" },
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
 
@@ -122,7 +122,7 @@ export default function Calculator() {
   
     // ✅ 🚨 Ensure TransportationTab Highlights Correctly
     const transportHasValue = Object.values(formData.transportation).some(
-      (vehicle) => vehicle.distance && Number(vehicle.distance) > 0
+      (vehicle) => (vehicle.distance || vehicle.cost) && (Number(vehicle.distance) > 0 || Number(vehicle.cost) > 0)
     );
     if (!transportHasValue) {
       newErrors.transportation = true; // ✅ Mark it as needing highlight

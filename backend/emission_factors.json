@@ -1,42 +1,86 @@
 {
-    "food": {
-      "beef": {
-        "emission_factor": 27, 
-        "unit": "kg CO2e per kg"
+   "food": {
+      "omnivore": {
+        "emission_factor": 10.23, 
+        "unit": "kg CO2e per day"
       },
-      "chicken": {
-        "emission_factor": 6.9, 
-        "unit": "kg CO2e per kg"
+      "vegetarian": {
+        "emission_factor": 4.47, 
+        "unit": "kg CO2e per day"
       },
-      "vegetables": {
-        "emission_factor": 2.5, 
-        "unit": "kg CO2e per kg"
+      "vegan": {
+        "emission_factor": 2.38, 
+        "unit": "kg CO2e per day"
       },
-      "pork": {
-        "emission_factor": 12, 
-        "unit": "kg CO2e per kg"
+      "pescatarian": {
+        "emission_factor": 3.68, 
+        "unit": "kg CO2e per day"
+      }
+    },
+    "water": {
+      "hot": {
+        "emission_factor": 15.63,
+        "unit": "kg CO2e per dollar"
       },
-      "rice": {
-        "emission_factor": 4.5, 
-        "unit": "kg CO2e per kg"
+      "cold": {
+        "emission_factor": 0.193,
+        "unit": "kg CO2e per dollar"
+      }
+    },
+    "restaurants": {
+      "fast_food": {
+        "emission_factor": 0.53,
+        "unit": "kg CO2e per dollar"
+      },
+      "casual_dining": {
+        "emission_factor": 0.375,
+        "unit": "kg CO2e per dollar"
+      },
+      "fine_dining": {
+        "emission_factor": 0.32,
+        "unit": "kg CO2e per dollar"
+      },
+      "average": {
+        "emission_factor": 0.4,
+        "unit": "kg CO2e per dollar"
       }
     },
     "retail": {
-      "electronics": {
-        "emission_factor": 300, 
-        "unit": "kg CO2e per item"
+      "kids": {
+        "emission_factor": 1,
+        "unit": "kg CO2e per dollar"
       },
       "clothing": {
-        "emission_factor": 5, 
-        "unit": "kg CO2e per item"
+        "emission_factor": 1.25,
+        "unit": "kg CO2e per dollar"
+      },
+      "electronics": {
+        "emission_factor": 2,
+        "unit": "kg CO2e per dollar"
+      },
+      "entertainment": {
+        "emission_factor": 0.6,
+        "unit": "kg CO2e per dollar"
+      },
+      "home_supplies": {
+        "emission_factor": 0.9,
+        "unit": "kg CO2e per dollar"
       },
       "furniture": {
-        "emission_factor": 60, 
-        "unit": "kg CO2e per item"
+        "emission_factor": 3,
+        "unit": "kg CO2e per dollar"
       },
-      "toys": {
-        "emission_factor": 10, 
-        "unit": "kg CO2e per item"
+      "medical_care": {
+        "emission_factor": 1.25,
+        "unit": "kg CO2e per dollar"
+      },
+      "personal_care": {
+        "emission_factor": 1.25,
+        "unit": "kg CO2e per dollar"
+      },
+      "pets": {
+        "emission_factor": 1.25,
+        "unit": "kg CO2e per dollar"
       }
     },
     "transportation": {
@@ -50,69 +94,73 @@
           "unit": "kg CO2e per mile"
         },
         "electric": {
-          "emission_factor": 0.0,
+          "emission_factor": 0.336,
           "unit": "kg CO2e per mile"
         }
       },
-      "truck": {
-        "emission_factor": 1.25,
-        "unit": "kg CO2e per mile"
-      },
       "bus": {
-        "emission_factor": 0.09,
-        "unit": "kg CO2e per passenger mile"
+        "emission_factor": 0.5,
+        "unit": "kg CO2e per passenger per dollar"
       },
       "train": {
-        "emission_factor": 0.05,
-        "unit": "kg CO2e per passenger mile"
+        "emission_factor": 0.14,
+        "unit": "kg CO2e per passenger per dollar"
       },
       "subway": {
-        "emission_factor": 0.07,
-        "unit": "kg CO2e per passenger mile"
+        "emission_factor": 0.25,
+        "unit": "kg CO2e per passenger per dollar"
+      },
+      "domestic_flight": {
+        "emission_factor": 1.67,
+        "unit": "kg CO2e per passenger per dollar"
+      },
+      "international_flight": {
+        "emission_factor": 1.1,
+        "unit": "kg CO2e per passenger per dollar"
+      },
+      "gas_bill": {
+        "emission_factor": 2.05,
+        "unit": "kg CO2e per dollar"
       }
     },
     "electricity": {
       "coal": {
-        "emission_factor": 0.9,
+        "emission_factor": 1.02,
         "unit": "kg CO2e per kWh"
       },
       "natural_gas": {
-        "emission_factor": 0.4,
+        "emission_factor": 0.39,
         "unit": "kg CO2e per kWh"
       },
-      "solar": {
-        "emission_factor": 0.0,
+      "petroleum": {
+        "emission_factor": 0.65,
         "unit": "kg CO2e per kWh"
       },
-      "wind": {
-        "emission_factor": 0.0,
-        "unit": "kg CO2e per kWh"
-      },
-      "hydro": {
-        "emission_factor": 0.0,
-        "unit": "kg CO2e per kWh"
+      "electricity_bill": {
+        "emission_factor": 1.93,
+        "unit": "kg CO2e per dollar"
       }
     },
     "waste": {
       "food_waste": {
-        "emission_factor": 1.2,
-        "unit": "kg CO2e per kg"
+        "emission_factor": 0.3,
+        "unit": "kg CO2e per kg per week"
       },
       "paper": {
-        "emission_factor": 0.6,
-        "unit": "kg CO2e per kg"
+        "emission_factor": 0.75,
+        "unit": "kg CO2e per kg per week"
       },
       "plastic": {
-        "emission_factor": 6.0,
-        "unit": "kg CO2e per kg"
+        "emission_factor": 4.5,
+        "unit": "kg CO2e per kg per week"
       },
       "metal": {
-        "emission_factor": 1.3,
-        "unit": "kg CO2e per kg"
+        "emission_factor": 0.05,
+        "unit": "kg CO2e per kg  per week"
       },
       "glass": {
-        "emission_factor": 0.5,
-        "unit": "kg CO2e per kg"
+        "emission_factor": 0.1,
+        "unit": "kg CO2e per kg per week"
       }
     }
   }
