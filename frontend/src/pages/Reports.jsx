@@ -34,9 +34,15 @@ export default function Reports() {
                 </td>
 
                 <td className="border border-gray-300 px-4 py-2">
-                  <Link to="/results" state={{ report }} className="text-blue-600 hover:underline">
-                    View Results
-                  </Link>
+                <Link 
+                  to={{
+                    pathname: "/results",
+                    state: { report } // ✅ Ensure report data is passed properly
+                  }} 
+                  className="text-blue-600 hover:underline">
+                  View Results
+                </Link>
+
                 </td>
               </tr>
             ))

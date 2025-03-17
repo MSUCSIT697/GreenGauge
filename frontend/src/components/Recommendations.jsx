@@ -61,7 +61,7 @@ export const generateRecommendations = (emissionsData = {}) => {
 // ✅ Main Recommendation System Component
 const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
     const [error, setError] = useState(false);
-    const [recommendations, setRecommendations] = useState(storedRecommendations);
+    const [recommendations, setRecommendations] = useState([]);
 
     useEffect(() => {
         if (!emissions || typeof emissions !== "object" || Object.keys(emissions).length === 0) {
@@ -70,9 +70,10 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
         }
 
         try {
-            if (!storedRecommendations.length) {
-                setRecommendations(generateRecommendations(emissions)); // ✅ Now correctly references the function
-            }
+            setRecommendations(storedRecommendations.length > 0 
+                ? storedRecommendations 
+                : generateRecommendations(emissions).slice(0, 3) // ✅ Fix: Limit to 3
+            );
         } catch (err) {
             console.error("🚨 Error generating recommendations:", err);
             setError(true);
@@ -90,8 +91,6 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
                     <li>Reduce car trips by carpooling or using public transport.</li>
                     <li>Switch to LED bulbs for energy efficiency.</li>
                     <li>Eat more plant-based meals to lower carbon impact.</li>
-                    <li>Opt for digital receipts instead of paper.</li>
-                    <li>Recycle properly to minimize waste.</li>
                 </ul>
             </div>
         );

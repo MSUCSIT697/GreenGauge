@@ -39,11 +39,12 @@ export function ResultsProvider({ children }) {
       const data = await response.json();
       console.log("✅ Retrieved results:", data);
 
-      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+      if (!hasFetchedResults) {
         setResults(data.results || []);
         setEmissionsHistory(data.results.map((r) => r.total_emissions));
-        setHasFetchedResults(true); // ✅ Mark results as fetched
-      }
+    }
+    setHasFetchedResults(true); // ✅ This should be outside the if condition
+    
     } catch (error) {
       console.error("🚨 Error fetching user results:", error);
     }
@@ -57,21 +58,21 @@ export function ResultsProvider({ children }) {
   // ✅ Function to update results dynamically
   const updateResults = async (newResult = null, source = "manual") => {
     if (newResult) {
-      const updatedResult = {
-        ...newResult,
-        source: source || "manual", // ✅ Ensure source is either "manual" or "upload"
-        recommendations: generateRecommendations(newResult.emissions),
-      };
+        const updatedResult = {
+            ...newResult,
+            source: source || "manual", // ✅ Ensure source is either "manual" or "upload"
+            recommendations: generateRecommendations(newResult.emissions),
+        };
 
-      setResults((prevResults) => {
-        const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
-        return isDuplicate ? prevResults : [updatedResult, ...prevResults];
-      });
+        setResults((prevResults) => {
+            return [updatedResult, ...prevResults.filter(r => r.create_ts !== updatedResult.create_ts)];
+        });
 
-      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
-      console.log("✅ Updated results and emissions history:", updatedResult);
+        setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
+        console.log("✅ Updated results and emissions history:", updatedResult);
     }
-  };
+};
+
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory, fetchUserResults }}>

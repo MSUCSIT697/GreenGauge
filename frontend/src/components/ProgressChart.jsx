@@ -18,9 +18,10 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     { date: "2025-02-15", value: 350 },
   ];
 
-  // ✅ Only use defaultData if the user has not made a manual calculation or upload
-  const hasUserData = data.some(entry => entry.source === "manual" || entry.source === "upload");
+  // ✅ Only use default data if the user has NOT made a calculation or upload
+  const hasUserData = data.length > 0; // ✅ Fix: Simply check if user data exists
   let allData = hasUserData ? [...data] : defaultData;
+
 
 
   // ✅ Sort data chronologically
