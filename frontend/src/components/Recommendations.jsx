@@ -43,16 +43,19 @@ export const generateRecommendations = (emissionsData = {}) => {
         }
     };
 
-    return Object.keys(emissionsData).flatMap(category => {
+    const allSuggestions = Object.keys(emissionsData).flatMap(category => {
         const userValue = emissionsData[category] ?? 0;
         const avgData = categoryAverages[category] || { min: 0, avg: 0, max: 0 };
-
+    
         if (!suggestions[category]) return [];
         if (userValue < avgData.min) return suggestions[category].positive;
         if (userValue < avgData.avg) return suggestions[category].moderate;
         return suggestions[category].strong;
     });
-};
+    
+    // ✅ Select only 3 random suggestions
+    return allSuggestions.sort(() => 0.5 - Math.random()).slice(0, 3);
+};    
 
 
 // ✅ Main Recommendation System Component
@@ -95,18 +98,15 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
     }
 
     return (
-        <div className="p-4 bg-gray-100 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-2">Your Carbon Footprint Report & Recommendations</h2>
-            <ul className="list-disc pl-4">
-                {recommendations.length > 0 ? (
-                    recommendations.map((rec, index) => (
-                        <li key={index} className="text-gray-700">- {rec}</li>
-                    ))
-                ) : (
-                    <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
-                )}
-            </ul>
-        </div>
+        <ul className="list-disc pl-4">
+            {recommendations.length > 0 ? (
+                recommendations.map((rec, index) => (
+                    <li key={index} className="text-gray-700">- {rec}</li>
+                ))
+            ) : (
+                <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
+            )}
+        </ul>
     );
 };
 
