@@ -25,9 +25,8 @@ export default function Results() {
     "Food": 209,
     "Retail": 209
   };
-  
 
-  // ✅ Fetch results only if not already stored
+  // ✅ Fixed useEffect (Prevents Infinite Loop)
   useEffect(() => {
     if (results.length > 0) {
       console.log("✅ Using cached results from context.");
@@ -63,7 +62,9 @@ export default function Results() {
         }
 
         setUserResults(data.results[0] || null); // ✅ Store latest result
-        updateResults(data.results[0]); // ✅ Cache results
+        if (results.length === 0) { // ✅ Prevent multiple updates
+          updateResults(data.results[0]); 
+        }
         setError(null);
       } catch (err) {
         console.error("🚨 Error fetching user results:", err);
@@ -74,7 +75,7 @@ export default function Results() {
     };
 
     fetchResults();
-  }, [results, navigate, updateResults]);
+  }, [navigate]); // ✅ Remove `updateResults` from dependencies
 
   // ✅ Pie Chart Data
   const pieData = {
@@ -128,7 +129,6 @@ export default function Results() {
               ))}
             </ul>
           </div>
-
 
           {/* ✅ Personalized Recommendations */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
