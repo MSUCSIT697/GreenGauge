@@ -133,14 +133,14 @@ def categorize_only(df):
 def process_pdf(file_stream):
     """Main processing function"""
     try:
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
-            # Write PDF content to temp file
-            tmp.write(file_stream.read())
-            tmp.seek(0)
-            
-            # Extract text
-            all_text = extract_text_from_pdf(tmp.name)
-            
+        # Pass the file stream directly to pdfplumber
+        with pdfplumber.open(file_stream) as pdf:
+            all_text = ""
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    all_text += text + "\n"
+                    
             # Parse transactions
             transactions = parse_transactions(all_text)
             

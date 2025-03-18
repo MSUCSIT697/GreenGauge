@@ -216,10 +216,19 @@ def handle_upload():
     file = request.files['pdf']
     try:
         result = process_pdf(file.stream)
+        
+        # Check if result contains an error
+        if 'error' in result:
+            return jsonify({"error": result['error']}), 400
+            
+        # Check if transactions key exists
+        if 'transactions' not in result:
+            return jsonify({"error": "Processing failed: No transactions found"}), 400
+            
         return jsonify({
             "status": "success",
             "data": result['transactions'],
-            "total_spent": result['total_spent']
+            "total_spent": result.get('total_spent', 0)
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
