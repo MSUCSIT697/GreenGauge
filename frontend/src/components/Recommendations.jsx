@@ -71,22 +71,15 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
     useEffect(() => {
         console.log("📌 Checking emissions before processing:", emissions);
     
-        if (!emissions || typeof emissions !== "object") {
-            console.warn("⚠️ Emissions data is invalid. Setting error.");
-            setError(true);
-            return;
-        }
-    
-        if (Object.keys(emissions).length === 0) {
-            console.warn("⚠️ Emissions object is empty. No recommendations available.");
-            setRecommendations([]);
-            return;
+        if (!emissions || typeof emissions !== "object" || Object.keys(emissions).length === 0) {
+            console.warn("⚠️ Emissions data is empty or invalid. Skipping recommendations.");
+            return; // ✅ Prevents unnecessary re-renders
         }
     
         try {
             const newRecommendations = storedRecommendations.length > 0 
                 ? storedRecommendations 
-                : generateRecommendations(emissions).slice(0, 3); // ✅ Fix: Limit to 3
+                : generateRecommendations(emissions).slice(0, 3); 
             
             console.log("📌 Generated recommendations:", newRecommendations);
             setRecommendations(newRecommendations);
@@ -94,7 +87,8 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
             console.error("🚨 Error generating recommendations:", err);
             setError(true);
         }
-    }, [emissions, storedRecommendations]);
+    }, [JSON.stringify(emissions), JSON.stringify(storedRecommendations)]); // ✅ Prevents unnecessary re-renders
+    
     
 
     if (error) {
