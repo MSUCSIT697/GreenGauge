@@ -219,9 +219,7 @@ def handle_upload():
         return jsonify({
             "status": "success",
             "data": result['transactions'],
-            "totals": result['totals'],
-            "footprint": result['footprint'],
-            "dates": result['dates']
+            "total_spent": result['total_spent']
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
