@@ -116,7 +116,7 @@ def calculate_waste_emissions(data):
         total_emissions += float(convert_to_zero(amount)) * waste_factor
     return total_emissions * 4  # Multiply by 4 to get monthly emissions
 
-def save_to_database(data, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id):
+def save_to_database(data, total_emissions, food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, profile_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
