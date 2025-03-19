@@ -41,48 +41,52 @@ export default function Dashboard() {
   const fetchResults = async () => {
     console.log("Fetching user results...");
 
-    if (!isLoggedIn) { // Use isLoggedIn from AuthContext
-      console.warn("⚠️ User is not logged in, prompting login.");
-      setShowLoginModal(true);
-      return;
+    if (!isLoggedIn) {
+        console.warn("⚠️ User is not logged in, prompting login.");
+        setShowLoginModal(true);
+        return;
     }
 
     try {
-      const token = localStorage.getItem("token"); // Still use localStorage for the token
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.warn("⚠️ No token found. Skipping fetch.");
+            return;
         }
-      });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.warn("⚠️ Unauthorized! Redirecting to login...");
-          navigate("/sign-in");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn("⚠️ Unauthorized! Redirecting to login...");
+                navigate("/sign-in");
+            }
+            throw new Error(`API request failed with status ${response.status}`);
         }
-        throw new Error(`API request failed with status ${response.status}`);
-      }
 
-      const data = await response.json();
-      console.log("✅ Retrieved user results:", data);
+        const data = await response.json();
+        console.log("✅ Retrieved user results:", data);
 
-      // ✅ Check if results have changed before updating state
-      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
-        updateResults(data.results || []);
-        fetchResults(); // Force re-fetch to update dashboard
-
-      }
+        // ✅ Only update state if data has changed
+        if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+            updateResults(data.results || []);
+        }
     } catch (error) {
-      console.error("🚨 Error fetching user results:", error);
+        console.error("🚨 Error fetching user results:", error);
     }
-  };
+};
 
-  // ✅ Run this only once when the page loads
-  useEffect(() => {
+// ✅ Fetch results only ONCE when the component mounts
+useEffect(() => {
     fetchResults();
-  }, [isLoggedIn]); // Re-fetch results if isLoggedIn changes
+}, []); // ✅ Empty dependency array ensures it runs only once
+
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {

@@ -8,6 +8,7 @@ export function ResultsProvider({ children }) {
   const [results, setResults] = useState([]);
   const [emissionsHistory, setEmissionsHistory] = useState([]);
   const [hasFetchedResults, setHasFetchedResults] = useState(false);
+  const [isFetching, setIsFetching] = useState(false); // ✅ Prevents multiple API calls
   const navigate = useNavigate();
 
   // ✅ Logout function moved above fetchUserResults()
@@ -23,13 +24,14 @@ export function ResultsProvider({ children }) {
 
   // ✅ Fetch stored results from backend
   const fetchUserResults = async () => {
-    if (hasFetchedResults) return; // ✅ Prevent duplicate fetches
+    if (hasFetchedResults || isFetching) return; // ✅ Prevent duplicate fetches
+    setIsFetching(true);
 
     const token = localStorage.getItem("token");
-
     if (!token) {
       console.warn("⚠️ No authentication token found.");
       navigate("/sign-in"); // ✅ Redirect to login if no token
+      setIsFetching(false);
       return;
     }
 
@@ -49,8 +51,7 @@ export function ResultsProvider({ children }) {
       if (!response.ok) {
         if (response.status === 401) {
           console.warn("⚠️ Unauthorized! Logging out...");
-          logoutUser(); // ✅ Redirect on 401
-          return;
+          logoutUser();
         }
         throw new Error(`API request failed with status ${response.status}`);
       }
@@ -66,18 +67,18 @@ export function ResultsProvider({ children }) {
             : {},
           recommendations: Array.isArray(r.recommendations) ? r.recommendations : [],
         }));
-        
-      
+
         console.log("✅ Processed Results with Emissions:", formattedResults);
-      
+
         setResults(formattedResults);
         setEmissionsHistory(formattedResults.map((r) => r.total_emissions ?? 0));
         setHasFetchedResults(true);
         localStorage.setItem("userResults", JSON.stringify(formattedResults)); // ✅ Store formatted results
       }
-      
     } catch (error) {
       console.error("🚨 Error fetching user results:", error);
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -87,8 +88,9 @@ export function ResultsProvider({ children }) {
       const storedResults = localStorage.getItem("userResults");
       if (storedResults) {
         console.log("✅ Loaded results from localStorage.");
-        setResults(JSON.parse(storedResults));
-        setEmissionsHistory(JSON.parse(storedResults).map((r) => r.total_emissions));
+        const parsedResults = JSON.parse(storedResults);
+        setResults(parsedResults);
+        setEmissionsHistory(parsedResults.map((r) => r.total_emissions));
         setHasFetchedResults(true);
       } else {
         await fetchUserResults();
@@ -103,35 +105,31 @@ export function ResultsProvider({ children }) {
       console.warn("⚠️ Skipping update: No valid emissions data in newResult.");
       return; // ✅ Prevent storing empty emissions
     }
-  
+
     const updatedResult = {
       ...newResult,
       source: source || "manual",
       recommendations: generateRecommendations(newResult.emissions),
       create_ts: newResult.create_ts || new Date().toISOString(), // ✅ Ensure timestamp exists
     };
-  
+
     console.log("📝 Storing updated result with recommendations:", updatedResult);
-  
+
     setResults((prevResults) => {
-      const isDuplicate = prevResults.some(
-        (r) => r.create_ts && r.create_ts === updatedResult.create_ts
-      );
-  
+      const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
       if (isDuplicate) {
         console.warn("⚠️ Skipping duplicate entry.");
         return prevResults;
       }
-  
+
       const updatedResults = [updatedResult, ...prevResults];
       localStorage.setItem("userResults", JSON.stringify(updatedResults)); // ✅ Persist results
       return updatedResults;
     });
-  
+
     setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
     console.log("✅ Updated results and stored in localStorage:", updatedResult);
   };
-  
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory, fetchUserResults, logoutUser }}>
