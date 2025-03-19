@@ -71,12 +71,48 @@ export default function Results() {
     }
 
     // If no stored results, fetch from API
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Session expired. Please log in again.");
-      navigate("/login");
-      return;
-    }
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+    
+      if (!token) {
+        console.warn("⚠️ No authentication token found.");
+        setError("Session expired. Please log in.");
+        navigate("/sign-in");
+        return;
+      }
+    
+      const fetchResults = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          });
+    
+          if (!response.ok) {
+            if (response.status === 401) {
+              console.warn("⚠️ Unauthorized! Redirecting to login...");
+              navigate("/sign-in");
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+    
+          const data = await response.json();
+          console.log("✅ Retrieved user results:", data);
+          if (data.results) setUserResults(data.results.find(r => r.create_ts === reportId) || null);
+        } catch (err) {
+          console.error("🚨 Error fetching user results:", err);
+          setError("Failed to fetch results.");
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      fetchResults();
+    }, [navigate, reportId]);
+    
 
     const fetchResults = async () => {
       try {
