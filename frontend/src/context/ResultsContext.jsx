@@ -96,26 +96,39 @@ export function ResultsProvider({ children }) {
   }, []); // ✅ Runs only once when the component mounts
 
   const updateResults = async (newResult = null, source = "manual") => {
-    if (newResult) {
-      const updatedResult = {
-        ...newResult,
-        source: source || "manual",
-        recommendations: generateRecommendations(newResult.emissions),
-      };
-      console.log("📝 Storing updated result with recommendations:", updatedResult);
-
-      setResults((prevResults) => {
-        const isDuplicate = prevResults.some((r) => r.create_ts === updatedResult.create_ts);
-        const updatedResults = isDuplicate ? prevResults : [updatedResult, ...prevResults];
-
-        localStorage.setItem("userResults", JSON.stringify(updatedResults)); // ✅ Persist results
-        return updatedResults;
-      });
-
-      setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
-      console.log("✅ Updated results and stored in localStorage:", updatedResult);
+    if (!newResult || !newResult.emissions || Object.keys(newResult.emissions).length === 0) {
+      console.warn("⚠️ Skipping update: No valid emissions data in newResult.");
+      return; // ✅ Prevent storing empty emissions
     }
+  
+    const updatedResult = {
+      ...newResult,
+      source: source || "manual",
+      recommendations: generateRecommendations(newResult.emissions),
+      create_ts: newResult.create_ts || new Date().toISOString(), // ✅ Ensure timestamp exists
+    };
+  
+    console.log("📝 Storing updated result with recommendations:", updatedResult);
+  
+    setResults((prevResults) => {
+      const isDuplicate = prevResults.some(
+        (r) => r.create_ts && r.create_ts === updatedResult.create_ts
+      );
+  
+      if (isDuplicate) {
+        console.warn("⚠️ Skipping duplicate entry.");
+        return prevResults;
+      }
+  
+      const updatedResults = [updatedResult, ...prevResults];
+      localStorage.setItem("userResults", JSON.stringify(updatedResults)); // ✅ Persist results
+      return updatedResults;
+    });
+  
+    setEmissionsHistory((prev) => [...prev, updatedResult.total_emissions]);
+    console.log("✅ Updated results and stored in localStorage:", updatedResult);
   };
+  
 
   return (
     <ResultsContext.Provider value={{ results, updateResults, emissionsHistory, fetchUserResults, logoutUser }}>

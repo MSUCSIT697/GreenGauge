@@ -29,53 +29,67 @@ export default function Results() {
   // ✅ Fixed useEffect (Prevents Infinite Loop)
   useEffect(() => {
     if (results.length > 0) {
-      console.log("✅ Using cached results from context.");
-      setUserResults(results[0]); // ✅ Display latest result
-      setLoading(false);
-      return;
+        console.log("✅ Loading results from context.");
+        setUserResults(results[0]);
+        setLoading(false);
+        return;
     }
 
+    console.log("🔍 Checking local storage for past results.");
+    const storedResults = localStorage.getItem("userResults");
+    if (storedResults) {
+        const parsedResults = JSON.parse(storedResults);
+        if (parsedResults.length > 0) {
+            console.log("✅ Loaded results from local storage:", parsedResults[0]);
+            setUserResults(parsedResults[0]);
+            setLoading(false);
+            return;
+        }
+    }
+
+    // If no stored results, fetch from API
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Session expired. Please log in again.");
-      navigate("/login");
-      return;
+        alert("Session expired. Please log in again.");
+        navigate("/login");
+        return;
     }
 
     const fetchResults = async () => {
-      try {
-        console.log("Fetching user results...");
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        try {
+            console.log("Fetching user results...");
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("✅ Received results from API:", data);
+
+            if (data.error) {
+                setError(data.error);
+                return;
+            }
+
+            setUserResults(data.results[0] || null);
+            if (results.length === 0) {
+                updateResults(data.results[0]);
+            }
+            setError(null);
+        } catch (err) {
+            console.error("🚨 Error fetching user results:", err);
+            setError("Failed to fetch results.");
+        } finally {
+            setLoading(false);
         }
-
-        const data = await response.json();
-        console.log("✅ Received results from API:", data);
-
-        if (data.error) {
-          setError(data.error);
-          return;
-        }
-
-        setUserResults(data.results[0] || null); // ✅ Store latest result
-        if (results.length === 0) { // ✅ Prevent multiple updates
-          updateResults(data.results[0]); 
-        }
-        setError(null);
-      } catch (err) {
-        console.error("🚨 Error fetching user results:", err);
-        setError("Failed to fetch results.");
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchResults();
-  }, [navigate]); // ✅ Remove `updateResults` from dependencies
+}, [results, navigate]); // ✅ Now listens for `results` changes and handles local storage
+
 
   // ✅ Pie Chart Data
   const pieData = {
@@ -120,13 +134,21 @@ export default function Results() {
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold pb-2">Category Comparison: You vs. US Average</h2>
             <ul className="list-disc pl-5 text-gray-700">
-              {Object.entries(userResults?.emissions_by_category || {}).map(([category, value], index) => (
-                <li key={index} className="mb-2">
-                  <strong>{category}: </strong> 
-                  <span className="text-green-600">{value} kg CO₂ (You) </span> |  
-                  <span className="text-gray-500"> {USA_AVG_CATEGORY[category]} kg CO₂ (US Avg)</span>
-                </li>
-              ))}
+              {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
+                const userValue = userResults?.emissions_by_category?.[category] ?? 0;
+                const usAvgValue = USA_AVG_CATEGORY[category];
+
+                return (
+                  <li key={index} className="mb-2">
+                    <strong>{category}: </strong> 
+                    <span className={userValue > usAvgValue ? "text-red-600" : "text-green-600"}>
+                      {userValue} kg CO₂ (You)
+                    </span> 
+                    |
+                    <span className="text-gray-500"> {usAvgValue} kg CO₂ (US Avg)</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

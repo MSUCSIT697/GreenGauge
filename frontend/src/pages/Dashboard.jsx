@@ -16,7 +16,12 @@ export default function Dashboard() {
 
   const roundToThousandths = (num) => (num ? Number(num.toFixed(3)) : 0);
 
-  const latestReport = results.length > 0 ? results[0] : null;
+  const latestReport = results.length > 0 ? results[0] : {
+    emissions: {}, 
+    total_emissions: 0, 
+    recommendations: []
+  };
+  
 
   console.log("✅ Latest Report for Recommendations:", latestReport);
   console.log("✅ Emissions Data Passed:", latestReport?.emissions);
@@ -61,6 +66,8 @@ export default function Dashboard() {
       // ✅ Check if results have changed before updating state
       if (JSON.stringify(results) !== JSON.stringify(data.results)) {
         updateResults(data.results || []);
+        fetchResults(); // Force re-fetch to update dashboard
+        
       }
     } catch (error) {
         console.error("🚨 Error fetching user results:", error);
@@ -128,21 +135,24 @@ export default function Dashboard() {
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
-            {(latestReport?.emissions || []).map((item, index) => (
-              <li key={index} className="flex justify-between items-center px-4">
-                <span className="text-gray-700 flex-1 text-left">{item.category}</span>
-                <span className="text-gray-500 w-16 text-right">{item.value}</span>
-              </li>
-            ))}
-
-            {(!latestReport || !latestReport.emissions) &&
+            {Object.keys(latestReport?.emissions || {}).length > 0 ? (
+              Object.entries(latestReport?.emissions || {}).map(([category, value], index) => (
+                <li key={index} className="flex justify-between items-center px-4">
+                  <span className="text-gray-700 flex-1 text-left">{category}</span>
+                  <span className="text-gray-500 w-16 text-right">{value}</span>
+                </li>
+              ))
+            ) : (
+              // ✅ If no emissions data, show default categories with "0"
               ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
                 <li key={index} className="flex justify-between items-center px-4">
                   <span className="text-gray-700 flex-1 text-left">{category}</span>
                   <span className="text-gray-500 w-16 text-right">0</span>
                 </li>
-              ))}
+              ))
+            )}
           </ul>
+
         </div>
 
         {/* ✅ Recommendations Section */}
