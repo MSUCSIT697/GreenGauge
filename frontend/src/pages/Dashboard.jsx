@@ -23,16 +23,18 @@ export default function Dashboard() {
     total_emissions: 0, 
     recommendations: []
   };
-  
+
 
   console.log("✅ Latest Report for Recommendations:", latestReport);
   console.log("✅ Emissions Data Passed:", latestReport?.emissions);
   console.log("✅ Stored Recommendations:", latestReport?.recommendations);
 
-  // ✅ Ensure emissions are passed correctly
-  const emissionsData = Array.isArray(latestReport?.emissions) 
-    ? Object.fromEntries(latestReport.emissions.map(({ category, value }) => [category, value])) 
-    : latestReport.emissions;
+  // ✅ Ensure emissions data is always in { category: value } format
+  const emissionsData = latestReport?.emissions
+    ? Array.isArray(latestReport.emissions)
+        ? Object.fromEntries(latestReport.emissions.map(({ category, value }) => [category, value]))
+        : { ...latestReport.emissions }
+    : {};
 
   console.log("✅ Corrected Emissions Data:", emissionsData);
 
@@ -42,50 +44,53 @@ export default function Dashboard() {
     console.log("Fetching user results...");
 
     if (!isLoggedIn) {
-        console.warn("⚠️ User is not logged in, prompting login.");
-        setShowLoginModal(true);
-        return;
+      console.warn("⚠️ User is not logged in, prompting login.");
+      setShowLoginModal(true);
+      return;
     }
 
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.warn("⚠️ No token found. Skipping fetch.");
-            return;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No token found. Skipping fetch.");
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         }
+      });
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.warn("⚠️ Unauthorized! Redirecting to login...");
-                navigate("/sign-in");
-            }
-            throw new Error(`API request failed with status ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.warn("⚠️ Unauthorized! Redirecting to login...");
+          navigate("/sign-in");
         }
+        throw new Error(`API request failed with status ${response.status}`);
+      }
 
-        const data = await response.json();
-        console.log("✅ Retrieved user results:", data);
+      const data = await response.json();
+      console.log("✅ Retrieved user results:", data);
 
         // ✅ Only update state if data has changed
-        if (JSON.stringify(results) !== JSON.stringify(data.results)) {
-            updateResults(data.results || []);
-        }
+      if (JSON.stringify(results) !== JSON.stringify(data.results)) {
+        updateResults(data.results || []);
+      }
     } catch (error) {
-        console.error("🚨 Error fetching user results:", error);
+      console.error("🚨 Error fetching user results:", error);
     }
-};
+  };
 
 // ✅ Fetch results only ONCE when the component mounts
-useEffect(() => {
-    fetchResults();
-}, []); // ✅ Empty dependency array ensures it runs only once
+  useEffect(() => {
+    if (results.length === 0 && isLoggedIn) {
+        console.log("🔄 Fetching user results...");
+        fetchResults();
+    }
+  }, [results, isLoggedIn]); // ✅ Fetch only when `results` or `isLoggedIn` changes
 
 
   // ✅ Update progress tracker when `results` change
@@ -169,25 +174,17 @@ useEffect(() => {
           {console.log("✅ Latest Report for Recommendations:", latestReport)}
           {console.log("✅ Emissions Data Passed:", latestReport?.emissions)}
           {console.log("✅ Stored Recommendations:", latestReport?.recommendations)}
-          {latestReport ? (
-            <RecommendationSystem 
-              emissions={emissionsData} 
-              storedRecommendations={Array.isArray(latestReport.recommendations) ? latestReport.recommendations : []} 
-            />
-          ) : (
-            <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
-          )}
-
-
-
-          
+          <RecommendationSystem 
+            emissions={emissionsData} 
+            storedRecommendations={Array.isArray(latestReport.recommendations) ? latestReport.recommendations : []} 
+          />
         </div>
       </div>
 
       {/* ✅ Progress Tracker */}
       <div className="bg-white rounded-lg shadow-md p-6 pb-16 mt-4">
         <h2 className="font-semibold text-gray-900">Progress Tracker:</h2>
-        <ProgressChart data={progressData} maxScale={1000} />
+        <ProgressChart data={progressData} maxScale={2000} />
       </div>
 
       <div className="flex justify-center space-x-4 mt-6">

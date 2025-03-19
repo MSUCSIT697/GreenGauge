@@ -26,7 +26,7 @@ export default function Results() {
     "Retail": 209
   };
 
-  // ✅ Fixed useEffect (Prevents Infinite Loop)
+  // ✅ Fetch & Load Results Properly
   useEffect(() => {
     if (results.length > 0) {
         console.log("✅ Loading results from context.");
@@ -88,23 +88,29 @@ export default function Results() {
     };
 
     fetchResults();
-}, [results, navigate]); // ✅ Now listens for `results` changes and handles local storage
+}, [results, navigate]); // ✅ Prevents infinite loop
 
+// ✅ Properly Format Emissions Data
+const formattedEmissions = userResults?.emissions
+    ? Array.isArray(userResults.emissions)
+        ? Object.fromEntries(userResults.emissions.map(({ category, value }) => [category, value]))
+        : { ...userResults.emissions }
+    : {};
 
-  // ✅ Pie Chart Data
-  const pieData = {
+console.log("✅ Processed Emissions for Recommendations:", formattedEmissions);
+
+// ✅ Pie Chart Data
+const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults?.emissions_by_category
-          ? Object.values(userResults.emissions_by_category)
-          : [0, 0, 0, 0, 0], 
+        data: Object.values(formattedEmissions), 
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
-  };
+};
 
-  return (
+return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
@@ -159,7 +165,10 @@ export default function Results() {
           {/* ✅ Personalized Recommendations */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Personalized Recommendations</h2>
-            <RecommendationSystem emissions={userResults?.emissions_by_category || {}} />
+            <RecommendationSystem 
+                emissions={formattedEmissions} 
+                storedRecommendations={Array.isArray(userResults?.recommendations) ? userResults.recommendations : []} 
+            />
           </div>
 
           {/* ✅ Pie Chart for Emissions Breakdown */}
