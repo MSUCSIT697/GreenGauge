@@ -200,6 +200,44 @@ export default function Results() {
             </div>
           </div>
 
+          {/* ✅ Category Comparison: User vs. US Average */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+            <h2 className="font-semibold pb-2 text-gray-900">Category Comparison: You vs. US Average</h2>
+            <div className="grid grid-cols-2 gap-6">
+              {/* ✅ User Emissions Breakdown */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">Your Emissions</h3>
+                <ul className="list-disc pl-5 text-gray-700">
+                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
+                    const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
+                    const userValue = userCategoryData ? userCategoryData.value : 0;
+                    
+                    return (
+                      <li key={index} className="mb-2">
+                        <strong>{category}: </strong> 
+                        <span className="text-gray-900">{userValue} kg CO₂</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              {/* ✅ US Average Breakdown */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">US Average</h3>
+                <ul className="list-disc pl-5 text-gray-700">
+                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => (
+                    <li key={index} className="mb-2">
+                      <strong>{category}: </strong> 
+                      <span className="text-gray-500">{USA_AVG_CATEGORY[category]} kg CO₂</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+
           {/* ✅ Personalized Recommendations */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Personalized Recommendations</h2>
