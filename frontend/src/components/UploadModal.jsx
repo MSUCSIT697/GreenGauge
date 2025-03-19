@@ -11,74 +11,86 @@ export default function UploadModal({ isOpen, onClose }) {
   const [successModal, setSuccessModal] = useState(false);
 
   const handleUpload = async () => {
-    if (files.length === 0) return alert("Please select a PDF to upload.");
-    
+    if (files.length === 0) {
+      alert("Please select a PDF to upload.");
+      return;
+    }
+  
     setUploading(true);
-    
     const formData = new FormData();
     files.forEach((file) => formData.append("pdf", file));
-
+  
     try {
+      // ✅ Upload the PDF file to the server
       const response = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
         method: "POST",
         body: formData,
       });
-
+  
       const data = await response.json();
-
-      if (response.ok) {
-        console.log("✅ PDF upload successful:", data.data);
-
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.warn("⚠️ No authentication token found. Redirecting to sign-in.");
-          navigate("/signin");
-          return;
-        }
-
-        const api_response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(data.data),
-        });
-    
-        const emission_response = await api_response.json();
-    
-        if (api_response.ok) {
-          console.log("✅ Calculation successful:", emission_response);
-    
-          // ✅ Update the results in context
-          updateResults(emission_response);
-    
-          // ✅ Show success message
-          setPopupMessage("✅ Calculation submitted successfully!");
-          setSuccessModal(true);
-        } else {
-          console.error("🚨 Calculation failed:", emission_response.error);
-          setPopupMessage("❌ Failed to calculate emissions. Please try again.");
-          setErrorModal(true);
-        }
+  
+      if (!response.ok) {
+        throw new Error(data.error || "PDF upload failed.");
       }
-      
-      const reportEntry = {
-        id: Date.now(), // Unique ID for tracking
-        uploadType: "pdf",
-        results: data,
-        date: new Date().toLocaleString()
+  
+      console.log("✅ PDF upload successful:", data.data);
+  
+      // ✅ Get authentication token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No authentication token found. Redirecting to sign-in.");
+        navigate("/signin");
+        return;
+      }
+  
+      // ✅ Send the uploaded data for emission calculation
+      const api_response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(data.data),
+      });
+  
+      const emission_response = await api_response.json();
+  
+      if (!api_response.ok) {
+        throw new Error(emission_response.error || "Failed to calculate emissions.");
+      }
+  
+      console.log("✅ Calculation successful:", emission_response);
+  
+      // ✅ Ensure the new result has a timestamp
+      const finalResult = {
+        ...emission_response,
+        create_ts: new Date().toISOString(), // Ensure a unique timestamp
+        source: "upload",
       };
-      
-      updateResults(reportEntry); // Update global state
-      onClose();
+  
+      // ✅ Store result and update state
+      const storedResults = JSON.parse(localStorage.getItem("userResults")) || [];
+      const updatedResults = [finalResult, ...storedResults];
+      localStorage.setItem("userResults", JSON.stringify(updatedResults));
+      updateResults(updatedResults);
+  
+      console.log("✅ Stored updated results:", updatedResults);
+  
+      // ✅ Show success message
+      setPopupMessage("✅ Calculation submitted successfully!");
+      setSuccessModal(true);
+  
+      // ✅ Redirect to the new result page
+      navigate(`/results/${finalResult.create_ts}`);
     } catch (error) {
-      console.error("🚨 Error uploading PDF:", error);
-      alert("Upload failed. Please try again.");
+      console.error("🚨 Error during upload and calculation:", error);
+      setPopupMessage(`❌ ${error.message}`);
+      setErrorModal(true);
     } finally {
       setUploading(false);
     }
   };
+  
 
   return (
     <div className={`modal ${isOpen ? "modal-open" : ""}`} onClick={onClose}>

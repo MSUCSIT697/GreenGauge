@@ -151,9 +151,9 @@ export default function Calculator() {
       console.log("🚨 Form is STILL INVALID. Blocking submission.");
       return;
     }
-
+  
     setConfirmModal(false);
-
+  
     // ✅ Construct the payload for the API
     const payload = {
       zip_code: zipCode,
@@ -163,14 +163,14 @@ export default function Calculator() {
       retail: formData.retail,
       waste: formData.waste,
     };
-
+  
     try {
       if (!isLoggedIn) { // Use isLoggedIn from AuthContext
         console.warn("⚠️ User is not logged in. Redirecting to sign-in.");
         navigate("/sign-in");
         return;
       }
-
+  
       const token = localStorage.getItem("token"); // Still use localStorage for the token
       const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
         method: "POST",
@@ -180,18 +180,32 @@ export default function Calculator() {
         },
         body: JSON.stringify(payload),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         console.log("✅ Calculation successful:", data);
-
-        // ✅ Update the results in context
-        updateResults(data);
-
-        // ✅ Show success message
-        setPopupMessage("✅ Calculation submitted successfully!");
-        setSuccessModal(true);
+  
+        // ✅ Construct new result object
+        const newResult = {
+          create_ts: new Date().toISOString(),
+          emissions: data.emissions, // ✅ Ensure API response includes emissions
+          total_emissions: data.total_emissions,
+          source: "manual",
+          recommendations: data.recommendations || [],
+        };
+  
+        // ✅ Store the new result in localStorage
+        const storedResults = JSON.parse(localStorage.getItem("userResults")) || [];
+        const updatedResults = [newResult, ...storedResults];
+        localStorage.setItem("userResults", JSON.stringify(updatedResults));
+        updateResults(updatedResults);
+  
+        console.log("✅ Stored updated results:", updatedResults);
+  
+        // ✅ Redirect to the correct result page
+        navigate(`/results/${newResult.create_ts}`);
+  
       } else {
         console.error("🚨 Calculation failed:", data.error);
         setPopupMessage("❌ Failed to calculate emissions. Please try again.");
@@ -203,6 +217,7 @@ export default function Calculator() {
       setErrorModal(true);
     }
   };
+  
 
 
 
