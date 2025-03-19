@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import JustGage from "justgage";
 import "raphael"; // Required for JustGage
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 export default function Home() {
   const [gauge, setGauge] = useState(null);
   const [userChoice, setUserChoice] = useState(null); // "yes" or "no"
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,18 +27,11 @@ export default function Home() {
       },
     });
     setGauge(newGauge);
-
-    // Check if the user is authenticated based on the token in localStorage
-    const token = localStorage.getItem('token');
-    if (token) {
-      // You can add extra validation for the token here, e.g., check expiry
-      setIsAuthenticated(true);
-    }
   }, []);
 
   // Function to handle button click
   const handleNavigation = () => {
-    if (isAuthenticated) {
+    if (isLoggedIn) {
       navigate('/calculator'); // Redirect to /calculator if signed in
     } else {
       navigate('/guest-calculator'); // Redirect to /guest-calculator if not signed in
@@ -118,23 +112,23 @@ export default function Home() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-center space-x-4 mt-6">
-      {!isAuthenticated ? (
-        <>
-          <Link to="/sign-in">
-            <button className="btn btn-primary">Sign In</button>
-          </Link>
-          <Link to="/create-account">
-            <button className="btn btn-primary">Create New Account</button>
-          </Link>
-          <Link to="/guest-calculator" className="btn btn-primary">
-            Try Calculator
-          </Link>
-        </>
-      ) : (
-        <button className="btn btn-primary" onClick={handleNavigation}>
-          Go to Calculator
-        </button>
-      )}
+        {!isLoggedIn ? ( // Use isLoggedIn from AuthContext
+          <>
+            <Link to="/sign-in">
+              <button className="btn btn-primary">Sign In</button>
+            </Link>
+            <Link to="/create-account">
+              <button className="btn btn-primary">Create New Account</button>
+            </Link>
+            <Link to="/guest-calculator" className="btn btn-primary">
+              Try Calculator
+            </Link>
+          </>
+        ) : (
+          <button className="btn btn-primary" onClick={handleNavigation}>
+            Go to Calculator
+          </button>
+        )}
       </div>
     </div>
   );

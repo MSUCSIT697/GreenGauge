@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom"; // ✅ Add useNavigate
 import GaugeChart from "../components/GaugeChart";
 import ProgressChart from "../components/ProgressChart";
 import UploadModal from "../components/UploadModal";
 import { useResults } from "../context/ResultsContext";
 import RecommendationSystem from "../components/Recommendations";
-import LoginPromptModal from "../components/LoginPromptModal"; 
+import LoginPromptModal from "../components/LoginPromptModal";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 export default function Dashboard() {
   const [progressData, setProgressData] = useState([]);
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { results, updateResults } = useResults();
   const navigate = useNavigate(); // ✅ Use navigate for handling unauthorized users
+  const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
 
   const roundToThousandths = (num) => (num ? Number(num.toFixed(3)) : 0);
 
@@ -26,11 +28,11 @@ export default function Dashboard() {
   console.log("✅ Latest Report for Recommendations:", latestReport);
   console.log("✅ Emissions Data Passed:", latestReport?.emissions);
   console.log("✅ Stored Recommendations:", latestReport?.recommendations);
-  
+
   // ✅ Ensure emissions are passed correctly
   const emissionsData = Array.isArray(latestReport?.emissions) 
-  ? Object.fromEntries(latestReport.emissions.map(({ category, value }) => [category, value])) 
-  : latestReport.emissions;
+    ? Object.fromEntries(latestReport.emissions.map(({ category, value }) => [category, value])) 
+    : latestReport.emissions;
 
   console.log("✅ Corrected Emissions Data:", emissionsData);
 
@@ -38,51 +40,49 @@ export default function Dashboard() {
   // ✅ Move this function OUTSIDE useEffect to prevent re-creation
   const fetchResults = async () => {
     console.log("Fetching user results...");
-    const token = localStorage.getItem("token");
 
-    if (!token) {
-        console.warn("⚠️ No token found, prompting login.");
-        setShowLoginModal(true);
-        return;
+    if (!isLoggedIn) { // Use isLoggedIn from AuthContext
+      console.warn("⚠️ User is not logged in, prompting login.");
+      setShowLoginModal(true);
+      return;
     }
 
     try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.warn("⚠️ Unauthorized! Redirecting to login...");
-                navigate("/sign-in");
-            }
-            throw new Error(`API request failed with status ${response.status}`);
+      const token = localStorage.getItem("token"); // Still use localStorage for the token
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         }
+      });
 
-        const data = await response.json();
-        console.log("✅ Retrieved user results:", data);
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.warn("⚠️ Unauthorized! Redirecting to login...");
+          navigate("/sign-in");
+        }
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Retrieved user results:", data);
 
       // ✅ Check if results have changed before updating state
       if (JSON.stringify(results) !== JSON.stringify(data.results)) {
         updateResults(data.results || []);
         fetchResults(); // Force re-fetch to update dashboard
-        
+
       }
     } catch (error) {
-        console.error("🚨 Error fetching user results:", error);
+      console.error("🚨 Error fetching user results:", error);
     }
   };
 
   // ✅ Run this only once when the page loads
   useEffect(() => {
     fetchResults();
-  }, []);
-
-
+  }, [isLoggedIn]); // Re-fetch results if isLoggedIn changes
 
   // ✅ Update progress tracker when `results` change
   useEffect(() => {
@@ -90,21 +90,21 @@ export default function Dashboard() {
     if (results.length === 0) return;
 
     const userGeneratedResults = results.filter((result) => result.source === "manual" || result.source === "upload");
-    
+
     console.log("✅ User-generated results:", userGeneratedResults);
 
     if (userGeneratedResults.length > 0) {
-        setProgressData(
-            userGeneratedResults.map((result) => ({
-                date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
-                value: result.total_emissions ?? 0,
-            }))
-        );
+      setProgressData(
+        userGeneratedResults.map((result) => ({
+          date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
+          value: result.total_emissions ?? 0,
+        }))
+      );
     }
-}, [results]); 
+  }, [results]);
 
 
-  
+
 
   return (
     <div className="p-6">
@@ -138,14 +138,14 @@ export default function Dashboard() {
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
-          {Object.entries(emissionsData).length > 0 ? (
-            Object.entries(emissionsData).map(([category, value], index) => (
-              <li key={index} className="flex justify-between items-center px-4">
-                <span className="text-gray-700 flex-1 text-left">{category}</span>
-                <span className="text-gray-500 w-16 text-right">{value}</span>
-              </li>
-            ))
-          ) : (
+            {Object.entries(emissionsData).length > 0 ? (
+              Object.entries(emissionsData).map(([category, value], index) => (
+                <li key={index} className="flex justify-between items-center px-4">
+                  <span className="text-gray-700 flex-1 text-left">{category}</span>
+                  <span className="text-gray-500 w-16 text-right">{value}</span>
+                </li>
+              ))
+            ) : (
 
               ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
                 <li key={index} className="flex justify-between items-center px-4">
@@ -176,8 +176,8 @@ export default function Dashboard() {
 
 
 
-
-      </div>
+          
+        </div>
       </div>
 
       {/* ✅ Progress Tracker */}
@@ -202,6 +202,7 @@ export default function Dashboard() {
       </div>
 
       <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
+      <LoginPromptModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

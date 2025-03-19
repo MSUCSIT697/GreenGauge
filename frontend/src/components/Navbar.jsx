@@ -1,35 +1,20 @@
-import { useState, useEffect } from "react";
+// Navbar.jsx
+import React, { useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const { isLoggedIn, handleLogout } = useContext(AuthContext); // Use AuthContext
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setIsLoggedIn(!!localStorage.getItem("token"));
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token
-    setIsLoggedIn(false); // Update state immediately
-    navigate("/"); // Redirect to homepage
-  };
 
   const menuItems = [
     { name: "Home", path: "/" },
     { name: "Dashboard", path: "/dashboard" },
-    { name: "Calculator", path: "/calculator" },
+    { name: "Calculator", path: isLoggedIn ? "/calculator" : "/guest-calculator" },
     { name: "FAQs", path: "/faqs" },
   ];
 

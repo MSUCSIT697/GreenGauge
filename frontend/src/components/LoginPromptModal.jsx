@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 export default function LoginPromptModal({ onClose }) {
   const navigate = useNavigate();
 
+  const handleClose = () => {
+    onClose(); // Close the modal
+    navigate("/"); // Navigate to the home page
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -17,7 +22,7 @@ export default function LoginPromptModal({ onClose }) {
           >
             Sign In
           </button>
-          <button className="btn btn-secondary" onClick={onClose}>
+          <button className="btn btn-secondary" onClick={handleClose}>
             Close
           </button>
         </div>
