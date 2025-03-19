@@ -83,7 +83,7 @@ export default function Dashboard() {
       console.error("🚨 Error fetching user results:", error);
     }
   };
-  
+
   useEffect(() => {
     console.log("✅ Checking if results exist:", results);
     if (results.length === 0) return;
@@ -93,7 +93,7 @@ export default function Dashboard() {
         .filter(result => result.source === "manual" || result.source === "upload")
         .map(result => ({
             date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
-            value: result.total_emissions ?? 0,
+            value: result.total_emissions ? Number(result.total_emissions.toFixed(2)) : 0
         }))
         .sort((a, b) => new Date(b.date) - new Date(a.date)); // ✅ Ensure newest entries are at the top
 
