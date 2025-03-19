@@ -11,7 +11,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setIsLoggedIn(!!localStorage.getItem("authToken"));
+      setIsLoggedIn(!!localStorage.getItem("token"));
     };
 
     window.addEventListener("storage", handleStorageChange);
@@ -21,7 +21,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Remove token
+    localStorage.removeItem("token"); // Remove token
     setIsLoggedIn(false); // Update state immediately
     navigate("/"); // Redirect to homepage
   };
