@@ -203,9 +203,13 @@ export default function Dashboard() {
         <Link to="/reports" className="btn btn-primary">
           View Reports
         </Link>
-        <Link to="/results" className="btn btn-primary">
+        <Link 
+          to={latestReport?.create_ts ? `/results/${latestReport.create_ts}` : "/results"} 
+          className="btn btn-primary"
+        >
           View Results
         </Link>
+
       </div>
 
       <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />

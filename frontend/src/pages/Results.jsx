@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom"; // ✅ Added `useParams`
 import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
@@ -10,11 +10,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Results() {
+  const { results, updateResults } = useResults();
+  const { reportId } = useParams(); // ✅ Get the report ID from the URL
+  const navigate = useNavigate();
+
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { results, updateResults } = useResults();
-  const navigate = useNavigate();
 
   // ✅ Hardcoded U.S. Average Midpoint for Gauge
   const USA_AVG_MIDPOINT = 1225; 
@@ -26,81 +28,106 @@ export default function Results() {
     "Retail": 209
   };
 
-  // ✅ Fetch & Load Results Properly
+  // ✅ NEW: Find the specific report the user clicked on
   useEffect(() => {
-    if (results.length > 0) {
-        console.log("✅ Loading results from context.");
-        setUserResults(results[0]);
-        setLoading(false);
-        return;
+    if (!reportId) {
+      setError("Invalid report ID.");
+      setLoading(false);
+      return;
     }
+
+    console.log(`🔍 Looking for report with ID: ${reportId}`);
+
+    // ✅ Find the report matching the `reportId`
+    const matchingReport = results.find(report => report.create_ts === reportId);
+
+    if (matchingReport) {
+      console.log("✅ Found matching report:", matchingReport);
+      setUserResults(matchingReport);
+    } else {
+      setError("No report found for this ID.");
+    }
+
+    setLoading(false);
+  }, [reportId, results]);
+
+  // ✅ Check local storage for past results if needed
+  useEffect(() => {
+    if (userResults) return; // ✅ Skip if already found in context
 
     console.log("🔍 Checking local storage for past results.");
     const storedResults = localStorage.getItem("userResults");
+
     if (storedResults) {
-        const parsedResults = JSON.parse(storedResults);
-        if (parsedResults.length > 0) {
-            console.log("✅ Loaded results from local storage:", parsedResults[0]);
-            setUserResults(parsedResults[0]);
-            setLoading(false);
-            return;
-        }
+      const parsedResults = JSON.parse(storedResults);
+      const matchingStoredReport = parsedResults.find(report => report.create_ts === reportId);
+      
+      if (matchingStoredReport) {
+        console.log("✅ Loaded results from local storage:", matchingStoredReport);
+        setUserResults(matchingStoredReport);
+        setLoading(false);
+        return;
+      }
     }
 
     // If no stored results, fetch from API
     const token = localStorage.getItem("token");
     if (!token) {
-        alert("Session expired. Please log in again.");
-        navigate("/login");
-        return;
+      alert("Session expired. Please log in again.");
+      navigate("/login");
+      return;
     }
 
     const fetchResults = async () => {
-        try {
-            console.log("Fetching user results...");
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+      try {
+        console.log("Fetching user results...");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log("✅ Received results from API:", data);
-
-            if (data.error) {
-                setError(data.error);
-                return;
-            }
-
-            setUserResults(data.results[0] || null);
-            if (results.length === 0) {
-                updateResults(data.results[0]);
-            }
-            setError(null);
-        } catch (err) {
-            console.error("🚨 Error fetching user results:", err);
-            setError("Failed to fetch results.");
-        } finally {
-            setLoading(false);
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
         }
+
+        const data = await response.json();
+        console.log("✅ Received results from API:", data);
+
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+
+        const matchingApiReport = data.results.find(report => report.create_ts === reportId);
+
+        if (matchingApiReport) {
+          setUserResults(matchingApiReport);
+          updateResults(matchingApiReport);
+        } else {
+          setError("No matching report found.");
+        }
+
+      } catch (err) {
+        console.error("🚨 Error fetching user results:", err);
+        setError("Failed to fetch results.");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchResults();
-}, [results, navigate]); // ✅ Prevents infinite loop
+  }, [userResults, reportId, results, navigate, updateResults]);
 
-// ✅ Properly Format Emissions Data
-const formattedEmissions = userResults?.emissions
+  // ✅ Properly Format Emissions Data
+  const formattedEmissions = userResults?.emissions
     ? Array.isArray(userResults.emissions)
-        ? Object.fromEntries(userResults.emissions.map(({ category, value }) => [category, value]))
-        : { ...userResults.emissions }
+      ? Object.fromEntries(userResults.emissions.map(({ category, value }) => [category, value]))
+      : { ...userResults.emissions }
     : {};
 
-console.log("✅ Processed Emissions for Recommendations:", formattedEmissions);
+  console.log("✅ Processed Emissions for Recommendations:", formattedEmissions);
 
-// ✅ Pie Chart Data
-const pieData = {
+  // ✅ Pie Chart Data
+  const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
@@ -108,9 +135,9 @@ const pieData = {
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
-};
+  };
 
-return (
+  return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900">Results Overview:</h1>
 
@@ -135,31 +162,6 @@ return (
                 <p className="mt-2 font-semibold text-gray-900">US Average Footprint</p>
               </div>
             </div>
-          </div>
-          {/* ✅ Comparison of User vs. US Average by Category */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-2">Category Comparison: You vs. US Average</h2>
-            <ul className="list-disc pl-5 text-gray-700">
-              {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
-                // ✅ Find the category in the user's emissions array
-                const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
-                const userValue = userCategoryData ? userCategoryData.value : 0;
-                const usAvgValue = USA_AVG_CATEGORY[category] ?? 0;
-
-                return (
-                  <li key={index} className="mb-2">
-                    <strong>{category}: </strong> 
-                    <span className={userValue > usAvgValue ? "text-red-600" : "text-green-600"}>
-                      {userValue} kg CO₂ (You)
-                    </span> 
-                    |
-                    <span className="text-gray-500"> {usAvgValue} kg CO₂ (US Avg)</span>
-                  </li>
-                );
-              })}
-            </ul>
-
-
           </div>
 
           {/* ✅ Personalized Recommendations */}

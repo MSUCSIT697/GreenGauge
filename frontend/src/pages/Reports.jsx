@@ -1,6 +1,5 @@
 import { useResults } from "../context/ResultsContext";
 import { Link } from "react-router-dom";
-import RecommendationSystem from "../components/Recommendations"; // ✅ Use default import
 
 export default function Reports() {
   const { results } = useResults();
@@ -26,7 +25,7 @@ export default function Reports() {
             </tr>
           ) : (
             sortedResults.map((report) => (
-              <tr key={report.id || report.create_ts || Math.random()} className="hover:bg-gray-50">
+              <tr key={report.create_ts || Math.random()} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">
                   {report.create_ts ? new Date(report.create_ts).toLocaleDateString() : "N/A"}
                 </td>
@@ -35,8 +34,7 @@ export default function Reports() {
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
                   <Link
-                    to="/results"
-                    state={{ report }} // ✅ Ensure report data is passed properly
+                    to={`/results/${report.create_ts}`} // ✅ Pass unique ID in URL
                     className="text-blue-600 hover:underline"
                   >
                     View Results
