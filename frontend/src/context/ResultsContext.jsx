@@ -61,9 +61,12 @@ export function ResultsProvider({ children }) {
       if (data.results) {
         const formattedResults = data.results.map((r) => ({
           ...r,
-          emissions: r.emissions ?? {}, // ✅ Ensure emissions is always an object
+          emissions: Array.isArray(r.emissions) 
+            ? Object.fromEntries(r.emissions.map(({ category, value }) => [category, value])) 
+            : {},
           recommendations: Array.isArray(r.recommendations) ? r.recommendations : [],
         }));
+        
       
         console.log("✅ Processed Results with Emissions:", formattedResults);
       

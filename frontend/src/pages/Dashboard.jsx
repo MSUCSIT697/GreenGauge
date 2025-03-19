@@ -135,15 +135,14 @@ export default function Dashboard() {
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
-            {Object.keys(latestReport?.emissions || {}).length > 0 ? (
-              Object.entries(latestReport?.emissions || {}).map(([category, value], index) => (
+            {Array.isArray(latestReport?.emissions) && latestReport.emissions.length > 0 ? (
+              latestReport.emissions.map((item, index) => (
                 <li key={index} className="flex justify-between items-center px-4">
-                  <span className="text-gray-700 flex-1 text-left">{category}</span>
-                  <span className="text-gray-500 w-16 text-right">{value}</span>
+                  <span className="text-gray-700 flex-1 text-left">{item.category}</span>
+                  <span className="text-gray-500 w-16 text-right">{item.value}</span>
                 </li>
               ))
             ) : (
-              // ✅ If no emissions data, show default categories with "0"
               ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
                 <li key={index} className="flex justify-between items-center px-4">
                   <span className="text-gray-700 flex-1 text-left">{category}</span>
@@ -152,6 +151,7 @@ export default function Dashboard() {
               ))
             )}
           </ul>
+
 
         </div>
 

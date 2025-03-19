@@ -77,10 +77,14 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
         }
     
         try {
+            const formattedEmissions = Array.isArray(emissions) 
+                ? Object.fromEntries(emissions.map(({ category, value }) => [category, value])) 
+                : emissions;
+
             const newRecommendations = storedRecommendations.length > 0 
                 ? storedRecommendations 
-                : generateRecommendations(emissions).slice(0, 3); 
-            
+                : generateRecommendations(formattedEmissions).slice(0, 3);
+
             console.log("📌 Generated recommendations:", newRecommendations);
             setRecommendations(newRecommendations);
         } catch (err) {
