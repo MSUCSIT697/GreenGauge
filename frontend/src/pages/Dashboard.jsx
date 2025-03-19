@@ -202,7 +202,10 @@ export default function Dashboard() {
       </div>
 
       <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
-      <LoginPromptModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      {/* Render LoginPromptModal only if showLoginModal is true */}
+      {showLoginModal && (
+        <LoginPromptModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      )}
     </div>
   );
 }
