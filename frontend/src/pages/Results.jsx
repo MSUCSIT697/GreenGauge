@@ -135,8 +135,10 @@ export default function Results() {
             <h2 className="font-semibold pb-2">Category Comparison: You vs. US Average</h2>
             <ul className="list-disc pl-5 text-gray-700">
               {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
-                const userValue = userResults?.emissions_by_category?.[category] ?? 0;
-                const usAvgValue = USA_AVG_CATEGORY[category];
+                // ✅ Find the category in the user's emissions array
+                const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
+                const userValue = userCategoryData ? userCategoryData.value : 0;
+                const usAvgValue = USA_AVG_CATEGORY[category] ?? 0;
 
                 return (
                   <li key={index} className="mb-2">
@@ -150,6 +152,8 @@ export default function Results() {
                 );
               })}
             </ul>
+
+
           </div>
 
           {/* ✅ Personalized Recommendations */}
