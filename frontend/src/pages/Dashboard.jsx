@@ -28,7 +28,10 @@ export default function Dashboard() {
   console.log("✅ Stored Recommendations:", latestReport?.recommendations);
   
   // ✅ Ensure emissions are passed correctly
-  const emissionsData = latestReport?.emissions ?? {};
+  const emissionsData = Array.isArray(latestReport?.emissions) 
+  ? Object.fromEntries(latestReport.emissions.map(({ category, value }) => [category, value])) 
+  : latestReport.emissions;
+
   console.log("✅ Corrected Emissions Data:", emissionsData);
 
   // ✅ Fetch user results on mount
@@ -135,14 +138,15 @@ export default function Dashboard() {
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
           <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
-            {Array.isArray(latestReport?.emissions) && latestReport.emissions.length > 0 ? (
-              latestReport.emissions.map((item, index) => (
-                <li key={index} className="flex justify-between items-center px-4">
-                  <span className="text-gray-700 flex-1 text-left">{item.category}</span>
-                  <span className="text-gray-500 w-16 text-right">{item.value}</span>
-                </li>
-              ))
-            ) : (
+          {Object.entries(emissionsData).length > 0 ? (
+            Object.entries(emissionsData).map(([category, value], index) => (
+              <li key={index} className="flex justify-between items-center px-4">
+                <span className="text-gray-700 flex-1 text-left">{category}</span>
+                <span className="text-gray-500 w-16 text-right">{value}</span>
+              </li>
+            ))
+          ) : (
+
               ["Transportation", "Electricity", "Food", "Retail", "Waste"].map((category, index) => (
                 <li key={index} className="flex justify-between items-center px-4">
                   <span className="text-gray-700 flex-1 text-left">{category}</span>
@@ -161,16 +165,15 @@ export default function Dashboard() {
           {console.log("✅ Latest Report for Recommendations:", latestReport)}
           {console.log("✅ Emissions Data Passed:", latestReport?.emissions)}
           {console.log("✅ Stored Recommendations:", latestReport?.recommendations)}
-          const emissionsData = latestReport?.emissions ?? {}; // ✅ Ensure emissions is always an object
-
-          {latestReport && typeof latestReport.emissions === "object" ? (
-              <RecommendationSystem 
-                  emissions={emissionsData} 
-                  storedRecommendations={Array.isArray(latestReport.recommendations) ? latestReport.recommendations : []} 
-              />
+          {latestReport ? (
+            <RecommendationSystem 
+              emissions={emissionsData} 
+              storedRecommendations={Array.isArray(latestReport.recommendations) ? latestReport.recommendations : []} 
+            />
           ) : (
-              <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
+            <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>
           )}
+
 
 
 
