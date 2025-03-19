@@ -115,7 +115,7 @@ const RecommendationSystem = ({ emissions, storedRecommendations = [] }) => {
         <ul className="list-disc pl-4">
             {recommendations.length > 0 ? (
                 recommendations.map((rec, index) => (
-                    <li key={index} className="text-gray-700">- {rec}</li>
+                    <li key={index} className="text-gray-700">{rec}</li>
                 ))
             ) : (
                 <p className="text-gray-500">Perform a calculation to receive personalized recommendations.</p>

@@ -57,6 +57,15 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
     filteredData = [allData.at(-1)];
   }
 
+  // ✅ Add 5-day buffer at the end of the chart
+  const maxDate = new Date(Math.max(...filteredData.map(d => new Date(d.date))));
+  const bufferDate = new Date(maxDate);
+  bufferDate.setDate(maxDate.getDate() + 20);
+
+  // ✅ Set the max Y-axis value dynamically
+  const highestValue = Math.max(...filteredData.map(entry => entry.value), 1500);
+  const adjustedMaxScale = highestValue + 500;
+
   const chartData = {
     labels: filteredData.map(entry =>
       new Date(entry.date).toLocaleDateString("en-US", {
@@ -121,13 +130,20 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
                 tooltipFormat: timeFrame === "1Y" ? "MMM yyyy" : "MMM dd",
               },
               min: cutoffDate,
-              max: now,
+              max: bufferDate, // ✅ Extends the chart by 5 days
               title: {
                 display: true,
                 text: "Date",
               },
             },
-            y: { min: 0, max: maxScale },
+            y: {
+              min: 0,
+              max: adjustedMaxScale, // ✅ Dynamically adjust max scale
+              title: {
+                display: true,
+                text: "kg CO2e",
+              },
+            },
           },
           plugins: {
             tooltip: {
