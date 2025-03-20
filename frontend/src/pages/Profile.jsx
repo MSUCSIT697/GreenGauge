@@ -67,41 +67,43 @@ export default function Settings() {
   const handleUpdateInfo = (e) => {
     e.preventDefault();
     setErrorMessage("");
-
+  
     let newUserData = { ...user };
     let hasChanges = false;
-
-    // ✅ Username Validation (No spaces, must match old username)
-    if (updatedInfo.newUsername.trim()) {
-      if (updatedInfo.newUsername.includes(" ")) {
-        setErrorMessage("⚠️ Username cannot contain spaces.");
-        return;
-      }
-      if (updatedInfo.oldUsername !== user.username) {
+  
+    // ✅ Username Validation
+    const trimmedNewUsername = updatedInfo.newUsername.trim();
+    if (trimmedNewUsername) {
+      if (!updatedInfo.oldUsername.trim() || updatedInfo.oldUsername !== user.username) {
         setErrorMessage("⚠️ Incorrect old username.");
         return;
       }
-      newUserData.username = updatedInfo.newUsername.trim();
-      hasChanges = true;
-    }
-
-    // ✅ Email Validation (Must match old email, proper format)
-    if (updatedInfo.newEmail.trim()) {
-      if (!/^\S+@\S+\.\S+$/.test(updatedInfo.newEmail)) {
-        setErrorMessage("⚠️ Please enter a valid email.");
+      if (trimmedNewUsername.includes(" ")) {
+        setErrorMessage("⚠️ Username cannot contain spaces.");
         return;
       }
-      if (updatedInfo.oldEmail !== user.email) {
+      newUserData.username = trimmedNewUsername;
+      hasChanges = true;
+    }
+  
+    // ✅ Email Validation
+    const trimmedNewEmail = updatedInfo.newEmail.trim();
+    if (trimmedNewEmail) {
+      if (!updatedInfo.oldEmail.trim() || updatedInfo.oldEmail !== user.email) {
         setErrorMessage("⚠️ Incorrect old email.");
         return;
       }
-      newUserData.email = updatedInfo.newEmail.trim();
+      if (!/^\S+@\S+\.\S+$/.test(trimmedNewEmail)) {
+        setErrorMessage("⚠️ Please enter a valid email.");
+        return;
+      }
+      newUserData.email = trimmedNewEmail;
       hasChanges = true;
     }
-
-    // ✅ Password Validation (Min 6 characters, must match old password)
+  
+    // ✅ Password Validation
     if (updatedInfo.newPassword.trim()) {
-      if (updatedInfo.oldPassword !== user.password) {
+      if (!updatedInfo.oldPassword || updatedInfo.oldPassword !== user.password) {
         setErrorMessage("⚠️ Incorrect old password.");
         return;
       }
@@ -112,22 +114,21 @@ export default function Settings() {
       newUserData.password = updatedInfo.newPassword;
       hasChanges = true;
     }
-
-    // ✅ If no changes, close modal
+  
     if (!hasChanges) {
-      setShowEditModal(false);
+      setErrorMessage("⚠️ No changes detected.");
       return;
     }
-
+  
     // ✅ Save changes
     localStorage.setItem("user", JSON.stringify(newUserData));
     setUser(newUserData);
     setShowEditModal(false);
     setShowSuccess(true);
-
-    // ✅ Hide success message after 2 sec
+  
     setTimeout(() => setShowSuccess(false), 2000);
   };
+  
 
   return (
     <div className="p-6">
@@ -189,41 +190,50 @@ export default function Settings() {
               {/* Username */}
               <div>
                 <label className="block text-sm font-medium">Old Username</label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={updatedInfo.oldUsername}
-                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldUsername: e.target.value })}
-                />
+                <input type="text" className="input input-bordered w-full" 
+                  value={updatedInfo.oldUsername} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldUsername: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium">New Username</label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={updatedInfo.newUsername}
-                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newUsername: e.target.value })}
-                />
+                <input type="text" className="input input-bordered w-full" 
+                  value={updatedInfo.newUsername} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newUsername: e.target.value })} />
               </div>
 
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium">Old Email</label>
-                <input
-                  type="email"
-                  className="input input-bordered w-full"
-                  value={updatedInfo.oldEmail}
-                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldEmail: e.target.value })}
-                />
+                <input type="email" className="input input-bordered w-full" 
+                  value={updatedInfo.oldEmail} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldEmail: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">New Email</label>
+                <input type="email" className="input input-bordered w-full" 
+                  value={updatedInfo.newEmail} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newEmail: e.target.value })} />
               </div>
 
-              <button type="submit" className="btn btn-primary w-full mt-4">
-                Submit
-              </button>
-              <button type="button" className="btn btn-secondary w-full mt-2" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </button>
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium">Old Password</label>
+                <input type="password" className="input input-bordered w-full" 
+                  value={updatedInfo.oldPassword} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldPassword: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">New Password</label>
+                <input type="password" className="input input-bordered w-full" 
+                  value={updatedInfo.newPassword} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newPassword: e.target.value })} />
+              </div>
+
+              {/* Submit & Cancel Buttons */}
+              <button type="submit" className="btn btn-primary w-full mt-4">Submit</button>
+              <button type="button" className="btn btn-secondary w-full mt-2" onClick={() => setShowEditModal(false)}>Cancel</button>
             </form>
+
           </div>
         </div>
       )}
