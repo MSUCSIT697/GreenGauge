@@ -19,8 +19,8 @@ export default function Dashboard() {
   const roundToThousandths = (num) => (num ? Number(num.toFixed(3)) : 0);
 
   const latestReport = results.length > 0
-  ? results.reduce((latest, current) =>
-      new Date(latest.create_ts) > new Date(current.create_ts) ? latest : current
+    ? results.reduce((latest, current) =>
+        new Date(latest.create_ts) > new Date(current.create_ts) ? latest : current
   ) // ✅ Always selects the most recent submission
   : { emissions: {}, total_emissions: 0, recommendations: [] };
 
@@ -84,17 +84,22 @@ export default function Dashboard() {
     }
   };
 
+  // Call fetchResults on component mount
+  useEffect(() => {
+    fetchResults();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   useEffect(() => {
     console.log("✅ Checking if results exist:", results);
     if (results.length === 0) return;
 
     // ✅ Get all user-generated results (including past & current)
     const userGeneratedResults = results
-        .filter(result => result.source === "manual" || result.source === "upload")
-        .map(result => ({
-            date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
-            value: result.total_emissions ? Number(result.total_emissions.toFixed(2)) : 0
-        }))
+      .filter(result => result.source === "manual" || result.source === "upload")
+      .map(result => ({
+        date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
+        value: result.total_emissions ? Number(result.total_emissions.toFixed(2)) : 0
+      }))
         .sort((a, b) => new Date(b.date) - new Date(a.date)); // ✅ Ensure newest entries are at the top
 
     console.log("✅ Updated progress tracker data:", userGeneratedResults);
@@ -141,10 +146,10 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow-md p-6 mt-4 flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 w-full min-h-[250px]">
         {/* ✅ Gauge Section */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg flex flex-col items-center h-full min-h-[250px]">
-        <GaugeChart
+          <GaugeChart
             id="dashboardGauge"
             rating={roundToThousandths(latestReport.total_emissions || 350)}
-        />
+          />
 
           <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p>
         </div>
