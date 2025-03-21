@@ -76,7 +76,7 @@ export function ResultsProvider({ children }) {
           ...r,
           total_emissions: r.total_emissions ? Number(r.total_emissions.toFixed(3)) : 0, // ✅ Fix decimal places
           emissions: Array.isArray(r.emissions)
-            ? Object.fromEntries(r.emissions.map(({ category, value }) => [category, Number(value.toFixed(3))]))
+            ? r.emissions
             : {},
           recommendations: Array.isArray(r.recommendations) && r.recommendations.length > 0
             ? r.recommendations

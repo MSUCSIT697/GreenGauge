@@ -210,7 +210,7 @@ export default function Results() {
                 <ul className="list-disc pl-5 text-gray-700">
                   {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
                     const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
-                    const userValue = userCategoryData ? userCategoryData.value : 0;
+                    const userValue = userCategoryData ? userCategoryData.value.toFixed(3) : 0;
                     
                     return (
                       <li key={index} className="mb-2">
