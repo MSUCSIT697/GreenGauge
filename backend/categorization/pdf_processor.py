@@ -3,12 +3,10 @@ import pytesseract
 import pandas as pd
 import re
 import tempfile
-import os
 from flask import jsonify
 
-
 # Configure Tesseract path (Windows specific)
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from PDF using pdfplumber and fallback to OCR"""
@@ -59,7 +57,7 @@ def parse_transactions(all_text):
     return transaction_lines
 
 def categorize_transactions(transaction_lines):
-    """Categorize transactions and calculate emissions"""
+    """Categorize transactions"""
     transaction_pattern = r"""
         (\d{2}/\d{2}/\d{4}|\d{2}/\d{2}|\b[A-Za-z]+\s\d{1,2},\s\d{4}\b)
         \s+(.+?)
@@ -81,24 +79,115 @@ def categorize_transactions(transaction_lines):
     
     return pd.DataFrame(parsed_data)
 
-def calculate_emissions(df):
-    """Calculate carbon emissions based on categories"""
-    def categorize(row):
-        desc = row['Description'].lower()
-        if any(k in desc for k in ['bus', 'uber', 'lyft']):
-            return 'Transport', abs(row['Amount']) * 0.5
-        elif any(k in desc for k in ['canteen', 'food', 'restaurant', 'coffee']):
-            return 'Food & Dining', abs(row['Amount']) * 0.3
-        elif any(k in desc for k in ['payment', 'transfer', 'zelle']):
-            return 'Finance', 0
-        elif 'quizlet' in desc or 'subscription' in desc:
-            return 'Subscriptions', abs(row['Amount']) * 0.1
-        return 'Other', 0
+def categorize_only(df):
+    """Categorize transactions and aggregate costs into the required JSON structure"""
+    def determine_category(description):
+        desc = description.lower()
+        
+        # Transportation
+        if any(k in desc for k in ['subway', 'bus', 'train', 'domestic_flight', 'international_flight']):
+            if 'subway' in desc:
+                return 'transportation', 'subway'
+            elif 'bus' in desc:
+                return 'transportation', 'bus'
+            elif 'train' in desc:
+                return 'transportation', 'train'
+            elif 'domestic_flight' in desc:
+                return 'transportation', 'domestic_flight'
+            elif 'international_flight' in desc:
+                return 'transportation', 'international_flight'
+        
+        # Electricity
+        elif 'electric' in desc:
+            return 'electricity', 'consumption'
+        
+        # Restaurants
+        elif any(k in desc for k in ['restaurant', 'food', 'coffee', 'cafe', 'canteen', 'diner', 'meal', 'doordash', 'grubhub', 'ubereats']):
+            if 'fast_food' in desc:
+                return 'restaurants', 'fast_food'
+            elif 'casual_dining' in desc:
+                return 'restaurants', 'casual_dining'
+            elif 'fine_dining' in desc:
+                return 'restaurants', 'fine_dining'
+            else:
+                return 'restaurants', 'average'
+        
+        # Water
+        elif 'water' in desc:
+            return 'water', 'water_bill'
+        
+        # Retail
+        elif any(k in desc for k in ['amazon', 'walmart', 'target', 'purchase', 'shop', 'store', 'market']):
+            if 'electronics' in desc:
+                return 'retail', 'electronics'
+            elif 'clothing' in desc:
+                return 'retail', 'clothing'
+            elif 'kids' in desc:
+                return 'retail', 'kids'
+            elif 'furniture' in desc:
+                return 'retail', 'furniture'
+            elif 'entertainment' in desc:
+                return 'retail', 'entertainment'
+            elif 'home_supplies' in desc:
+                return 'retail', 'home_supplies'
+            elif 'medical_care' in desc:
+                return 'retail', 'medical_care'
+            elif 'personal_care' in desc:
+                return 'retail', 'personal_care'
+            elif 'pets' in desc:
+                return 'retail', 'pets'
+        
+        # Default category for unclassified transactions
+        return 'other', 'other'
 
-    df[['Category', 'Emissions']] = df.apply(
-        lambda row: pd.Series(categorize(row)), axis=1
-    )
-    return df
+    # Initialize the JSON structure
+    result = {
+        "transportation": {
+            "subway": {"cost": 0},
+            "bus": {"cost": 0},
+            "train": {"cost": 0},
+            "domestic_flight": {"cost": 0},
+            "international_flight": {"cost": 0}
+        },
+        "electricity": {
+            "consumption": 0,
+            "energy_source": "electricity_bill"
+        },
+        "food": {},
+        "retail": {
+            "electronics": 0,
+            "clothing": 0,
+            "kids": 0,
+            "furniture": 0,
+            "entertainment": 0,
+            "home_supplies": 0,
+            "medical_care": 0,
+            "personal_care": 0,
+            "pets": 0
+        },
+        "waste": {},
+        "restaurants": {
+            "fast_food": 0,
+            "casual_dining": 0,
+            "fine_dining": 0,
+            "average": 0
+        },
+        "water": {
+            "water_bill": 0
+        }
+    }
+
+    # Apply categorization and aggregate costs
+    for _, row in df.iterrows():
+        category, subcategory = determine_category(row['Description'])
+        if category in result:
+            if subcategory in result[category]:
+                if isinstance(result[category][subcategory], dict):
+                    result[category][subcategory]['cost'] += row['Amount']
+                else:
+                    result[category][subcategory] += row['Amount']
+
+    return result
 
 def process_pdf(file_stream):
     """Main processing function"""
@@ -114,19 +203,12 @@ def process_pdf(file_stream):
             # Parse transactions
             transactions = parse_transactions(all_text)
             
-            # Categorize and calculate
+            # Categorize transactions
             df = categorize_transactions(transactions)
-            df = calculate_emissions(df)
+            categorized_data = categorize_only(df)
             
-            # Prepare results
-            totals = df.groupby('Category')['Emissions'].sum().reset_index()
-            
-            return {
-                "transactions": df.to_dict(orient='records'),
-                "totals": totals.to_dict(orient='records'),
-                "footprint": df['Emissions'].sum(),
-                "dates": df['Date'].unique().tolist()
-            }
+            # Return the categorized transactions
+            return categorized_data
             
     except Exception as e:
         return {"error": str(e)}

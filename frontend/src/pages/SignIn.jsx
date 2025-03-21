@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+// SignIn.jsx
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useResults } from "../context/ResultsContext"; // ✅ Import Results Context
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -8,6 +10,7 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { updateResults } = useResults(); // ✅ Fetch user results after login
+  const { handleLogin } = useContext(AuthContext); // Use AuthContext
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,13 +26,9 @@ const SignIn = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        
-        // ✅ Fetch user's past results **right after login**
-        await updateResults();
-
-        // ✅ Redirect user to the dashboard
-        navigate("/dashboard");
+        handleLogin(data.token); // Call handleLogin from AuthContext
+        await updateResults(); // Fetch user's past results
+        navigate("/"); // Redirect to home
       } else {
         setError(data.error || "Invalid credentials");
       }

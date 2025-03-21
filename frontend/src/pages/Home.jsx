@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import JustGage from "justgage";
 import "raphael"; // Required for JustGage
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 export default function Home() {
   const [gauge, setGauge] = useState(null);
   const [userChoice, setUserChoice] = useState(null); // "yes" or "no"
+  const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
+  const navigate = useNavigate();
 
   useEffect(() => {
     // ✅ Initialize JustGage without labels
@@ -25,6 +28,15 @@ export default function Home() {
     });
     setGauge(newGauge);
   }, []);
+
+  // Function to handle button click
+  const handleNavigation = () => {
+    if (isLoggedIn) {
+      navigate('/calculator'); // Redirect to /calculator if signed in
+    } else {
+      navigate('/guest-calculator'); // Redirect to /guest-calculator if not signed in
+    }
+  };
 
   const handleGaugeChange = (choice) => {
     setUserChoice(choice);
@@ -100,15 +112,23 @@ export default function Home() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-center space-x-4 mt-6">
-        <Link to="/sign-in">
-          <button className="btn btn-primary">Sign In</button>
-        </Link>
-        <Link to="/create-account">
-          <button className="btn btn-primary">Create New Account</button>
-        </Link>
-        <Link to="/calculator" className="btn btn-primary">
-          Try Calculator
-        </Link>
+        {!isLoggedIn ? ( // Use isLoggedIn from AuthContext
+          <>
+            <Link to="/sign-in">
+              <button className="btn btn-primary">Sign In</button>
+            </Link>
+            <Link to="/create-account">
+              <button className="btn btn-primary">Create New Account</button>
+            </Link>
+            <Link to="/guest-calculator" className="btn btn-primary">
+              Try Calculator
+            </Link>
+          </>
+        ) : (
+          <button className="btn btn-primary" onClick={handleNavigation}>
+            Go to Calculator
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,45 +1,118 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom"; // ✅ Added `useParams`
 import { Link } from "react-router-dom";
 import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
-import ProgressChart from "../components/ProgressChart";
+import RecommendationSystem from "../components/Recommendations";
 import { useResults } from "../context/ResultsContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Results() {
+  const { results, updateResults } = useResults();
+  const { reportId } = useParams(); // ✅ Get the report ID from the URL
+  const navigate = useNavigate();
+
   const [userResults, setUserResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { results, updateResults } = useResults(); 
-  const navigate = useNavigate();
 
   // ✅ Hardcoded U.S. Average Midpoint for Gauge
   const USA_AVG_MIDPOINT = 1225; 
-
-  // ✅ Default U.S. Monthly Average Data
-  const usAverage = {
-    monthlyRating: USA_AVG_MIDPOINT, 
-    ratings: [
-      { category: "Electricity", value: 375 },
-      { category: "Transportation", value: 458 },
-      { category: "Waste", value: 62 },
-      { category: "Food", value: 209 },
-      { category: "Retail", value: 209 },
-    ],
+  const USA_AVG_CATEGORY = {
+    "Transportation": 458,
+    "Electricity": 375,
+    "Waste": 62,
+    "Food": 209,
+    "Retail": 209
   };
 
-  // ✅ Fetch user results from API
+  // ✅ NEW: Find the specific report the user clicked on
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      alert("Session expired. Please log in again.");
-      navigate("/login");
+    if (!reportId) {
+      setError("Invalid report ID.");
+      setLoading(false);
       return;
     }
+
+    console.log(`🔍 Looking for report with ID: ${reportId}`);
+
+    // ✅ Find the report matching the `reportId`
+    const matchingReport = results.find(report => report.create_ts === reportId);
+
+    if (matchingReport) {
+      console.log("✅ Found matching report:", matchingReport);
+      setUserResults(matchingReport);
+    } else {
+      setError("No report found for this ID.");
+    }
+
+    setLoading(false);
+  }, [reportId, results]);
+
+  // ✅ Check local storage for past results if needed
+  useEffect(() => {
+    if (userResults) return; // ✅ Skip if already found in context
+
+    console.log("🔍 Checking local storage for past results.");
+    const storedResults = localStorage.getItem("userResults");
+
+    if (storedResults) {
+      const parsedResults = JSON.parse(storedResults);
+      const matchingStoredReport = parsedResults.find(report => report.create_ts === reportId);
+      
+      if (matchingStoredReport) {
+        console.log("✅ Loaded results from local storage:", matchingStoredReport);
+        setUserResults(matchingStoredReport);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // If no stored results, fetch from API
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+    
+      if (!token) {
+        console.warn("⚠️ No authentication token found.");
+        setError("Session expired. Please log in.");
+        navigate("/sign-in");
+        return;
+      }
+    
+      const fetchResults = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/get_user_results`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          });
+    
+          if (!response.ok) {
+            if (response.status === 401) {
+              console.warn("⚠️ Unauthorized! Redirecting to login...");
+              navigate("/sign-in");
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+    
+          const data = await response.json();
+          console.log("✅ Retrieved user results:", data);
+          if (data.results) setUserResults(data.results.find(r => r.create_ts === reportId) || null);
+        } catch (err) {
+          console.error("🚨 Error fetching user results:", err);
+          setError("Failed to fetch results.");
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      fetchResults();
+    }, [navigate, reportId]);
+    
 
     const fetchResults = async () => {
       try {
@@ -60,9 +133,15 @@ export default function Results() {
           return;
         }
 
-        setUserResults(data); 
-        updateResults(data); // ✅ Ensure results are stored in context
-        setError(null);
+        const matchingApiReport = data.results.find(report => report.create_ts === reportId);
+
+        if (matchingApiReport) {
+          setUserResults(matchingApiReport);
+          updateResults(matchingApiReport);
+        } else {
+          setError("No matching report found.");
+        }
+
       } catch (err) {
         console.error("🚨 Error fetching user results:", err);
         setError("Failed to fetch results.");
@@ -72,16 +151,23 @@ export default function Results() {
     };
 
     fetchResults();
-  }, [navigate, updateResults]); 
+  }, [userResults, reportId, results, navigate, updateResults]);
 
-  // ✅ Pie Chart Data (Fix incorrect object reference)
+  // ✅ Properly Format Emissions Data
+  const formattedEmissions = userResults?.emissions
+    ? Array.isArray(userResults.emissions)
+      ? Object.fromEntries(userResults.emissions.map(({ category, value }) => [category, value]))
+      : { ...userResults.emissions }
+    : {};
+
+  console.log("✅ Processed Emissions for Recommendations:", formattedEmissions);
+
+  // ✅ Pie Chart Data
   const pieData = {
     labels: ["Food", "Retail", "Transportation", "Electricity", "Waste"],
     datasets: [
       {
-        data: userResults?.emissions_by_category
-          ? Object.values(userResults.emissions_by_category)
-          : [0, 0, 0, 0, 0], 
+        data: Object.values(formattedEmissions), 
         backgroundColor: ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"],
       },
     ],
@@ -99,7 +185,7 @@ export default function Results() {
         <p className="text-center text-gray-500">Loading...</p>
       ) : userResults ? (
         <>
-          {/* ✅ Display Gauge Comparison */}
+          {/* ✅ Gauge Comparison (User vs. US Avg) */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
             <div className="flex justify-center space-x-8">
@@ -107,12 +193,63 @@ export default function Results() {
                 <GaugeChart id="userGauge" rating={userResults?.total_emissions || 0} />
                 <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint</p>
               </div>
+              <div className="flex flex-col items-center">
+                <GaugeChart id="usGauge" rating={USA_AVG_MIDPOINT} />
+                <p className="mt-2 font-semibold text-gray-900">US Average Footprint</p>
+              </div>
             </div>
+          </div>
+
+          {/* ✅ Category Comparison: User vs. US Average */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+            <h2 className="font-semibold pb-2 text-gray-900">Category Comparison: You vs. US Average</h2>
+            <div className="grid grid-cols-2 gap-6">
+              {/* ✅ User Emissions Breakdown */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">Your Emissions</h3>
+                <ul className="list-disc pl-5 text-gray-700">
+                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
+                    const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
+                    const userValue = userCategoryData ? userCategoryData.value.toFixed(3) : 0;
+                    
+                    return (
+                      <li key={index} className="mb-2">
+                        <strong>{category}: </strong> 
+                        <span className="text-gray-900">{userValue} kg CO₂</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              {/* ✅ US Average Breakdown */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">US Average</h3>
+                <ul className="list-disc pl-5 text-gray-700">
+                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => (
+                    <li key={index} className="mb-2">
+                      <strong>{category}: </strong> 
+                      <span className="text-gray-500">{USA_AVG_CATEGORY[category]} kg CO₂</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+
+          {/* ✅ Personalized Recommendations */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+            <h2 className="font-semibold">Personalized Recommendations</h2>
+            <RecommendationSystem 
+                emissions={formattedEmissions} 
+                storedRecommendations={Array.isArray(userResults?.recommendations) ? userResults.recommendations : []} 
+            />
           </div>
 
           {/* ✅ Pie Chart for Emissions Breakdown */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
-            <h2 className="font-semibold pb-4">Carbon Emissions Breakdown</h2>
+            <h2 className="font-semibold pb-4">Emissions Breakdown</h2>
             <Pie data={pieData} height={50} />
             <p className="text-gray-600 text-sm">
               Your total monthly carbon emissions:{" "}

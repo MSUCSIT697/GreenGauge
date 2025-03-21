@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react"; // Add useContext
 import { useNavigate } from "react-router-dom";
 import { useResults } from "../context/ResultsContext";
 import TransportationTab from "../components/Tabs/TransportationTab";
@@ -7,10 +7,12 @@ import FoodTab from "../components/Tabs/FoodTab";
 import RetailTab from "../components/Tabs/RetailTab";
 import WasteTab from "../components/Tabs/WasteTab";
 import Modals from "../components/Modals"; // ✅ Import centralized modals
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 export default function Calculator() {
   const navigate = useNavigate();
   const { updateResults } = useResults();
+  const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
 
   const categories = ["Transportation", "Electricity", "Food", "Retail", "Waste"];
   const [currentTab, setCurrentTab] = useState(0);
@@ -31,20 +33,20 @@ export default function Calculator() {
   const handleZipChange = (zip) => {
     if (/^\d{0,5}$/.test(zip)) {
       setZipCode(zip);
-      
+
       // ✅ If zip code reaches 5 digits, remove the error outline
       if (zip.length === 5) {
         setShowError((prev) => ({ ...prev, zipCode: false }));
       }
     }
   };
-  
+
 
   const [formData, setFormData] = useState({
-    transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, truck: { distance: "" }, bus: { distance: "" }, train: { distance: "" } },
-    electricity: { consumption_kwh: "", energy_source: "natural_gas" },
-    food: { beef: "", chicken: "", vegetables: "", rice: "", pork: "" },
-    retail: { electronics: "", clothing: "", toys: "", furniture: "" },
+    transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, subway: { cost: "" }, bus: { cost: "" }, train: { cost: "" }, domestic_flight: { cost: "" }, international_flight: { cost: "" } },
+    electricity: { consumption: "", energy_source: "natural_gas" },
+    food: { consumption: 1, diet: "omnivore" },
+    retail: { electronics: "", clothing: "", kids: "", furniture: "", entertainment: "", home_supplies: "", medical_care: "", personal_care: "", pets: "" },
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
 
@@ -59,18 +61,18 @@ export default function Calculator() {
             : value ? parseFloat(value) || 0 : 0,
         },
       };
-  
+
       console.log("Updated formData:", updatedFormData); // ✅ Debugging
-  
+
       return updatedFormData;
     });
   };
-  
-  
+
+
 
   const isFormValid = (data = formData) => {
     if (zipCode.length !== 5) return false;
-  
+
     return Object.keys(data).every((category) =>
       Object.values(data[category]).some((value) => {
         if (typeof value === "object") return Object.values(value).some((sub) => !isNaN(sub) && Number(sub) > 0);
@@ -78,30 +80,30 @@ export default function Calculator() {
       })
     );
   };
-  
-  
+
+
 
   const handleSubmit = () => {
-    let newErrors = { 
-      zipCode: false, 
-      transportation: false, 
-      electricity: false, 
-      food: false, 
-      retail: false, 
-      waste: false 
+    let newErrors = {
+      zipCode: false,
+      transportation: false,
+      electricity: false,
+      food: false,
+      retail: false,
+      waste: false,
     };
     let isValid = true;
-  
+
     // ✅ Ensure Zip Code is Valid
     if (zipCode.length !== 5) {
       newErrors.zipCode = true;
       isValid = false;
     }
-  
+
     // ✅ Check Each Category for at Least One Valid Entry
     Object.keys(formData).forEach((category) => {
       let hasValidEntry = false;
-  
+
       Object.values(formData[category]).forEach((value) => {
         if (typeof value === "object") {
           if (Object.values(value).some((subValue) => !isNaN(subValue) && Number(subValue) > 0)) {
@@ -113,22 +115,22 @@ export default function Calculator() {
           }
         }
       });
-  
+
       if (!hasValidEntry) {
         newErrors[category] = true;
         isValid = false;
       }
     });
-  
+
     // ✅ 🚨 Ensure TransportationTab Highlights Correctly
     const transportHasValue = Object.values(formData.transportation).some(
-      (vehicle) => vehicle.distance && Number(vehicle.distance) > 0
+      (vehicle) => (vehicle.distance || vehicle.cost) && (Number(vehicle.distance) > 0 || Number(vehicle.cost) > 0)
     );
     if (!transportHasValue) {
       newErrors.transportation = true; // ✅ Mark it as needing highlight
       isValid = false;
     }
-  
+
     // ✅ If Form is Invalid, Show Error Modal and Stop Submission
     if (!isValid) {
       setShowError(newErrors);
@@ -136,13 +138,13 @@ export default function Calculator() {
       setErrorModal(true);
       return;
     }
-  
+
     // ✅ If Form is Valid, Reset Errors and Proceed
     setShowError({ zipCode: false, transportation: false, electricity: false, food: false, retail: false, waste: false });
     setPopupMessage("Are you sure you want to submit?");
     setConfirmModal(true);
   };
-  
+
 
   const handleConfirmSubmission = async () => {
     if (!isFormValid()) {
@@ -151,7 +153,7 @@ export default function Calculator() {
     }
   
     setConfirmModal(false);
-    
+  
     // ✅ Construct the payload for the API
     const payload = {
       zip_code: zipCode,
@@ -163,13 +165,13 @@ export default function Calculator() {
     };
   
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("⚠️ No authentication token found. Redirecting to sign-in.");
-        navigate("/signin");
+      if (!isLoggedIn) { // Use isLoggedIn from AuthContext
+        console.warn("⚠️ User is not logged in. Redirecting to sign-in.");
+        navigate("/sign-in");
         return;
       }
   
+      const token = localStorage.getItem("token"); // Still use localStorage for the token
       const response = await fetch(`${import.meta.env.VITE_API_URL}/calculate_emissions`, {
         method: "POST",
         headers: {
@@ -184,12 +186,26 @@ export default function Calculator() {
       if (response.ok) {
         console.log("✅ Calculation successful:", data);
   
-        // ✅ Update the results in context
-        updateResults(data);
+        // ✅ Construct new result object
+        const newResult = {
+          create_ts: new Date().toISOString(),
+          emissions: data.emissions, // ✅ Ensure API response includes emissions
+          total_emissions: data.total_emissions,
+          source: "manual",
+          recommendations: data.recommendations || [],
+        };
   
-        // ✅ Show success message
-        setPopupMessage("✅ Calculation submitted successfully!");
-        setSuccessModal(true);
+        // ✅ Store the new result in localStorage
+        const storedResults = JSON.parse(localStorage.getItem("userResults")) || [];
+        const updatedResults = [newResult, ...storedResults];
+        localStorage.setItem("userResults", JSON.stringify(updatedResults));
+        updateResults(updatedResults);
+  
+        console.log("✅ Stored updated results:", updatedResults);
+  
+        // ✅ Redirect to the correct result page
+        navigate(`/results/${newResult.create_ts}`);
+  
       } else {
         console.error("🚨 Calculation failed:", data.error);
         setPopupMessage("❌ Failed to calculate emissions. Please try again.");
@@ -202,8 +218,9 @@ export default function Calculator() {
     }
   };
   
-  
-  
+
+
+
 
   const handleTabClick = (index) => {
     setCurrentTab(index);

@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.services import (
     addNewUser,
     calculate_food_emissions,
+    calculate_guest_emissions,
     calculate_retail_emissions,
     calculate_transportation_emissions,
     calculate_electricity_emissions,
@@ -64,11 +65,26 @@ def calculate_emissions():
         profile_id = None  # Allow guest users to calculate emissions without storing
 
     # ✅ Step 2: Calculate emissions
-    food_emissions = calculate_food_emissions(data['food'])
-    retail_emissions = calculate_retail_emissions(data['retail'])
-    transportation_emissions = calculate_transportation_emissions(data['transportation'])
-    electricity_emissions = calculate_electricity_emissions(data['electricity'])
-    waste_emissions = calculate_waste_emissions(data['waste'])
+    if len(data['food']) > 0:
+        food_emissions = calculate_food_emissions(data['food'])
+    else:
+        food_emissions = 0
+    if len(data['retail']) > 0:
+        retail_emissions = calculate_retail_emissions(data['retail'])
+    else:
+        retail_emissions = 0
+    if len(data['transportation']) > 0:
+        transportation_emissions = calculate_transportation_emissions(data['transportation'])
+    else:
+        transportation_emissions = 0
+    if len(data['electricity']) > 0:
+        electricity_emissions = calculate_electricity_emissions(data['electricity'])
+    else:
+        electricity_emissions = 0
+    if len(data['waste']) > 0:
+        waste_emissions = calculate_waste_emissions(data['waste'])
+    else:
+        waste_emissions = 0
 
     total_emissions = sum([
         food_emissions,
@@ -104,6 +120,32 @@ def calculate_emissions():
                     {"category": "Food", "value": food_emissions},  # Food emissions (column 1)
                     {"category": "Retail", "value": retail_emissions}  # Retail emissions (column 2)
                 ]
+            })
+
+# ✅ Get total emissions for Guest Users
+@api_routes.route('/guest_emissions', methods=['POST'])
+def guest_emissions():
+    data = request.get_json()
+
+    print("🚨 Debug: Received data for guest emissions calculation:", data)
+
+    current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    emissions = calculate_guest_emissions(data)
+    print("🚨 Debug: Calculated emissions for guest user:", emissions)
+
+    total_emissions = sum(emissions.values())
+    print("🚨 Debug: Calculated total emissions for guest user:", total_emissions)
+    return jsonify({
+                "total_emissions": total_emissions,  # Total emissions (from column 0)
+                "create_ts": current_timestamp, 
+                "emissions": [
+                    {"category": "Electricity", "value": emissions.get('electricity', 0)},
+                    {"category": "Transportation", "value": emissions.get('car', 0)},
+                    {"category": "Water", "value": emissions.get('water', 0)},
+                    {"category": "Food", "value": emissions.get('food', 0)},
+                    {"category": "Flight Travel", "value": emissions.get('flight_travel', 0)}
+        ]
             })
 
 
@@ -189,12 +231,18 @@ def handle_upload():
     file = request.files['pdf']
     try:
         result = process_pdf(file.stream)
+        
+        # Check if result contains an error
+        if 'error' in result:
+            return jsonify({"error": result['error']}), 400
+            
+        # # Check if transactions key exists
+        # if 'transactions' not in result:
+        #     return jsonify({"error": "Processing failed: No transactions found"}), 400
+            
         return jsonify({
             "status": "success",
-            "data": result['transactions'],
-            "totals": result['totals'],
-            "footprint": result['footprint'],
-            "dates": result['dates']
+            "data": result,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

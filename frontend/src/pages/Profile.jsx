@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import defaultProfile from "../assets/defaultProfile.jpg"; // Relative path
-
-
+import defaultProfile from "../assets/defaultProfile.jpg"; // ✅ Profile Image
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -10,7 +8,9 @@ export default function Settings() {
   const [user, setUser] = useState({
     username: "User",
     email: "user@example.com",
+    password: "password123", // ✅ Placeholder (Replace when using API)
   });
+
   const [profilePicture, setProfilePicture] = useState(defaultProfile);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -30,82 +30,97 @@ export default function Settings() {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-  
-        // ✅ Validate the stored image (ensure it is not an invalid blob URL)
-        const isValidImage = parsedUser.profilePicture && parsedUser.profilePicture.startsWith("data:image");
-  
-        setUser({ username: parsedUser.username, email: parsedUser.email });
+        setUser(parsedUser);
+
+        // ✅ Validate profile image (Avoids invalid blobs)
+        const isValidImage =
+          parsedUser.profilePicture && parsedUser.profilePicture.startsWith("data:image");
         setProfilePicture(isValidImage ? parsedUser.profilePicture : defaultProfile);
-  
-        console.log("Profile picture URL on load:", isValidImage ? parsedUser.profilePicture : "Using default");
       } catch (error) {
-        console.error("⚠️ Error parsing user data from localStorage:", error);
+        console.error("⚠️ Error parsing user data:", error);
         setErrorMessage("⚠️ Error loading profile. Please re-login.");
       }
     } else {
-      console.warn("⚠️ No user data found in localStorage.");
       setErrorMessage("⚠️ No user data found. Please log in.");
     }
   }, []);
-  
-  
-  
+
+  // ✅ Profile Picture Change
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.readAsDataURL(file); // ✅ Convert image to Base64 (persistent storage)
-  
+      reader.readAsDataURL(file);
+
       reader.onloadend = () => {
         const base64Image = reader.result;
         setProfilePicture(base64Image);
-  
-        console.log("✅ New profile picture URL:", base64Image);
-  
-        // ✅ Save Base64 in localStorage (instead of blob URL)
+
+        // ✅ Save in localStorage
         const storedUser = JSON.parse(localStorage.getItem("user")) || {};
         localStorage.setItem("user", JSON.stringify({ ...storedUser, profilePicture: base64Image }));
       };
     }
   };
-  
-  
-  
 
-  // ✅ Handle account info update
+  // ✅ Handle account info update (Validations Applied)
   const handleUpdateInfo = (e) => {
     e.preventDefault();
+    setErrorMessage("");
   
     let newUserData = { ...user };
     let hasChanges = false;
-    setErrorMessage("");
   
-    // ✅ Update Username
-    if (updatedInfo.newUsername) {
-      if (!updatedInfo.oldUsername || updatedInfo.oldUsername !== user.username) {
-        setErrorMessage("⚠️ Please enter your correct old username to update it.");
+    // ✅ Username Validation
+    const trimmedNewUsername = updatedInfo.newUsername.trim();
+    if (trimmedNewUsername) {
+      if (!updatedInfo.oldUsername.trim() || updatedInfo.oldUsername !== user.username) {
+        setErrorMessage("⚠️ Incorrect old username.");
         return;
       }
-      newUserData.username = updatedInfo.newUsername;
+      if (trimmedNewUsername.includes(" ")) {
+        setErrorMessage("⚠️ Username cannot contain spaces.");
+        return;
+      }
+      newUserData.username = trimmedNewUsername;
       hasChanges = true;
     }
   
-    // ✅ Update Email
-    if (updatedInfo.newEmail) {
-      if (!updatedInfo.oldEmail || updatedInfo.oldEmail !== user.email) {
-        setErrorMessage("⚠️ Please enter your correct old email to update it.");
+    // ✅ Email Validation
+    const trimmedNewEmail = updatedInfo.newEmail.trim();
+    if (trimmedNewEmail) {
+      if (!updatedInfo.oldEmail.trim() || updatedInfo.oldEmail !== user.email) {
+        setErrorMessage("⚠️ Incorrect old email.");
         return;
       }
-      newUserData.email = updatedInfo.newEmail;
+      if (!/^\S+@\S+\.\S+$/.test(trimmedNewEmail)) {
+        setErrorMessage("⚠️ Please enter a valid email.");
+        return;
+      }
+      newUserData.email = trimmedNewEmail;
+      hasChanges = true;
+    }
+  
+    // ✅ Password Validation
+    if (updatedInfo.newPassword.trim()) {
+      if (!updatedInfo.oldPassword || updatedInfo.oldPassword !== user.password) {
+        setErrorMessage("⚠️ Incorrect old password.");
+        return;
+      }
+      if (updatedInfo.newPassword.length < 6) {
+        setErrorMessage("⚠️ New password must be at least 6 characters.");
+        return;
+      }
+      newUserData.password = updatedInfo.newPassword;
       hasChanges = true;
     }
   
     if (!hasChanges) {
-      setShowEditModal(false);
+      setErrorMessage("⚠️ No changes detected.");
       return;
     }
   
-    // ✅ Save changes in localStorage
+    // ✅ Save changes
     localStorage.setItem("user", JSON.stringify(newUserData));
     setUser(newUserData);
     setShowEditModal(false);
@@ -114,38 +129,38 @@ export default function Settings() {
     setTimeout(() => setShowSuccess(false), 2000);
   };
   
-  console.log("Rendering profile picture:", profilePicture);
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">My Settings:</h1>
-      {/* ✅ Show Error Message */}
-        {errorMessage && (
-          <div className="bg-red-500 text-white p-3 rounded-md text-center mt-4">
-            {errorMessage}
-          </div>
-        )}
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">My Settings</h1>
+
+      {/* ✅ Error Message */}
+      {errorMessage && (
+        <div className="bg-red-500 text-white p-3 rounded-md text-center mt-4">{errorMessage}</div>
+      )}
+
       {/* User Info Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-4">
         <div className="flex items-center space-x-6">
-        <img 
-          src={profilePicture || defaultProfile} 
-          onError={(e) => { 
-            console.warn("⚠️ Profile image failed to load. Falling back to default.");
-            e.target.src = defaultProfile;  // ✅ Fallback to default profile image
-          }} 
-          alt="Profile" 
-          className="w-40 h-40 rounded-full border-4 border-gray-300" 
-        />
+          <img
+            src={profilePicture || defaultProfile}
+            onError={(e) => {
+              e.target.src = defaultProfile;
+            }}
+            alt="Profile"
+            className="w-40 h-40 rounded-full border-4 border-gray-300"
+          />
 
           <div className="text-lg">
-          <p className="text-2xl font-bold">Username: <span className="font-normal">{user.username}</span></p>
-          <p className="text-2xl font-bold">Email: <span className="font-normal">{user.email}</span></p>
-
-
+            <p className="text-2xl font-bold">
+              Username: <span className="font-normal">{user.username}</span>
+            </p>
+            <p className="text-2xl font-bold">
+              Email: <span className="font-normal">{user.email}</span>
+            </p>
           </div>
         </div>
-        
+
         {/* Buttons */}
         <div className="mt-6 flex gap-4">
           <label className="btn btn-primary cursor-pointer w-1/2 text-center">
@@ -172,40 +187,53 @@ export default function Settings() {
             <h2 className="text-lg font-bold mb-4">Update Account Info</h2>
             {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
             <form onSubmit={handleUpdateInfo} className="space-y-4">
-              
               {/* Username */}
               <div>
                 <label className="block text-sm font-medium">Old Username</label>
-                <input type="text" className="input input-bordered w-full" value={updatedInfo.oldUsername} onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldUsername: e.target.value })} />
+                <input type="text" className="input input-bordered w-full" 
+                  value={updatedInfo.oldUsername} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldUsername: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium">New Username</label>
-                <input type="text" className="input input-bordered w-full" value={updatedInfo.newUsername} onChange={(e) => setUpdatedInfo({ ...updatedInfo, newUsername: e.target.value })} />
+                <input type="text" className="input input-bordered w-full" 
+                  value={updatedInfo.newUsername} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newUsername: e.target.value })} />
               </div>
 
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium">Old Email</label>
-                <input type="email" className="input input-bordered w-full" value={updatedInfo.oldEmail} onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldEmail: e.target.value })} />
+                <input type="email" className="input input-bordered w-full" 
+                  value={updatedInfo.oldEmail} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldEmail: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium">New Email</label>
-                <input type="email" className="input input-bordered w-full" value={updatedInfo.newEmail} onChange={(e) => setUpdatedInfo({ ...updatedInfo, newEmail: e.target.value })} />
+                <input type="email" className="input input-bordered w-full" 
+                  value={updatedInfo.newEmail} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newEmail: e.target.value })} />
               </div>
 
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium">Old Password</label>
-                <input type="password" className="input input-bordered w-full" value={updatedInfo.oldPassword} onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldPassword: e.target.value })} />
+                <input type="password" className="input input-bordered w-full" 
+                  value={updatedInfo.oldPassword} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldPassword: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium">New Password</label>
-                <input type="password" className="input input-bordered w-full" value={updatedInfo.newPassword} onChange={(e) => setUpdatedInfo({ ...updatedInfo, newPassword: e.target.value })} />
+                <input type="password" className="input input-bordered w-full" 
+                  value={updatedInfo.newPassword} 
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, newPassword: e.target.value })} />
               </div>
 
+              {/* Submit & Cancel Buttons */}
               <button type="submit" className="btn btn-primary w-full mt-4">Submit</button>
               <button type="button" className="btn btn-secondary w-full mt-2" onClick={() => setShowEditModal(false)}>Cancel</button>
             </form>
+
           </div>
         </div>
       )}
