@@ -24,10 +24,10 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
   let allData = hasUserData ? [...storedResults, ...data] : defaultData;
 
   // ✅ Remove duplicates by ensuring unique dates
-  allData = [...new Map(allData.map(item => [item.date, item])).values()];
+  allData = [...new Map(allData.map(item => [item.create_ts, item])).values()];
 
   // ✅ Sort data chronologically (oldest → newest)
-  allData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  allData.sort((a, b) => new Date(a.create_ts) - new Date(b.create_ts));
 
   // ✅ Set cutoff date based on timeframe selection
   const now = new Date();
@@ -48,7 +48,7 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
 
   // ✅ Filter data based on timeframe, but always show last known entry
   let filteredData = allData.filter(entry => {
-    const entryDate = new Date(entry.date);
+    const entryDate = new Date(entry.create_ts);
     return entryDate >= cutoffDate && entryDate <= now;
   });
 
@@ -58,17 +58,17 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
   }
 
   // ✅ Add 5-day buffer at the end of the chart
-  const maxDate = new Date(Math.max(...filteredData.map(d => new Date(d.date))));
+  const maxDate = new Date(Math.max(...filteredData.map(d => new Date(d.create_ts))));
   const bufferDate = new Date(maxDate);
-  bufferDate.setDate(maxDate.getDate() + 20);
+  bufferDate.setDate(maxDate.getDate() + 5);
 
   // ✅ Set the max Y-axis value dynamically
-  const highestValue = Math.max(...filteredData.map(entry => entry.value), 1500);
+  const highestValue = Math.max(...filteredData.map(entry => entry.total_emissions), 1500);
   const adjustedMaxScale = highestValue + 500;
 
   const chartData = {
     labels: filteredData.map(entry =>
-      new Date(entry.date).toLocaleDateString("en-US", {
+      new Date(entry.create_ts).toLocaleDateString("en-US", {
         month: timeFrame === "1Y" ? "short" : "short",
         year: timeFrame === "1Y" ? "numeric" : undefined,
         day: timeFrame === "1M" ? "numeric" : undefined,
@@ -78,8 +78,8 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
       {
         label: "Total Emissions Over Time",
         data: filteredData.map(entry => ({
-          x: new Date(entry.date),
-          y: entry.value,
+          x: new Date(entry.create_ts),
+          y: entry.total_emissions,
         })),
         borderColor: "green",
         borderWidth: 2,

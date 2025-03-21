@@ -96,11 +96,11 @@ export default function Dashboard() {
     // ✅ Get all user-generated results (including past & current)
     const userGeneratedResults = results
       .filter(result => result.source === "manual" || result.source === "upload")
-      .map(result => ({
-        date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
-        value: result.total_emissions ? Number(result.total_emissions.toFixed(2)) : 0
-      }))
-        .sort((a, b) => new Date(b.date) - new Date(a.date)); // ✅ Ensure newest entries are at the top
+      // .map(result => ({
+      //   date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
+      //   value: result.total_emissions ? Number(result.total_emissions.toFixed(2)) : 0
+      // }))
+        // .sort((a, b) => new Date(b.create_ts) - new Date(a.create_ts)); // ✅ Ensure newest entries are at the top
 
     console.log("✅ Updated progress tracker data:", userGeneratedResults);
     setProgressData(userGeneratedResults);
@@ -120,11 +120,11 @@ export default function Dashboard() {
     console.log("✅ User-generated results:", userGeneratedResults);
 
     if (userGeneratedResults.length > 0) {
-        setProgressData(
-            userGeneratedResults.map(result => ({
-                date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
-                value: result.total_emissions ?? 0,
-            })).sort((a, b) => new Date(b.date) - new Date(a.date)) // ✅ Ensure newest entries are at the top
+        setProgressData(userGeneratedResults
+            // userGeneratedResults.map(result => ({
+            //     date: result.create_ts ? new Date(result.create_ts).toISOString() : new Date().toISOString(),
+            //     value: result.total_emissions ?? 0,
+            // })).sort((a, b) => new Date(b.date) - new Date(a.date)) // ✅ Ensure newest entries are at the top
         );
     }
 }, [results]);
@@ -151,18 +151,18 @@ export default function Dashboard() {
             rating={roundToThousandths(latestReport.total_emissions || 350)}
           />
 
-          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint Rating</p>
+          <p className="mt-2 font-semibold text-gray-900">Your Monthly Footprint</p>
         </div>
 
         {/* ✅ Category Breakdown */}
         <div className="flex-1 bg-gray-50 p-4 rounded-lg text-center h-full min-h-[250px] flex flex-col">
-          <h2 className="font-semibold pb-2 text-gray-900">Ratings by Category</h2>
+          <h2 className="font-semibold pb-2 text-gray-900">Emissions by Category</h2>
           <ul className="mt-1 text-gray-700 space-y-1 px-8 flex flex-col justify-between">
             {Object.entries(emissionsData).length > 0 ? (
               Object.entries(emissionsData).map(([category, value], index) => (
                 <li key={index} className="flex justify-between items-center px-4">
                   <span className="text-gray-700 flex-1 text-left">{category}</span>
-                  <span className="text-gray-500 w-16 text-right">{value}</span>
+                  <span className="text-gray-500 w-16 text-right">{value.toFixed(3)}</span>
                 </li>
               ))
             ) : (
