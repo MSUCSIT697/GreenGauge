@@ -1,6 +1,7 @@
 // 1. Modify UploadModal.jsx to log PDF results
 import { useState } from "react";
 import { useResults } from "../context/ResultsContext";
+import { useNavigate } from "react-router-dom";
 
 export default function UploadModal({ isOpen, onClose }) {
   const [files, setFiles] = useState([]);
@@ -9,6 +10,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [popupMessage, setPopupMessage] = useState("");
   const [errorModal, setErrorModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleUpload = async () => {
     if (files.length === 0) {

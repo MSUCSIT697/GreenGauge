@@ -227,22 +227,23 @@ def get_user_results():
 def handle_upload():
     if 'pdf' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
-        
-    file = request.files['pdf']
+    
     try:
-        result = process_pdf(file.stream)
-        
-        # Check if result contains an error
-        if 'error' in result:
-            return jsonify({"error": result['error']}), 400
-            
-        # # Check if transactions key exists
-        # if 'transactions' not in result:
-        #     return jsonify({"error": "Processing failed: No transactions found"}), 400
-            
-        return jsonify({
-            "status": "success",
-            "data": result,
-        })
+        file = request.files['pdf']
+
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        if file and file.filename.endswith('.pdf'):
+            result = process_pdf(file)
+            if 'error' in result:
+                return jsonify({"error": result['error']}), 500
+            return jsonify({
+                "status": "success",
+                "data": result,
+            }), 200
+
+        return jsonify({"error": "Invalid file type. Only PDFs are allowed."}), 400
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
