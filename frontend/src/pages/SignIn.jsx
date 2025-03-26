@@ -26,7 +26,7 @@ const SignIn = () => {
       const data = await response.json();
 
       if (response.ok) {
-        handleLogin(data.token); // Call handleLogin from AuthContext
+        handleLogin(data); // Call handleLogin from AuthContext
         await updateResults(); // Fetch user's past results
         navigate("/"); // Redirect to home
       } else {

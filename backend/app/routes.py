@@ -10,7 +10,11 @@ from app.services import (
     get_total_emissions_by_id,
     getIdByEmail,
     getPasswordByEmail,
-    save_to_database
+    save_to_database,
+    getUserNameByEmail,
+    update_email,
+    update_password,
+    update_username
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 import bcrypt
@@ -190,9 +194,31 @@ def login():
     
     if bcrypt.checkpw(password.encode('utf-8'), storedPassword.encode('utf-8')):
         access_token = create_access_token(identity=email)
-        return jsonify({'message': 'Login successful', 'token': access_token}), 200
+        user_name = getUserNameByEmail(email)
+        return jsonify({'message': 'Login successful', 'token': access_token, 'profile': {'username': user_name, 'email': email}}), 200
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
+
+@api_routes.route('/update_profile', methods=['Post'])
+@jwt_required()
+def profile():
+    data = request.json
+    current_user = get_jwt_identity()
+    user_id = getIdByEmail(current_user)
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+    if 'username' in data:
+        username = data.get('username')
+        update_username(username, user_id)
+    if 'email' in data:
+        email = data.get('email')
+        update_email(email, user_id)
+    if 'password' in data:
+        password = data.get('password')
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        update_password(hashed_password, user_id)
+    return jsonify({'message': 'Profile updated successfully'}), 200
+
 
 
 # ✅ Protected route (Example)

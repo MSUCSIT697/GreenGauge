@@ -15,15 +15,20 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Function to handle login
-  const handleLogin = (token) => {
-    localStorage.setItem("token", token); // Set token in localStorage
+  const handleLogin = (data) => {
+    localStorage.setItem("token", data.token); // Set token in localStorage
+    localStorage.setItem("profile", JSON.stringify(data.profile)); // Set profile in localStorage
     setIsLoggedIn(true); // Update isLoggedIn state
   };
 
   // Function to handle logout
   const handleLogout = () => {
     localStorage.removeItem("token"); // Remove token from localStorage
+    localStorage.removeItem("profile"); // Remove profile from localStorage
+    localStorage.removeItem("userResults"); // Remove userResults from localStorage
     setIsLoggedIn(false); // Update isLoggedIn state
+    // Force a hard navigation to home page with full page reload
+    window.location.reload();
   };
 
   return (

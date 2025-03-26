@@ -1,6 +1,6 @@
 // Navbar.jsx
-import React, { useState, useContext } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useContext, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
@@ -9,7 +9,8 @@ export default function Navbar() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const { isLoggedIn, handleLogout } = useContext(AuthContext); // Use AuthContext
   const location = useLocation();
-  const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+
 
   const menuItems = [
     { name: "Home", path: "/" },
@@ -17,6 +18,23 @@ export default function Navbar() {
     { name: "Calculator", path: isLoggedIn ? "/calculator" : "/guest-calculator" },
     { name: "FAQs", path: "/faqs" },
   ];
+
+  // Add this effect to handle outside clicks
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setAccountMenuOpen(false);
+    }
+  };
+
+  // Add when mounted
+  document.addEventListener("mousedown", handleClickOutside);
+  // Clean up on unmount
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
 
   return (
     <nav className="bg-white shadow-md px-6 py-4">
@@ -41,17 +59,33 @@ export default function Navbar() {
 
         {/* Account Dropdown Menu (Only if logged in) */}
         {isLoggedIn ? (
-          <div className="relative hidden md:block">
-            <button onClick={() => setAccountMenuOpen(!accountMenuOpen)} className="flex items-center gap-2">
+          <div className="relative hidden md:block" ref={dropdownRef}>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setAccountMenuOpen(!accountMenuOpen);
+              }} 
+              className="flex items-center gap-2"
+            >
               <UserCircleIcon className="h-6 w-6 text-gray-900" />
               <span className="text-sm font-semibold text-gray-900">Account</span>
             </button>
             {accountMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md">
-                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md z-50">
+                <Link 
+                  to="/profile" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setAccountMenuOpen(false)}
+                >
                   Profile
                 </Link>
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }} 
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
                   Logout
                 </button>
               </div>

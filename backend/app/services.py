@@ -275,3 +275,36 @@ def getIdByEmail(email):
     cursor.close()
     conn.close()
     return id[0]
+
+def getUserNameByEmail(email):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT fullname FROM users WHERE email = %s", (email,))
+    name = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return name[0]
+
+def update_username(username, user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET fullname = %s WHERE id = %s", (username, user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def update_email(email, user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def update_password(password, user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (password, user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
