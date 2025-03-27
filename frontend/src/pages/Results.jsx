@@ -246,17 +246,28 @@ export default function Results() {
                 storedRecommendations={Array.isArray(userResults?.recommendations) ? userResults.recommendations : []} 
             />
           </div>
-
-          {/* ✅ Pie Chart for Emissions Breakdown */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4 h-100">
-            <h2 className="font-semibold pb-4">Emissions Breakdown</h2>
-            <Pie data={pieData} height={50} />
-            <p className="text-gray-600 text-sm">
-              Your total monthly carbon emissions:{" "}
+           {/* ✅ Pie Chart for Emissions Breakdown */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+           <h2 className="font-semibold pb-4">Emissions Breakdown</h2>
+           <div style={{ maxWidth: "400px", margin: "0 auto" }}>
+          <Pie 
+            data={pieData} 
+            options={{
+            responsive: true,
+            maintainAspectRatio: false,
+          }} 
+            width={320} 
+            height={320} 
+             />
+            </div>
+              <p className="text-gray-600 text-sm">
+                Your total monthly carbon emissions:{" "}
               <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
-            </p>
-          </div>
+              </p>
+            </div>
 
+
+         
           {/* ✅ Navigation Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
             <Link to="/reports" className="btn btn-primary">View Reports</Link>

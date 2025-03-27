@@ -51,23 +51,24 @@ export default function Calculator() {
   });
 
   const handleChange = (category, field, value, subField = null) => {
+    const sanitizedValue = Math.max(0, parseFloat(value)) || 0; // Prevent negative values
+  
     setFormData((prev) => {
       const updatedFormData = {
         ...prev,
         [category]: {
           ...prev[category],
           [field]: subField
-            ? { ...prev[category][field], [subField]: value ? parseFloat(value) || 0 : 0 }
-            : value ? parseFloat(value) || 0 : 0,
+            ? { ...prev[category][field], [subField]: sanitizedValue }
+            : sanitizedValue,
         },
       };
-
-      console.log("Updated formData:", updatedFormData); // ✅ Debugging
-
+  
+      console.log("Updated formData:", updatedFormData); // Debugging
+  
       return updatedFormData;
     });
   };
-
 
 
   const isFormValid = (data = formData) => {
