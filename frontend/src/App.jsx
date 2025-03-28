@@ -13,6 +13,7 @@ import FAQs from "./pages/FAQs";
 import Results from "./pages/Results";
 import { ResultsProvider } from "./context/ResultsContext";
 import { AuthProvider } from "./context/AuthContext";
+import GuestResults from "./pages/GuestResults";
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
                 <Route path="profile" element={<Profile />} />
                 <Route path="faqs" element={<FAQs />} />
                 <Route path="/results/:reportId" element={<Results />} />
+                <Route path="/guest-results" element={<GuestResults />} />
               </Route>
             </Routes>
     </ResultsProvider>

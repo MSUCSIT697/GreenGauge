@@ -205,7 +205,13 @@ export default function Calculator() {
         console.log("✅ Stored updated results:", updatedResults);
   
         // ✅ Redirect to the correct result page
+        // ✅ Show success modal before navigating
+        setPopupMessage("✅ Calculation submitted successfully!");
+        setSuccessModal(true);
+
         navigate(`/results/${newResult.create_ts}`);
+
+
   
       } else {
         console.error("🚨 Calculation failed:", data.error);
@@ -310,6 +316,7 @@ export default function Calculator() {
         handleConfirmSubmission={handleConfirmSubmission}
         navigate={navigate}
       />
+
 
     </div>
   );

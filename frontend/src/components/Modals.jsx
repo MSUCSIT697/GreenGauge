@@ -9,9 +9,25 @@ export default function Modals({
   setSuccessModal, 
   popupMessage, 
   handleConfirmSubmission, 
-  navigate 
+  navigate,
+  guestMode = false // ✅ NEW: Optional prop to handle guest results
 }) {
-  console.log("🔍 Modals Props Updated:", { errorModal, confirmModal, successModal });
+  console.log("🔍 Modals Props Updated:", { errorModal, confirmModal, successModal, guestMode });
+
+  // ✅ Navigate logic for success modal
+  const handleSuccessClick = () => {
+    if (guestMode) {
+      const guestResult = JSON.parse(sessionStorage.getItem("guestResult"));
+      if (guestResult) {
+        navigate("/guest-results", { state: { result: guestResult } });
+      } else {
+        console.warn("⚠️ No guest result in sessionStorage.");
+        navigate("/guest-results");
+      }
+    } else {
+      navigate("/results"); // signed-in user logic
+    }
+  };
 
   return (
     <div>
@@ -51,7 +67,7 @@ export default function Modals({
             <h3 className="text-lg font-bold">Submission Successful</h3>
             <p>Your results will be displayed on the next page.</p>
             <div className="modal-action">
-              <button className="btn btn-primary" onClick={() => navigate(`/results`)}>
+              <button className="btn btn-primary" onClick={handleSuccessClick}>
                 View Results
               </button>
             </div>
