@@ -7,11 +7,17 @@ import { useResults } from "../context/ResultsContext";
 import RecommendationSystem from "../components/Recommendations";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { AuthContext } from "../context/AuthContext"; // Import AuthContext
+import { useLocation } from "react-router-dom";
+
 
 export default function Dashboard() {
   const [progressData, setProgressData] = useState([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCalcModal, setShowCalcModal] = useState(false);
+  const location = useLocation();
+
+
   const { results, updateResults } = useResults();
   const navigate = useNavigate(); // ✅ Use navigate for handling unauthorized users
   const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
@@ -84,6 +90,14 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (location.state?.openUpload) {
+      setIsUploadOpen(true);
+      // Optional: Clear state to prevent re-trigger on refresh or back button
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+  
   // Call fetchResults on component mount
   useEffect(() => {
     fetchResults();
@@ -135,7 +149,16 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900">My Dashboard :</h1>
+      <div className="flex items-center justify-between">
+  <h1 className="text-2xl font-bold text-gray-900">My Dashboard :</h1>
+  <button
+    onClick={() => setShowCalcModal(true)}
+    className="px-4 py-2 rounded-md border-2 border-green-800 text-green-800 bg-lime-200 font-medium hover:bg-transparent  transition"
+  >
+    New Calculation
+  </button>
+</div>
+
 
       {results.length === 0 && (
         <p className="text-yellow-600 mt-4">
@@ -222,6 +245,39 @@ export default function Dashboard() {
       {showLoginModal && (
         <LoginPromptModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       )}
+
+      {showCalcModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full text-center relative">
+            <button
+              className="absolute top-2 right-3 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowCalcModal(false)}
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Start a New Calculation</h3>
+            <p className="text-gray-700 mb-4">
+              If you'd like to upload one of your bills for calculations, press below:
+            </p>
+            <button
+              className="btn btn-primary mb-4"
+              onClick={() => {
+                setIsUploadOpen(true);
+                setShowCalcModal(false);
+              }}
+            >
+              Upload PDF
+            </button>
+            <p className="text-gray-700 mb-2">
+              To do advanced calculations using our manual calculator, click below:
+            </p>
+            <Link to="/calculator" className="btn btn-primary">
+              Manual Calculator
+            </Link>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

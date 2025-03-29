@@ -21,13 +21,18 @@ export default function ElectricityTab({ formData, handleChange, showError }) {
       <h2 className="text-lg font-semibold">Electricity</h2>
       <FormInput
         label="What is your monthly electricity consumption (in kWh):"
+        type="number"
+        min="0"
         value={formData.electricity.consumption}
         onChange={(e) =>
           handleChange("electricity", "consumption", e.target.value)
         }
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
         showError={showError.electricity}
       />
-      <label className="block">Energy Source:</label>
+      <label className="block mt-4">Energy Source:</label>
       <select
         className={`input input-bordered w-full mt-2 ${
           showError.electricity ? "border-red-500" : ""
@@ -38,7 +43,7 @@ export default function ElectricityTab({ formData, handleChange, showError }) {
         <option value="natural_gas">Natural Gas</option>
         <option value="coal">Coal</option>
         <option value="petroleum">Petroleum</option>
-        <option value="electricity_bill">Monthly Bill in dollars</option>
+        <option value="electricity_bill">Electricity</option>
       </select>
     </div>
   );

@@ -4,11 +4,14 @@ import JustGage from "justgage";
 import "raphael"; // Required for JustGage
 import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
+
 export default function Home() {
   const [gauge, setGauge] = useState(null);
   const [userChoice, setUserChoice] = useState(null); // "yes" or "no"
   const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     // ✅ Initialize JustGage without labels
@@ -125,11 +128,68 @@ export default function Home() {
             </Link>
           </>
         ) : (
-          <button className="btn btn-primary" onClick={handleNavigation}>
-            Go to Calculator
-          </button>
+          <>
+            <button
+              className="btn btn-primary flex items-center hover:bg-lime-100 hover:text-green-800 gap-2"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <span className="text-xl font-bold">+</span>
+              Make a New Calculation
+            </button>
+
+            <Link to="/dashboard">
+              <button className="btn btn-primary ml-4">Go to Dashboard</button>
+            </Link>
+          </>
+        
         )}
       </div>
+      {isModalOpen && (
+  <div
+    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        setIsModalOpen(false); // Click outside closes modal
+      }
+    }}
+  >
+    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full text-center relative">
+      <button
+        className="absolute top-2 right-3 text-gray-400 hover:text-gray-600"
+        onClick={() => setIsModalOpen(false)}
+      >
+        ✕
+      </button>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Start a New Calculation</h3>
+      <p className="text-gray-700 mb-4">
+        If you'd like to upload one of your bills for calculations, press below:
+      </p>
+      <button
+        className="btn btn-primary mb-4"
+        onClick={() => {
+          navigate("/dashboard", { state: { openUpload: true } });
+          setIsModalOpen(false);
+        }}
+      >
+        Upload PDF
+      </button>
+      <p className="text-gray-700 mb-2">
+        To do advanced calculations using our manual calculator, click below:
+      </p>
+      <button
+        className="btn btn-primary"
+        onClick={() => {
+          navigate("/calculator");
+          setIsModalOpen(false);
+        }}
+      >
+        Manual Calculator
+      </button>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }
