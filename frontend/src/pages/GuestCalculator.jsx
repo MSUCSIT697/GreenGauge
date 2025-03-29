@@ -293,8 +293,8 @@ export default function GuestCalculator() {
 
 
       <div className="flex justify-center space-x-4 mt-8">
-        <button className="btn btn-outline btn-primary" onClick={() => navigate("/dashboard")}>
-          Return to Dashboard
+        <button className="btn btn-outline btn-primary" onClick={() => navigate("/")}>
+          Return to Home Page
         </button>
         <button className="btn btn-outline btn-primary" onClick={() => navigate("/sign-in")}>
           Sign In for Full Access

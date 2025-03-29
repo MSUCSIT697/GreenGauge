@@ -5,11 +5,19 @@ import { Pie } from "react-chartjs-2";
 import GaugeChart from "../components/GaugeChart";
 import RecommendationSystem from "../components/Recommendations";
 import { useResults } from "../context/ResultsContext";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, RadialLinearScale,  PointElement,  LineElement,  Filler, } from "chart.js";
+import { Bar } from "react-chartjs-2";
+import { Radar } from 'react-chartjs-2';
+ChartJS.register(CategoryScale, LinearScale, BarElement);
+ChartJS.register(  RadialLinearScale,  PointElement,  LineElement,  Filler  );
+
+
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Results() {
+  
+  const [viewType, setViewType] = useState("pie");
   const { results, updateResults } = useResults();
   const { reportId } = useParams(); // ✅ Get the report ID from the URL
   const navigate = useNavigate();
@@ -172,6 +180,87 @@ export default function Results() {
       },
     ],
   };
+  const chartColors = ["#10b981", "#108981", "#fecaca", "#316bd6", "#f09e41"];
+const usAvgColor = "#9ca3af"; // gray for US average
+
+const barData = {
+  labels: Object.keys(USA_AVG_CATEGORY),
+  datasets: [
+    {
+      label: "Your Emissions",
+      data: Object.keys(USA_AVG_CATEGORY).map(cat => {
+        const userVal = userResults?.emissions?.find(e => e.category === cat)?.value || 0;
+        return parseFloat(userVal.toFixed(3));
+      }),
+      backgroundColor: chartColors,
+    },
+    {
+      label: "US Average Emissions",
+      data: Object.values(USA_AVG_CATEGORY),
+      backgroundColor: "#f09e41",
+    },
+  ],
+};
+
+const radarData = {
+  labels: Object.keys(USA_AVG_CATEGORY),
+  datasets: [
+    {
+      label: 'Your Emissions',
+      data: Object.keys(USA_AVG_CATEGORY).map((cat) =>
+        userResults?.emissions?.find((e) => e.category === cat)?.value || 0
+      ),
+      backgroundColor: 'rgba(16, 185, 129, 0.2)',
+      borderColor: '#10b981',
+      pointBackgroundColor: '#10b981',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: '#10b981',
+    },
+    {
+      label: 'US Average Emissions',
+      data: Object.values(USA_AVG_CATEGORY),
+      backgroundColor: 'rgba(240, 158, 65, 0.2)',
+      borderColor: '#f09e41',
+      pointBackgroundColor: '#f09e41',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: '#f09e41',
+    },
+  ],
+};
+
+const radarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { position: 'top' },
+    title: { display: true, text: 'Emissions Comparison' },
+  },
+  scales: {
+    r: {
+      beginAtZero: true,
+      angleLines: { display: true },
+      ticks: { display: true },
+    },
+  },
+};
+
+
+const listedComparison = Object.keys(USA_AVG_CATEGORY).map((category, i) => {
+  const userVal = userResults?.emissions?.find(e => e.category === category)?.value?.toFixed(3) || 0;
+  const avgVal = USA_AVG_CATEGORY[category];
+    
+  return (
+    <div key={i} className="contents gap-x-4 py-4">
+      <div className="text-left font-medium text-gray-700">{category}</div>
+      <div className="text-left text-gray-900">{userVal} kg CO₂</div>
+      <div className="text-left text-gray-500"> {avgVal} kg CO₂</div>
+    </div>
+  );
+});
+
+
 
   return (
     <div className="container mx-auto p-6">
@@ -188,7 +277,7 @@ export default function Results() {
           {/* ✅ Gauge Comparison (User vs. US Avg) */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="font-semibold">Gauge Comparison</h2>
-            <div className="flex justify-center space-x-8">
+            <div className="flex flex-col md:flex-row justify-center items-center gap-6">
               <div className="flex flex-col items-center">
                 <GaugeChart id="userGauge" rating={userResults?.total_emissions || 0} />
                 <p className="mt-2 font-semibold text-gray-900">Your Carbon Footprint</p>
@@ -200,42 +289,104 @@ export default function Results() {
             </div>
           </div>
 
-          {/* ✅ Category Comparison: User vs. US Average */}
+          
+
+          {/* ✅ Updated Category Comparison with Toggle View */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="font-semibold pb-2 text-gray-900">Category Comparison: You vs. US Average</h2>
-            <div className="grid grid-cols-2 gap-6">
-              {/* ✅ User Emissions Breakdown */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700">Your Emissions</h3>
-                <ul className="list-disc pl-5 text-gray-700">
-                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => {
-                    const userCategoryData = userResults?.emissions?.find((item) => item.category === category);
-                    const userValue = userCategoryData ? userCategoryData.value.toFixed(3) : 0;
-                    
-                    return (
-                      <li key={index} className="mb-2">
-                        <strong>{category}: </strong> 
-                        <span className="text-gray-900">{userValue} kg CO₂</span>
-                      </li>
-                    );
-                  })}
-                </ul>
+            <h2 className="font-semibold text-gray-900 mb-2">Category Comparison: You vs. US Average</h2>
+            <div className="pt-2 pb-4">
+              {/* Toggle Buttons */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['bar', 'pie', 'radar', 'list'].map((type) => (
+                  <button
+                    key={type}
+                    className={`px-4 py-1 rounded-md text-sm ${
+                      viewType === type ? 'bg-primary text-white' : 'bg-gray-200 text-gray-800'
+                    }`}
+                    onClick={() => setViewType(type)}
+                  >
+                    {type === 'pie'
+                      ? 'Pie Chart'
+                      : type === 'bar'
+                      ? 'Bar Graph'
+                      : type === 'list'
+                      ? 'List View'
+                      : 'Radar Chart'}
+                  </button>
+                ))}
               </div>
 
-              {/* ✅ US Average Breakdown */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700">US Average</h3>
-                <ul className="list-disc pl-5 text-gray-700">
-                  {Object.keys(USA_AVG_CATEGORY).map((category, index) => (
-                    <li key={index} className="mb-2">
-                      <strong>{category}: </strong> 
-                      <span className="text-gray-500">{USA_AVG_CATEGORY[category]} kg CO₂</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* View Area */}
+              {viewType === "pie" && (
+                <div className="flex flex-col md:flex-row justify-evenly items-center flex-wrap w-full px-4 sm:px-8 md:px-12 lg:px-20 gap-6 md:gap-12">
+
+
+                  <div style={{ width: "300px" }}>
+                    <Pie
+                      data={{
+                        labels: Object.keys(formattedEmissions),
+                        datasets: [{ data: Object.values(formattedEmissions), backgroundColor: chartColors }],
+                      }}
+                    />
+                    <p className="text-center mt-2 text-md font-medium text-gray-700">Your Emissions</p>
+                  </div>
+                  <div style={{ width: "300px" }}>
+                    <Pie
+                      data={{
+                        labels: Object.keys(USA_AVG_CATEGORY),
+                        datasets: [{ data: Object.values(USA_AVG_CATEGORY), backgroundColor: chartColors }],
+                      }}
+                    />
+                    <p className="text-center mt-2 text-md font-medium text-gray-700">US Average Emissions</p>
+                  </div>
+                </div>
+              )}
+
+              {viewType === "bar" && (
+                <div className="mt-4 w-full" style={{ maxHeight: "600px", overflowY: "auto" }}>
+                  <div className="relative" style={{ minHeight: "300px", maxHeight: "600px" }}>
+                    <Bar
+                      data={barData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: "top" } },
+                        scales: { y: { beginAtZero: true } },
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+
+              {viewType === 'radar' && (
+                <div className="mt-4" style={{ height: '400px' }}>
+                  <Radar data={radarData} options={radarOptions} />
+                </div>
+              )}
+
+
+              {viewType === "list" && (
+                <div className="flex flex-col items-center w-full">
+                  <div className="grid grid-cols-3 gap-x-4 sm:gap-x-8 md:gap-x-12 lg:gap-x-20 xl:gap-x-32 text-base mt-4 w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+
+                    {/* Column Headers */}
+                    <div className="text-left font-semibold border-b pb-1">Category</div>
+                    <div className="text-left font-semibold border-b pb-1">Your Emissions</div>
+                    <div className="text-left font-semibold border-b pb-1">US Average Emissions</div>
+
+                    {/* Listed Data */}
+                    {listedComparison}
+                  </div>
+                </div>
+              )}
+
+
+
+
             </div>
           </div>
+
 
 
           {/* ✅ Personalized Recommendations */}
@@ -246,28 +397,7 @@ export default function Results() {
                 storedRecommendations={Array.isArray(userResults?.recommendations) ? userResults.recommendations : []} 
             />
           </div>
-           {/* ✅ Pie Chart for Emissions Breakdown */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-           <h2 className="font-semibold pb-4">Emissions Breakdown</h2>
-           <div style={{ maxWidth: "400px", margin: "0 auto" }}>
-          <Pie 
-            data={pieData} 
-            options={{
-            responsive: true,
-            maintainAspectRatio: false,
-          }} 
-            width={320} 
-            height={320} 
-             />
-            </div>
-              <p className="text-gray-600 text-sm">
-                Your total monthly carbon emissions:{" "}
-              <span className="text-green-500">{userResults?.total_emissions || 0}</span> kg CO₂.
-              </p>
-            </div>
-
-
-         
+                    
           {/* ✅ Navigation Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
             <Link to="/reports" className="btn btn-primary">View Reports</Link>
