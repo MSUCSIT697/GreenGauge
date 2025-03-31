@@ -13,63 +13,63 @@ export default function RetailTab({ formData, handleChange, showError }) {
     <div>
       <h2 className="text-lg font-semibold">Retail Purchases</h2>
       <FormInput
-        label="Kids (dollars per month):"
+        label="Kids (($) per month):"
         value={formData.retail.kids}
         onChange={(e) => handleChange("retail", "kids", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Clothing (dollars per month):"
+        label="Clothing (($) per month):"
         value={formData.retail.clothing}
         onChange={(e) => handleChange("retail", "clothing", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Entertainment (dollars per month):"
+        label="Entertainment (($) per month):"
         value={formData.retail.entertainment}
         onChange={(e) => handleChange("retail", "entertainment", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Furniture (dollars per month):"
+        label="Furniture (($) per month):"
         value={formData.retail.furniture}
         onChange={(e) => handleChange("retail", "furniture", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Home Supplies (dollars per month):"
+        label="Home Supplies (($) per month):"
         value={formData.retail.home_supplies}
         onChange={(e) => handleChange("retail", "home_supplies", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Medical Care (dollars per month):"
+        label="Medical Care (($) per month):"
         value={formData.retail.medical_care}
         onChange={(e) => handleChange("retail", "medical_care", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Personal Care (dollars per month):"
+        label="Personal Care (($) per month):"
         value={formData.retail.personal_care}
         onChange={(e) => handleChange("retail", "personal_care", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Pets (dollars per month):"
+        label="Pets (($) per month):"
         value={formData.retail.pets}
         onChange={(e) => handleChange("retail", "pets", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
       <FormInput
-        label="Electronics (dollars per month):"
+        label="Electronics (($) per month):"
         value={formData.retail.electronics}
         onChange={(e) => handleChange("retail", "electronics", e.target.value)}
         showError={showError.retail}
