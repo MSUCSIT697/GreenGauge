@@ -20,15 +20,55 @@ export default function TransportationTab({ formData, handleChange, showError })
     <div>
       <h2 className="text-lg font-semibold">Transportation</h2>
 
+      {/* Housemate Count */}
       <FormInput
-        label="Car Distance (miles):"
-        value={formData.transportation.car.distance}
+        label="Number of Housemates (including yourself):"
+        value={formData.transportation.housemate_count || ""}
+        onChange={(e) =>
+          handleChange("transportation", "housemate_count", e.target.value)
+        }
+        showError={showError.transportation}
+        isMonetary={false}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="1"
+      />
+
+      {/* Car Distance */}
+      <FormInput
+        label="Car Distance (miles per month):"
+        value={formData.transportation.car?.distance || ""}
         onChange={(e) =>
           handleChange("transportation", "car", e.target.value, "distance")
         }
         showError={showError.transportation}
+        isMonetary={false}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
 
+      {/* Number of Passengers for Car Trips */}
+      <FormInput
+        label="Average Number of Passengers per Car Trip (including driver):"
+        value={formData.transportation.car?.passengers || ""}
+        onChange={(e) =>
+          handleChange("transportation", "car", e.target.value, "passengers")
+        }
+        showError={showError.transportation}
+        isMonetary={false}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="1"
+      />
+
+      {/* Car Type */}
       <label className="block font-medium mb-1">Car Type:</label>
       <select
         className={`w-full mt-2 bg-gray-50 border border-gray-300 rounded-md p-2 appearance-auto focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -42,49 +82,80 @@ export default function TransportationTab({ formData, handleChange, showError })
         <option value="electric">Electric</option>
       </select>
 
+      {/* Existing Fields (Subway, Bus, Train, Flights) */}
       <FormInput
-        label="Subway (monthly expenditure in dollars):"
-        value={formData.transportation.subway.cost}
+        label="Monthly Subway Bill ($):"
+        value={formData.transportation.subway?.cost || ""}
         onChange={(e) =>
           handleChange("transportation", "subway", e.target.value, "cost")
         }
         showError={showError.transportation}
+        isMonetary={true}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
 
       <FormInput
-        label="Bus (monthly expenditure in dollars):"
-        value={formData.transportation.bus.cost}
+        label="Monthly Bus Bill ($):"
+        value={formData.transportation.bus?.cost || ""}
         onChange={(e) =>
           handleChange("transportation", "bus", e.target.value, "cost")
         }
         showError={showError.transportation}
+        isMonetary={true}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
 
       <FormInput
-        label="Train (monthly expenditure in dollars):"
-        value={formData.transportation.train.cost}
+        label="Monthly Train Bill ($):"
+        value={formData.transportation.train?.cost || ""}
         onChange={(e) =>
           handleChange("transportation", "train", e.target.value, "cost")
         }
         showError={showError.transportation}
+        isMonetary={true}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
 
       <FormInput
-        label="Domestic Flights (monthly expenditure in dollars):"
-        value={formData.transportation.domestic_flight.cost}
+        label="Monthly Domestic Flights Bill ($):"
+        value={formData.transportation.domestic_flight?.cost || ""}
         onChange={(e) =>
           handleChange("transportation", "domestic_flight", e.target.value, "cost")
         }
         showError={showError.transportation}
+        isMonetary={true}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
 
       <FormInput
-        label="International Flights (monthly expenditure in dollars):"
-        value={formData.transportation.international_flight.cost}
+        label="Monthly International Flights Bill ($):"
+        value={formData.transportation.international_flight?.cost || ""}
         onChange={(e) =>
           handleChange("transportation", "international_flight", e.target.value, "cost")
         }
         showError={showError.transportation}
+        isMonetary={true}
+        type="number"
+        onKeyDown={(e) => {
+          if (e.key === "-" || e.key === "e") e.preventDefault();
+        }}
+        placeholder="0"
       />
     </div>
   );
