@@ -26,6 +26,7 @@ from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from categorization.pdf_processor import process_pdf
 from flask_cors import CORS
+from datetime import timedelta
 
 api_routes = Blueprint('api_routes', __name__)
 
@@ -193,9 +194,18 @@ def login():
         return jsonify({'error': 'Invalid email or password'}), 401
     
     if bcrypt.checkpw(password.encode('utf-8'), storedPassword.encode('utf-8')):
-        access_token = create_access_token(identity=email)
+        # Set token expiration to 2 days (48 hours)
+        expires = timedelta(days=2)
+        access_token = create_access_token(identity=email, expires_delta=expires)
         user_name = getUserNameByEmail(email)
-        return jsonify({'message': 'Login successful', 'token': access_token, 'profile': {'username': user_name, 'email': email}}), 200
+        return jsonify({
+            'message': 'Login successful', 
+            'token': access_token, 
+            'profile': {
+                'username': user_name, 
+                'email': email
+            }
+        }), 200
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
 
