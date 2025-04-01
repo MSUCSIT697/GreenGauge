@@ -93,13 +93,16 @@ def calculate_transportation_emissions(data):
             # We are expecting "vehicle_type" within each car
             vehicle_type = details["vehicle_type"]
             emission_factor = EMISSION_FACTORS["transportation"]["car"].get(vehicle_type, {}).get("emission_factor", 0)
-            total_emissions += float(convert_to_zero(details["distance"])) * emission_factor 
-            # * float(convert_to_zero(details["passengers"]))
+            total_emissions += float(convert_to_zero(details["distance"])) * emission_factor * float(convert_to_zero(details["passengers"]))
         else:
-            # For bus, train, subway, etc.
-            emission_factor = EMISSION_FACTORS["transportation"].get(vehicle, {}).get("emission_factor", 0)
-            total_emissions += float(convert_to_zero((details["cost"]))) * emission_factor 
-            # * float(convert_to_zero(details["passengers"]))
+            if isinstance(details, dict) and "cost" in details:
+                # For bus, train, subway, etc.
+                emission_factor = EMISSION_FACTORS["transportation"].get(vehicle, {}).get("emission_factor", 0)
+                total_emissions += float(convert_to_zero((details["cost"]))) * emission_factor 
+                # * float(convert_to_zero(details["passengers"]))
+            else:
+                print(f"Invalid details or missing 'cost' key. vehicle :: {vehicle} details :: {details}")
+            
     return total_emissions
 
 def calculate_electricity_emissions(data):
@@ -120,7 +123,7 @@ def save_to_database(data, total_emissions, food_emissions, retail_emissions, tr
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Step 1: Insert into total_emissions first to get the ID
+    # Insert into total_emissions first to get the ID
     cursor.execute("""
         INSERT INTO total_emissions (food_emissions, retail_emissions, transportation_emissions, electricity_emissions, waste_emissions, total_emissions, profile_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s);
@@ -128,39 +131,6 @@ def save_to_database(data, total_emissions, food_emissions, retail_emissions, tr
 
     total_emission_id = cursor.lastrowid  # Fetch the generated ID
 
-# Do not require storing individual data in separate tables
-
-    # # Step 2: Insert into food_emissions with total_emission_id
-    # cursor.execute("""
-    #     INSERT INTO food_emissions (beef, chicken, vegetables, total_emission_id)
-    #     VALUES (%s, %s, %s, %s);
-    # """, (data['food']['beef'], data['food']['chicken'], data['food']['vegetables'], total_emission_id))
-
-    # # Step 3: Insert into retail_emissions with total_emission_id
-    # cursor.execute("""
-    #     INSERT INTO retail_emissions (electronics, clothing, total_emission_id)
-    #     VALUES (%s, %s, %s);
-    # """, (data['retail']['electronics'], data['retail']['clothing'], total_emission_id))
-
-    # # Step 4: Insert into transportation_emissions with total_emission_id
-    # cursor.execute("""
-    #     INSERT INTO transportation_emissions (vehicle_type, distance, passengers, total_emission_id)
-    #     VALUES (%s, %s, %s, %s);
-    # """, ("car", data['transportation']['car']['distance'], data['transportation']['car']['passengers'], total_emission_id))
-
-    # # Step 5: Insert into electricity_emissions with total_emission_id
-    # cursor.execute("""
-    #     INSERT INTO electricity_emissions (consumption, energy_source, total_emission_id)
-    #     VALUES (%s, %s, %s);
-    # """, (data['electricity']['consumptionh'], data['electricity']['energy_source'], total_emission_id))
-
-    # # Step 6: Insert into waste_emissions with total_emission_id
-    # cursor.execute("""
-    #     INSERT INTO waste_emissions (food_waste, paper, plastic, metal, total_emission_id)
-    #     VALUES (%s, %s, %s, %s, %s);
-    # """, (data['waste']['food_waste'], data['waste']['paper'], data['waste']['plastic'], data['waste']['metal'], total_emission_id))
-
-    # Commit changes
     conn.commit()
     cursor.close()
     conn.close()
