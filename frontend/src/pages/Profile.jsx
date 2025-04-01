@@ -7,23 +7,6 @@ export default function Settings() {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useContext(AuthContext);
 
-  // Load theme from localStorage or default to light
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme ? savedTheme === "dark" : false;
-  });
-
-  // Apply theme class to document root
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
-
   const [user, setUser] = useState({
     username: "",
     email: ""
@@ -33,6 +16,7 @@ export default function Settings() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [modalErrorMessage, setModalErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [updatedInfo, setUpdatedInfo] = useState({
     username: "",
@@ -96,43 +80,68 @@ export default function Settings() {
   // ✅ Handle account info update
   const handleUpdateInfo = async (e) => {
     e.preventDefault();
-    setErrorMessage("");
+    setModalErrorMessage("");
     setIsLoading(true);
   
     try {
       const storedUser = JSON.parse(localStorage.getItem("profile")) || {};
+      const currentPassword = storedUser.password; // Get current password from storage
       
       // Prepare the update data
       const updateData = {};
       const requestBody = {};
-      if (updatedInfo.username && updatedInfo.username !== user.username) {
-        if (updatedInfo.username.trim().includes(" ")) {
-          setErrorMessage("⚠️ Username cannot contain spaces.");
-          return;
-        }else{
-          updateData.username = updatedInfo.username;
-          requestBody.username = updatedInfo.username;
-        }
-      }
-      if (updatedInfo.email && updatedInfo.email !== user.email) {
-        if (!/^\S+@\S+\.\S+$/.test(updatedInfo)) {
-          setErrorMessage("⚠️ Please enter a valid email.");
-          return;
-        }else{
-          updateData.email = updatedInfo.email;
-          requestBody.email = updatedInfo.email;
-        }
-      }
+      
+      // Password validation
       if (updatedInfo.password) {
+        if (!updatedInfo.oldPassword) {
+          setModalErrorMessage("Please enter your current password");
+          return;
+        }
+        
+        if (updatedInfo.oldPassword !== currentPassword) {
+          setModalErrorMessage("Current password is incorrect");
+          return;
+        }
+        
+        if (updatedInfo.password === updatedInfo.oldPassword) {
+          setModalErrorMessage("New password must be different from current password");
+          return;
+        }
+        
+        if (updatedInfo.password.length < 6) {
+          setModalErrorMessage("Password must be at least 6 characters");
+          return;
+        }
+        
         requestBody.password = updatedInfo.password;
       }
   
+      // Username validation
+      if (updatedInfo.username && updatedInfo.username !== user.username) {
+        if (updatedInfo.username.trim().includes(" ")) {
+          setModalErrorMessage("Username cannot contain spaces");
+          return;
+        }
+        updateData.username = updatedInfo.username;
+        requestBody.username = updatedInfo.username;
+      }
+  
+      // Email validation
+      if (updatedInfo.email && updatedInfo.email !== user.email) {
+        if (!/^\S+@\S+\.\S+$/.test(updatedInfo.email)) {
+          setModalErrorMessage("Please enter a valid email");
+          return;
+        }
+        updateData.email = updatedInfo.email;
+        requestBody.email = updatedInfo.email;
+      }
+  
       if (Object.keys(requestBody).length === 0) {
-        setErrorMessage("No changes detected");
+        setModalErrorMessage("No changes detected");
         return;
       }
   
-      // Make API call to update profile
+      // API call
       const response = await fetch(`${import.meta.env.VITE_API_URL}/update_profile`, {
         method: 'POST',
         headers: {
@@ -147,8 +156,11 @@ export default function Settings() {
         throw new Error(errorData.error || 'Failed to update profile');
       }
   
-      // Update local storage if API call succeeds
+      // Update local storage
       const updatedUser = { ...storedUser, ...updateData };
+      if (updatedInfo.password) {
+        updatedUser.password = updatedInfo.password; // Update password in local storage
+      }
       localStorage.setItem("profile", JSON.stringify(updatedUser));
       
       // Update state
@@ -162,18 +174,14 @@ export default function Settings() {
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to update profile:", error);
-      setErrorMessage(error.message || "Failed to update profile");
+      setModalErrorMessage(error.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
   return (
-    <div className="p-6 dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div className="p-6 transition-colors duration-200">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
       {/* Loading state */}
@@ -197,25 +205,8 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Dark Mode Toggle */}
-      <div className="flex justify-end mb-4">
-        <label className="flex items-center cursor-pointer">
-          <span className="mr-2">Dark Mode</span>
-          <div className="relative">
-            <input 
-              type="checkbox" 
-              className="sr-only" 
-              checked={darkMode}
-              onChange={toggleDarkMode}
-            />
-            <div className={`block w-14 h-8 rounded-full ${darkMode ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
-            <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${darkMode ? 'transform translate-x-6' : ''}`}></div>
-          </div>
-        </label>
-      </div>
-
       {/* Profile Content */}
-      <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-6">
           <div className="relative group shrink-0">
             <img
@@ -224,7 +215,7 @@ export default function Settings() {
                 e.target.src = defaultProfile;
               }}
               alt="Profile"
-              className="w-40 h-40 rounded-full border-4 border-gray-200 dark:border-gray-600 object-cover"
+              className="w-40 h-40 rounded-full border-4 border-gray-200 object-cover"
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <label className="text-white cursor-pointer text-sm font-medium">
@@ -241,13 +232,13 @@ export default function Settings() {
 
           <div className="flex flex-col justify-center gap-2">
             <h2 className="text-2xl font-bold">{user.username}</h2>
-            <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
+            <p className="text-gray-600">{user.email}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-4 mt-16">
           <button 
-            className="btn btn-primary dark:bg-blue-600 dark:hover:bg-blue-700"
+            className="btn btn-primary"
             onClick={() => {
               setUpdatedInfo({
                 username: user.username,
@@ -262,7 +253,7 @@ export default function Settings() {
           </button>
           
           <button 
-            className="btn btn-primary dark:bg-blue-600 dark:hover:bg-blue-700"
+            className="btn btn-primary"
             onClick={() => navigate("/dashboard")}
             disabled={isLoading}
           >
@@ -274,14 +265,22 @@ export default function Settings() {
       {/* Update Info Modal */}
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Update Profile</h2>
+
+            {/* Modal-specific error message */}
+            {modalErrorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4">
+                <p>{modalErrorMessage}</p>
+              </div>
+            )}
+
             <form onSubmit={handleUpdateInfo} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Username</label>
                 <input 
                   type="text" 
-                  className="input input-bordered w-full dark:bg-gray-600 dark:border-gray-500"
+                  className="input input-bordered w-full"
                   value={updatedInfo.username}
                   onChange={(e) => setUpdatedInfo({ ...updatedInfo, username: e.target.value })}
                   required
@@ -292,7 +291,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input 
                   type="email" 
-                  className="input input-bordered w-full dark:bg-gray-600 dark:border-gray-500"
+                  className="input input-bordered w-full"
                   value={updatedInfo.email}
                   onChange={(e) => setUpdatedInfo({ ...updatedInfo, email: e.target.value })}
                   required
@@ -300,11 +299,22 @@ export default function Settings() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-1">Current Password</label>
+                <input 
+                  type="password" 
+                  className="input input-bordered w-full"
+                  value={updatedInfo.oldPassword || ""}
+                  onChange={(e) => setUpdatedInfo({ ...updatedInfo, oldPassword: e.target.value })}
+                  placeholder="Required for password changes"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-1">New Password</label>
                 <input 
                   type="password" 
-                  className="input input-bordered w-full dark:bg-gray-600 dark:border-gray-500"
-                  value={updatedInfo.password}
+                  className="input input-bordered w-full"
+                  value={updatedInfo.password || ""}
                   onChange={(e) => setUpdatedInfo({ ...updatedInfo, password: e.target.value })}
                   placeholder="Leave blank to keep current"
                 />
@@ -313,14 +323,14 @@ export default function Settings() {
               <div className="flex gap-2 pt-2">
                 <button 
                   type="submit" 
-                  className="btn btn-primary flex-1 dark:bg-blue-600 dark:hover:bg-blue-700"
+                  className="btn btn-primary flex-1"
                   disabled={isLoading}
                 >
                   {isLoading ? "Saving..." : "Save Changes"}
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-outline flex-1 dark:border-gray-600 dark:hover:bg-gray-600"
+                  className="btn btn-outline flex-1"
                   onClick={() => setShowEditModal(false)}
                   disabled={isLoading}
                 >
