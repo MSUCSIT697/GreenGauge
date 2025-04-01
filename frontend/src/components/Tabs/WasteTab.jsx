@@ -1,28 +1,14 @@
-import { useState } from "react";
+import { useState } from "react"; 
 import FormInput from "../FormInput";
 
 export default function WasteTab({ formData, handleChange, showError }) {
   const [recycling, setRecycling] = useState(formData.waste.recycling || "No");
-  const [recycledTypes, setRecycledTypes] = useState([]);
   const [unit, setUnit] = useState("kg"); // Default unit is kg
 
   const handleRecyclingChange = (e) => {
     const value = e.target.value;
     setRecycling(value);
     handleChange("waste", "recycling", value);
-  };
-  const handleRecycledTypesChange = (e) => {
-    const { value, checked } = e.target;
-    let updatedTypes = [...recycledTypes];
-
-    if (checked) {
-      updatedTypes.push(value);
-    } else {
-      updatedTypes = updatedTypes.filter((type) => type !== value);
-    }
-
-    setRecycledTypes(updatedTypes);
-    handleChange("waste", "recycledTypes", updatedTypes);
   };
 
   const convertWeight = (value, toUnit) => {
@@ -98,64 +84,38 @@ export default function WasteTab({ formData, handleChange, showError }) {
         </select>
       </div>
 
-      {/* If user recycles, ask what they recycle */}
-      {recycling === "Yes" && (
-        <div>
-          <label className="block font-medium">What types of waste do you recycle?</label>
-          <div className="flex flex-wrap">
-            {wasteTypes.map(({ key, label }) => (
-              <label key={key} className="mr-4">
-                <input
-                  type="checkbox"
-                  value={key}
-                  checked={recycledTypes.includes(key)}
-                  onChange={handleRecycledTypesChange}
-                />{" "}
-                {label}
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Waste Reduction Actions */}
+      {/* Waste Reduction Actions Dropdown */}
       <div>
         <label className="block font-medium">Are you taking any actions to reduce waste?</label>
-        <div className="flex flex-wrap">
+        <select
+          value={formData.waste.actions || ""}
+          onChange={(e) => handleChange("waste", "actions", e.target.value)}
+          className="border rounded p-2 w-full"
+        >
+          <option value="">Select an action</option>
           {wasteReductionActions.map((action) => (
-            <label key={action} className="mr-4">
-              <input
-                type="checkbox"
-                value={action}
-                checked={formData.waste.actions?.includes(action)}
-                onChange={(e) =>
-                  handleChange(
-                    "waste",
-                    "actions",
-                    e.target.checked
-                      ? [...(formData.waste.actions || []), action]
-                      : formData.waste.actions.filter((a) => a !== action)
-                  )
-                }
-              />{" "}
-              {action}
-            </label>
+            <option key={action} value={action}>{action}</option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* E-Waste & Hazardous Waste */}
+      {/* E-Waste Management */}
       <div>
         <label className="block font-medium">How do you manage e-waste?</label>
-        <input
-          type="text"
-          className="border rounded p-2 w-full"
+        <select
           value={formData.waste.eWaste || ""}
           onChange={(e) => handleChange("waste", "eWaste", e.target.value)}
-          placeholder="E.g., Drop-off at e-waste recycling centers"
-        />
+          className="border rounded p-2 w-full"
+        >
+          <option value="">Select a method</option>
+          <option value="Drop-off at e-waste recycling centers">Drop-off at e-waste recycling centers</option>
+          <option value="Trade-in programs">Trade-in programs</option>
+          <option value="Donation to charities">Donation to charities</option>
+          <option value="Municipal e-waste collection events">Municipal e-waste collection events</option>
+        </select>
       </div>
 
+      {/* Hazardous Waste Management */}
       <div>
         <label className="block font-medium">How do you manage hazardous waste (paint, chemicals, etc.)?</label>
         <input
