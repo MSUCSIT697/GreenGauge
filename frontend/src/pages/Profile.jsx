@@ -158,9 +158,6 @@ export default function Settings() {
   
       // Update local storage
       const updatedUser = { ...storedUser, ...updateData };
-      if (updatedInfo.password) {
-        updatedUser.password = updatedInfo.password; // Update password in local storage
-      }
       localStorage.setItem("profile", JSON.stringify(updatedUser));
       
       // Update state
