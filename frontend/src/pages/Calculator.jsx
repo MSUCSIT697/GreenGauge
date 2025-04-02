@@ -41,7 +41,6 @@ export default function Calculator() {
     }
   };
 
-
   const [formData, setFormData] = useState({
     transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, subway: { cost: "" }, bus: { cost: "" }, train: { cost: "" }, domestic_flight: { cost: "" }, international_flight: { cost: "" } },
     electricity: { consumption: "", energy_source: "natural_gas" },

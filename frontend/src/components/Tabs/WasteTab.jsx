@@ -1,36 +1,11 @@
-import { useState } from "react"; 
+import { useState } from "react";
 import FormInput from "../FormInput";
 
 export default function WasteTab({ formData, handleChange, showError }) {
-  const [recycling, setRecycling] = useState(formData.waste.recycling || "No");
-  const [unit, setUnit] = useState("kg"); // Default unit is kg
-
-  const handleRecyclingChange = (e) => {
-    const value = e.target.value;
-    setRecycling(value);
-    handleChange("waste", "recycling", value);
-  };
-
-  const convertWeight = (value, toUnit) => {
-    if (!value) return "";
-    return toUnit === "lbs" ? (value * 2.20462).toFixed(2) : (value / 2.20462).toFixed(2);
-  };
-
-  const handleUnitChange = (e) => {
-    const newUnit = e.target.value;
-    const updatedWaste = {};
-
-    Object.keys(formData.waste).forEach((key) => {
-      if (wasteTypes.some((wt) => wt.key === key)) {
-        updatedWaste[key] = convertWeight(formData.waste[key], newUnit);
-      } else {
-        updatedWaste[key] = formData.waste[key];
-      }
-    });
-
-    setUnit(newUnit);
-    handleChange("waste", null, updatedWaste);
-  };
+  const [recycling, setRecycling] = useState(formData.waste.recycling || "");
+  const [showRecyclingDropdown, setShowRecyclingDropdown] = useState(false);
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [showEWasteDropdown, setShowEWasteDropdown] = useState(false);
 
   const wasteTypes = [
     { key: "food_waste", label: "Food Waste" },
@@ -49,78 +24,160 @@ export default function WasteTab({ formData, handleChange, showError }) {
     "Donating usable items",
   ];
 
+  const eWasteOptions = [
+    "Drop-off at e-waste recycling centers",
+    "Trade-in programs",
+    "Donation to charities",
+    "Municipal e-waste collection events"
+  ];
+
+  const recyclingOptions = ["Yes", "No", "Not Sure"];
+
+  const handleSelection = (field, value) => {
+    handleChange("waste", field, value);
+    switch(field) {
+      case "recycling": setShowRecyclingDropdown(false); break;
+      case "actions": setShowActionsDropdown(false); break;
+      case "eWaste": setShowEWasteDropdown(false); break;
+    }
+  };
+
   return (
     <div>
       <h2 className="text-lg font-semibold">Waste Production</h2>
-
-      {/* Unit Toggle */}
-      <div className="mb-4">
-        <label className="block font-medium">Select Unit:</label>
-        <select value={unit} onChange={handleUnitChange} className="border rounded p-2">
-          <option value="kg">Kilograms (kg)</option>
-          <option value="lbs">Pounds (lbs)</option>
-        </select>
-      </div>
 
       {/* Waste Inputs */}
       {wasteTypes.map(({ key, label }) => (
         <FormInput
           key={key}
-          label={${label} (${unit} per week):}
-          value={formData.waste[key]}
+          label={`${label} (lbs per week):`}
+          value={formData.waste[key] || ""}
           onChange={(e) => handleChange("waste", key, Math.max(0, e.target.value))}
           showError={showError.waste}
           type="number"
+          min="0"
         />
       ))}
 
       {/* Recycling Question */}
-      <div>
-        <label className="block font-medium">Do you recycle your waste?</label>
-        <select value={recycling} onChange={handleRecyclingChange} className="border rounded p-2">
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-          <option value="Not Sure">Not Sure</option>
-        </select>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Do you recycle your waste?</label>
+        <div className="relative">
+          <input
+            type="text"
+            readOnly
+            placeholder="Select recycling option"
+            value={recycling}
+            onClick={() => {
+              setShowRecyclingDropdown(!showRecyclingDropdown);
+              setShowActionsDropdown(false);
+              setShowEWasteDropdown(false);
+            }}
+            className={`input input-bordered w-full px-3 py-2 border ${
+              showError.waste ? 'border-red-500' : 'border-gray-300'
+            } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+          />
+          {showRecyclingDropdown && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-300">
+              {recyclingOptions.map((option) => (
+                <div
+                  key={option}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    recycling === option ? 'bg-gray-100 font-medium' : ''
+                  }`}
+                  onClick={() => {
+                    setRecycling(option);
+                    handleSelection("recycling", option);
+                  }}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Waste Reduction Actions Dropdown */}
-      <div>
-        <label className="block font-medium">Are you taking any actions to reduce waste?</label>
-        <select
-          value={formData.waste.actions || ""}
-          onChange={(e) => handleChange("waste", "actions", e.target.value)}
-          className="border rounded p-2 w-full"
-        >
-          <option value="">Select an action</option>
-          {wasteReductionActions.map((action) => (
-            <option key={action} value={action}>{action}</option>
-          ))}
-        </select>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Are you taking any actions to reduce waste?</label>
+        <div className="relative">
+          <input
+            type="text"
+            readOnly
+            placeholder="Select an action"
+            value={formData.waste.actions || ""}
+            onClick={() => {
+              setShowActionsDropdown(!showActionsDropdown);
+              setShowRecyclingDropdown(false);
+              setShowEWasteDropdown(false);
+            }}
+            className={`input input-bordered w-full px-3 py-2 border ${
+              showError.waste ? 'border-red-500' : 'border-gray-300'
+            } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+          />
+          {showActionsDropdown && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-300 max-h-60 overflow-auto">
+              {wasteReductionActions.map((action) => (
+                <div
+                  key={action}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    formData.waste.actions === action ? 'bg-gray-100 font-medium' : ''
+                  }`}
+                  onClick={() => handleSelection("actions", action)}
+                >
+                  {action}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* E-Waste Management */}
-      <div>
-        <label className="block font-medium">How do you manage e-waste?</label>
-        <select
-          value={formData.waste.eWaste || ""}
-          onChange={(e) => handleChange("waste", "eWaste", e.target.value)}
-          className="border rounded p-2 w-full"
-        >
-          <option value="">Select a method</option>
-          <option value="Drop-off at e-waste recycling centers">Drop-off at e-waste recycling centers</option>
-          <option value="Trade-in programs">Trade-in programs</option>
-          <option value="Donation to charities">Donation to charities</option>
-          <option value="Municipal e-waste collection events">Municipal e-waste collection events</option>
-        </select>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">How do you manage e-waste?</label>
+        <div className="relative">
+          <input
+            type="text"
+            readOnly
+            placeholder="Select e-waste method"
+            value={formData.waste.eWaste || ""}
+            onClick={() => {
+              setShowEWasteDropdown(!showEWasteDropdown);
+              setShowRecyclingDropdown(false);
+              setShowActionsDropdown(false);
+            }}
+            className={`input input-bordered w-full px-3 py-2 border ${
+              showError.waste ? 'border-red-500' : 'border-gray-300'
+            } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+          />
+          {showEWasteDropdown && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-300">
+              {eWasteOptions.map((option) => (
+                <div
+                  key={option}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    formData.waste.eWaste === option ? 'bg-gray-100 font-medium' : ''
+                  }`}
+                  onClick={() => handleSelection("eWaste", option)}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Hazardous Waste Management */}
       <div>
-        <label className="block font-medium">How do you manage hazardous waste (paint, chemicals, etc.)?</label>
+        <label className="block font-medium mb-1">How do you manage hazardous waste (paint, chemicals, etc.)?</label>
         <input
           type="text"
-          className="border rounded p-2 w-full"
+          className={`input input-bordered w-full px-3 py-2 border ${
+            showError.waste ? 'border-red-500' : 'border-gray-300'
+          } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
           value={formData.waste.hazardousWaste || ""}
           onChange={(e) => handleChange("waste", "hazardousWaste", e.target.value)}
           placeholder="E.g., Special disposal facility, hazardous waste collection events"
