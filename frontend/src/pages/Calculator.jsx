@@ -45,13 +45,16 @@ export default function Calculator() {
   const [formData, setFormData] = useState({
     transportation: { car: { distance: "", vehicle_type: "gasoline", passengers: 1 }, subway: { cost: "" }, bus: { cost: "" }, train: { cost: "" }, domestic_flight: { cost: "" }, international_flight: { cost: "" } },
     electricity: { consumption: "", energy_source: "natural_gas" },
-    food: { consumption: 1, diet: "omnivore" },
+    food: { consumption: 1, diet: "",eatingOut: "", localFood: "", foodExpense: "" },
     retail: { electronics: "", clothing: "", kids: "", furniture: "", entertainment: "", home_supplies: "", medical_care: "", personal_care: "", pets: "" },
     waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
   });
 
   const handleChange = (category, field, value, subField = null) => {
-    const sanitizedValue = Math.max(0, parseFloat(value)) || 0; // Prevent negative values
+    // Only sanitize numeric values, preserve strings
+    const sanitizedValue = typeof value === 'number' || !isNaN(value) 
+      ? Math.max(0, parseFloat(value)) || 0 
+      : value;
   
     setFormData((prev) => {
       const updatedFormData = {
@@ -64,12 +67,10 @@ export default function Calculator() {
         },
       };
   
-      console.log("Updated formData:", updatedFormData); // Debugging
-  
+      console.log("Updated formData:", updatedFormData);
       return updatedFormData;
     });
   };
-
 
   const isFormValid = (data = formData) => {
     if (zipCode.length !== 5) return false;

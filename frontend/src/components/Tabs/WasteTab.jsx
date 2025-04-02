@@ -66,7 +66,7 @@ export default function WasteTab({ formData, handleChange, showError }) {
       {wasteTypes.map(({ key, label }) => (
         <FormInput
           key={key}
-          label={`${label} (${unit} per week):`}
+          label={${label} (${unit} per week):}
           value={formData.waste[key]}
           onChange={(e) => handleChange("waste", key, Math.max(0, e.target.value))}
           showError={showError.waste}
