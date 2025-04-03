@@ -20,7 +20,7 @@ GUEST_EMISSION_FACTORS = load_guest_emission_factors()
 
 
 def convert_to_zero(value):
-    return 0 if not value else value
+    return 0 if not value or not isinstance(value, (int, float)) else value
 
 def calculate_guest_emissions(data):
     # Initialize total carbon emissions

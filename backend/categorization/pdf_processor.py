@@ -179,7 +179,7 @@ def categorize_only(df):
                     # print(f"⚠️ Unexpected structure at {category} -> {subcategory}, initializing.")
                     result[category][subcategory] = amount
             else:
-                # print(f"🆕 Creating new subcategory: {subcategory} in {category} with {amount}")
+                print(f"🆕 Creating new subcategory: {subcategory} in {category} with {amount}")
                 result[category][subcategory] = amount
 
     return result
