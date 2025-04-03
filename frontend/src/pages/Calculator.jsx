@@ -46,7 +46,7 @@ export default function Calculator() {
     electricity: { consumption: "", energy_source: "natural_gas" },
     food: { consumption: 1, diet: "",eatingOut: "", localFood: "", foodExpense: "" },
     retail: { electronics: "", clothing: "", kids: "", furniture: "", entertainment: "", home_supplies: "", medical_care: "", personal_care: "", pets: "" },
-    waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "" },
+    waste: { food_waste: "", paper: "", plastic: "", glass: "", metal: "", recycling: "", actions: "", eWaste: "",hazardousWaste: ""},
   });
 
   const handleChange = (category, field, value, subField = null) => {

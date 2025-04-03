@@ -6,6 +6,7 @@ export default function WasteTab({ formData, handleChange, showError }) {
   const [showRecyclingDropdown, setShowRecyclingDropdown] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [showEWasteDropdown, setShowEWasteDropdown] = useState(false);
+  const [showHazardousDropdown, setShowHazardousDropdown] = useState(false);
 
   const wasteTypes = [
     { key: "food_waste", label: "Food Waste" },
@@ -32,16 +33,24 @@ export default function WasteTab({ formData, handleChange, showError }) {
   ];
 
   const recyclingOptions = ["Yes", "No", "Not Sure"];
-
+  
+  const hazardousOptions = [
+    "Special disposal facility",
+    "Hazardous waste collection events",
+    "Municipal pickup",
+    "Retailer take-back programs",
+    "Professional disposal service",
+  ];
   const handleSelection = (field, value) => {
     handleChange("waste", field, value);
     switch(field) {
       case "recycling": setShowRecyclingDropdown(false); break;
       case "actions": setShowActionsDropdown(false); break;
       case "eWaste": setShowEWasteDropdown(false); break;
+      case "hazardousWaste": setShowHazardousDropdown(false); break;
     }
   };
-
+  
   return (
     <div>
       <h2 className="text-lg font-semibold">Waste Production</h2>
@@ -171,17 +180,43 @@ export default function WasteTab({ formData, handleChange, showError }) {
       </div>
 
       {/* Hazardous Waste Management */}
-      <div>
-        <label className="block font-medium mb-1">How do you manage hazardous waste (paint, chemicals, etc.)?</label>
-        <input
-          type="text"
-          className={`input input-bordered w-full px-3 py-2 border ${
-            showError.waste ? 'border-red-500' : 'border-gray-300'
-          } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
-          value={formData.waste.hazardousWaste || ""}
-          onChange={(e) => handleChange("waste", "hazardousWaste", e.target.value)}
-          placeholder="E.g., Special disposal facility, hazardous waste collection events"
-        />
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          How do you manage hazardous waste (paint, chemicals, etc.)?
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            readOnly
+            placeholder="Select disposal method"
+            value={formData.waste.hazardousWaste || ""}
+            onClick={() => {
+              setShowHazardousDropdown(!showHazardousDropdown);
+              // Close other dropdowns
+              setShowRecyclingDropdown(false);
+              setShowActionsDropdown(false);
+              setShowEWasteDropdown(false);
+            }}
+            className={`input input-bordered w-full px-3 py-2 border ${
+              showError.waste ? 'border-red-500' : 'border-gray-300'
+            } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+          />
+          {showHazardousDropdown && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-300 max-h-60 overflow-auto">
+              {hazardousOptions.map((option) => (
+                <div
+                  key={option}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    formData.waste.hazardousWaste === option ? 'bg-gray-100 font-medium' : ''
+                  }`}
+                  onClick={() => handleSelection("hazardousWaste", option)}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
