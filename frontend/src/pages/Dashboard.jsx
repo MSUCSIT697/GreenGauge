@@ -10,6 +10,7 @@ import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 import { useLocation } from "react-router-dom";
 
 
+
 export default function Dashboard() {
   const [progressData, setProgressData] = useState([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -29,6 +30,16 @@ export default function Dashboard() {
         new Date(latest.create_ts) > new Date(current.create_ts) ? latest : current
   ) // ✅ Always selects the most recent submission
   : { emissions: {}, total_emissions: 0, recommendations: [] };
+  const [username, setUsername] = useState("");
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("profile");
+  if (storedUser) {
+    const parsed = JSON.parse(storedUser);
+    setUsername(parsed.username || "");
+  }
+}, []);
+
 
 
   console.log("✅ Latest Report for Recommendations:", latestReport);
@@ -150,7 +161,11 @@ export default function Dashboard() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
-  <h1 className="text-2xl font-bold text-gray-900">My Dashboard :</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+  {username ? `${username}'s Dashboard:` : 'My Dashboard:'}
+</h1>
+
+
   <button
   onClick={() => setShowCalcModal(true)}
   className="btn btn-primary border-[2px] text-white border-green-800"
