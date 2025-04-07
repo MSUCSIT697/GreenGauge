@@ -101,7 +101,7 @@ export default function ProgressChart({ data = [], maxScale = 2450 }) {
           <button
             key={frame}
             className={`px-3 py-1 rounded-md ${
-              timeFrame === frame ? "bg-green-500 text-white" : "bg-gray-200"
+              timeFrame === frame ? "bg-primary text-white" : "bg-gray-200"
             }`}
             onClick={() => setTimeFrame(frame)}
           >

@@ -192,7 +192,7 @@ const barData = {
         const userVal = userResults?.emissions?.find(e => e.category === cat)?.value || 0;
         return parseFloat(userVal.toFixed(3));
       }),
-      backgroundColor: chartColors, // TODO :: should be consistent for all categories
+      backgroundColor: "#10b981", // TODO :: should be consistent for all categories
     },
     {
       label: "US Average Emissions",

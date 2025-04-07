@@ -203,61 +203,65 @@ export default function Settings() {
       )}
 
       {/* Profile Content */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center gap-6">
-          <div className="relative group shrink-0">
-            <img
-              src={profilePicture || defaultProfile}
-              onError={(e) => {
-                e.target.src = defaultProfile;
-              }}
-              alt="Profile"
-              className="w-40 h-40 rounded-full border-4 border-gray-200 object-cover"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <label className="text-white cursor-pointer text-sm font-medium">
-                Change Photo
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  onChange={handleProfilePictureChange}
-                  accept="image/*"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-center gap-2">
-            <h2 className="text-2xl font-bold">{user.username}</h2>
-            <p className="text-gray-600">{user.email}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4 mt-16">
-          <button 
-            className="btn btn-primary"
-            onClick={() => {
-              setUpdatedInfo({
-                username: user.username,
-                email: user.email,
-                password: ""
-              });
-              setShowEditModal(true);
-            }}
-            disabled={isLoading}
-          >
-            Edit Profile
-          </button>
-          
-          <button 
-            className="btn btn-primary"
-            onClick={() => navigate("/dashboard")}
-            disabled={isLoading}
-          >
-            Back to Dashboard
-          </button>
-        </div>
+<div className="bg-white rounded-lg shadow-md p-6">
+  <div className="flex gap-8 items-center justify-start">
+    {/* Profile Picture */}
+    <div className="relative group w-40 h-40 shrink-0">
+      <img
+        src={profilePicture || defaultProfile}
+        onError={(e) => {
+          e.target.src = defaultProfile;
+        }}
+        alt="Profile"
+        className="w-full h-full rounded-full border-4 border-primary object-cover"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <label className="text-white cursor-pointer text-sm font-medium">
+          Change Photo
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleProfilePictureChange}
+            accept="image/*"
+          />
+        </label>
       </div>
+    </div>
+
+    {/* Username & Email stacked vertically */}
+    <div className="flex flex-col justify-center gap-2">
+      <h2 className="text-4xl font-bold">{user.username}</h2>
+      <p className="text-2xl text-gray-600">{user.email}</p>
+    </div>
+  </div>
+
+  {/* Action Buttons */}
+  <div className="flex gap-4 mt-12">
+  <button
+    className="btn btn-primary flex-1 px-6 py-3 text-base"
+      onClick={() => {
+        setUpdatedInfo({
+          username: user.username,
+          email: user.email,
+          password: ""
+        });
+        setShowEditModal(true);
+      }}
+      disabled={isLoading}
+    >
+      Edit Profile
+    </button>
+
+    <button
+    className="btn btn-primary flex-1 px-6 py-3 text-base"
+      onClick={() => navigate("/dashboard")}
+      disabled={isLoading}
+    >
+      Back to Dashboard
+    </button>
+  </div>
+</div>
+
 
       {/* Update Info Modal */}
       {showEditModal && (

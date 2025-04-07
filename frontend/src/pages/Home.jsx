@@ -130,11 +130,10 @@ export default function Home() {
         ) : (
           <>
             <button
-              className="btn btn-primary flex items-center hover:bg-lime-100 hover:text-green-800 gap-2"
+              className="btn btn-primary "
               onClick={() => setIsModalOpen(true)}
             >
-              <span className="text-xl font-bold">+</span>
-              Make a New Calculation
+             + Make a New Calculation
             </button>
 
             <Link to="/dashboard">

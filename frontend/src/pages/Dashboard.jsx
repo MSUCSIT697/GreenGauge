@@ -152,11 +152,14 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
   <h1 className="text-2xl font-bold text-gray-900">My Dashboard :</h1>
   <button
-    onClick={() => setShowCalcModal(true)}
-    className="px-4 py-2 rounded-md border-2 border-green-800 text-green-800 bg-lime-200 font-medium hover:bg-transparent  transition"
-  >
-    New Calculation
-  </button>
+  onClick={() => setShowCalcModal(true)}
+  className="btn btn-primary border-[2px] text-white border-green-800"
+>
+  + New Calculation
+</button>
+
+
+
 </div>
 
 
