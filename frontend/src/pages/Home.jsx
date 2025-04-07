@@ -55,7 +55,7 @@ export default function Home() {
 
   return (
     <div className="p-6 flex flex-col items-center">
-      <h1 className="text-4xl font-bold text-green-700 mb-6">Green Gauge</h1>
+      <h1 className="text-4xl font-bold text-primary mb-6">Green Gauge</h1>
 
       <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-4xl flex flex-col lg:flex-row">
         {/* Mission Statement */}

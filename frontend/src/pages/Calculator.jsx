@@ -251,7 +251,8 @@ export default function Calculator() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
+
       <h1 className="text-2xl font-bold text-gray-900">Manual Calculator:</h1>
       <p className="text-gray-600 mb-4">Provide the required details to calculate your carbon footprint.</p>
 
@@ -269,13 +270,17 @@ export default function Calculator() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b mb-0">
+      <div className="flex flex-wrap justify-start border-b mb-0 gap-2">
+
         {categories.map((cat, index) => (
           <button
             key={index}
-            className={`px-6 py-2 text-lg rounded-t-md transition-all ${
-              currentTab === index ? "bg-white font-bold border border-b-0 border-primary" : "hover:bg-white hover:shadow-md"
+            className={`text-lg rounded-t-md transition-all px-4 py-2 flex-1 min-w-[140px] text-center sm:flex-none ${
+              currentTab === index
+                ? "bg-white font-bold border border-b-0 border-primary"
+                : "hover:bg-primary "
             }`}
+            
             onClick={() => handleTabClick(index)}
           >
             {cat}
@@ -287,7 +292,8 @@ export default function Calculator() {
       <div className="bg-white shadow-md rounded-b-lg p-6 -mt-px">{renderTabContent()}</div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
+
         {currentTab > 0 && (
           <button className="btn btn-secondary" onClick={() => setCurrentTab(currentTab - 1)}>
             Back
