@@ -253,7 +253,7 @@ useEffect(() => {
           to={latestReport?.create_ts ? `/results/${latestReport.create_ts}` : "/results"} 
           className="btn btn-primary"
         >
-          View Results
+          View Latest Result
         </Link>
 
       </div>

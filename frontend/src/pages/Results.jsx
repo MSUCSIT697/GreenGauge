@@ -400,7 +400,7 @@ const listedComparison = Object.keys(USA_AVG_CATEGORY).map((category, i) => {
                     
           {/* ✅ Navigation Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
-            <Link to="/reports" className="btn btn-primary">View Reports</Link>
+            <Link to="/reports" className="btn btn-primary">View All Reports</Link>
             <Link to="/dashboard" className="btn btn-primary">Return to Dashboard</Link>
           </div>
         </>

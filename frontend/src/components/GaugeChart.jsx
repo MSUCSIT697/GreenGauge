@@ -20,7 +20,7 @@ export default function GaugeChart({ rating, id = "defaultGauge" }) { // ✅ Def
       title: "",
       levelColorsGradient: true,
       levelColors: [
-        "#3B82F6", // Blue (Below Average)
+        "#108981", // Blue (Below Average)
         "#10B981", // Green (Ideal Range)
         "#EF4444", // Red (Above Average)
       ],

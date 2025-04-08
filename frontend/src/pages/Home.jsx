@@ -3,6 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import JustGage from "justgage";
 import "raphael"; // Required for JustGage
 import { AuthContext } from "../context/AuthContext"; // Import AuthContext
+import InfoTooltip from "../components/InfoToolTip";
+import { Info } from "lucide-react";
+import SimpleGauge from "../components/SimpleGauge";
+import { useRef } from "react";
+
 
 
 export default function Home() {
@@ -11,26 +16,9 @@ export default function Home() {
   const { isLoggedIn } = useContext(AuthContext); // Use AuthContext
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const lastGaugeValue = useRef(50); // default starting value
 
-
-  useEffect(() => {
-    // ✅ Initialize JustGage without labels
-    const newGauge = new JustGage({
-      id: "gaugeChart",
-      value: 50, // Default midpoint
-      min: 0,
-      max: 100,
-      title: "",
-      levelColors: ["#10b981", "#f09e41", "#ef4444"], // Green to red
-      gaugeWidthScale: 0.5, // ✅ Thinner gauge
-      pointer: true,
-      hideMinMax: true, // ✅ Hides numeric scale
-      textRenderer: function () {
-        return ""; // ✅ Ensures numbers are not displayed
-      },
-    });
-    setGauge(newGauge);
-  }, []);
+  
 
   // Function to handle button click
   const handleNavigation = () => {
@@ -43,15 +31,8 @@ export default function Home() {
 
   const handleGaugeChange = (choice) => {
     setUserChoice(choice);
-
-    if (gauge) {
-      if (choice === "yes") {
-        gauge.refresh(10); // ✅ Almost empty (Green - Low Emissions)
-      } else {
-        gauge.refresh(90); // ✅ Almost full (Red - High Emissions)
-      }
-    }
   };
+  
 
   return (
     <div className="p-6 flex flex-col items-center">
@@ -76,14 +57,27 @@ export default function Home() {
 
         {/* Gauge Chart Section */}
         <div className="flex-1 flex flex-col items-center justify-center relative">
-          <div className="relative flex flex-col items-center">
-            <div id="gaugeChart" className="w-64 h-64"></div>
-          </div>
+        <div className="relative flex flex-col items-center">
+        <div className="w-64 h-[10rem] -mb-1">
+  <SimpleGauge
+    value={userChoice === "yes" ? 10 : userChoice === "no" ? 90 : 50}
+    activated={userChoice !== null}
+    id="homeGauge"
+  />
+</div>
+
+</div>
+
 
           {/* ✅ Move the question & buttons **closer** to the gauge */}
-          <p className="mt-2 font-semibold text-gray-900 text-center">
-            Do you want to help save the earth?
-          </p>
+          <div className="mt-2 font-semibold text-gray-900 flex items-center gap-2">
+  <p>Do you want to help save the earth?</p>
+  <InfoTooltip
+    message="A less-filled gauge means you're producing fewer emissions - that's great for the planet!"
+    position="top"
+  />
+</div>
+
 
           {/* Interactive Buttons */}
           <div className="flex space-x-4 mt-1">

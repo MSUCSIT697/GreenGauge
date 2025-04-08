@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useResults } from "../context/ResultsContext";
 import { useNavigate } from "react-router-dom";
+import InfoTooltip from "./InfoToolTip"; // adjust the path if needed
+
 
 export default function UploadModal({ isOpen, onClose }) {
   const [files, setFiles] = useState([]);
@@ -96,8 +98,16 @@ export default function UploadModal({ isOpen, onClose }) {
 
   return (
     <div className={`modal ${isOpen ? "modal-open" : ""}`} onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold">Upload PDF</h2>
+      <div className="modal-box overflow-visible relative" onClick={(e) => e.stopPropagation()}>
+
+      <div className="flex items-center gap-2 mb-2">
+  <h2 className="text-lg font-semibold">Upload PDF</h2>
+  <InfoTooltip
+    position="top"
+    message="Accepted formats: Monthly bank statements in PDF format. Make sure the file contains readable transaction data."
+  />
+</div>
+
         <input type="file" onChange={(e) => setFiles([e.target.files[0]])} accept=".pdf" />
         <button className="btn btn-primary" onClick={handleUpload}>
           {uploading ? "Uploading..." : "Upload & Process"}
