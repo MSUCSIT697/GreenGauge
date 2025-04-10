@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FormInput from "../FormInput";
+import InfoTooltip from "../InfoToolTip";
 
 export default function FoodTab({ formData, handleChange, showError }) {
   const [showDietDropdown, setShowDietDropdown] = useState(false);
@@ -8,9 +9,9 @@ export default function FoodTab({ formData, handleChange, showError }) {
 
   const dietOptions = [
     { value: "omnivore", label: "Omnivore - heavy on meat" },
-    { value: "vegetarian", label: "Vegetarian - only vegetables" },
-    { value: "vegan", label: "Vegan - only veg and no dairy" },
-    { value: "pescatarian", label: "Pescatarian - includes fish and seafood" }
+    { value: "vegetarian", label: "Vegetarian - no meat" },
+    { value: "vegan", label: "Vegan - no animal products" },
+    { value: "pescatarian", label: "Pescatarian - includes fish/seafood" }
   ];
 
   const eatingOutOptions = [
@@ -28,21 +29,13 @@ export default function FoodTab({ formData, handleChange, showError }) {
 
   const handleSelection = (field, value) => {
     handleChange("food", field, value);
-    // Close the dropdown immediately after selection
-    switch(field) {
-      case "diet":
-        setShowDietDropdown(false);
-        break;
-      case "eatingOut":
-        setShowEatingOutDropdown(false);
-        break;
-      case "localFood":
-        setShowLocalFoodDropdown(false);
-        break;
+    switch (field) {
+      case "diet": setShowDietDropdown(false); break;
+      case "eatingOut": setShowEatingOutDropdown(false); break;
+      case "localFood": setShowLocalFoodDropdown(false); break;
     }
   };
 
-  // Get current values from formData with fallbacks
   const currentDiet = formData.food?.diet || "";
   const currentEatingOut = formData.food?.eatingOut || "";
   const currentLocalFood = formData.food?.localFood || "";
@@ -51,10 +44,13 @@ export default function FoodTab({ formData, handleChange, showError }) {
   return (
     <div>
       <h2 className="text-lg font-semibold">Food</h2>
-      
+
       {/* Diet Selection */}
       <div className="mb-4">
-        <label className="block font-medium mb-1">Regular Diet:</label>
+        <label className="block font-medium mb-1 flex items-center gap-2">
+          Regular Diet
+          
+        </label>
         <div className="relative">
           <input
             type="text"
@@ -63,7 +59,6 @@ export default function FoodTab({ formData, handleChange, showError }) {
             value={dietOptions.find(opt => opt.value === currentDiet)?.label || ''}
             onClick={() => {
               setShowDietDropdown(!showDietDropdown);
-              // Close other dropdowns when opening this one
               setShowEatingOutDropdown(false);
               setShowLocalFoodDropdown(false);
             }}
@@ -91,7 +86,10 @@ export default function FoodTab({ formData, handleChange, showError }) {
 
       {/* Eating Out Frequency */}
       <div className="mb-4">
-        <label className="block font-medium mb-1">How often do you eat out?</label>
+        <label className="block font-medium mb-1 flex items-center gap-2">
+          How often do you eat out?
+          
+        </label>
         <div className="relative">
           <input
             type="text"
@@ -127,7 +125,10 @@ export default function FoodTab({ formData, handleChange, showError }) {
 
       {/* Local Food Preference */}
       <div className="mb-4">
-        <label className="block font-medium mb-1">Do you prioritize locally sourced food?</label>
+        <label className="block font-medium mb-1 flex items-center gap-2">
+          Do you prioritize locally sourced food?
+          
+        </label>
         <div className="relative">
           <input
             type="text"
@@ -163,14 +164,19 @@ export default function FoodTab({ formData, handleChange, showError }) {
 
       {/* Food Expenses */}
       <FormInput
-        label="Average monthly food expenses ($):"
+        label={
+          <span className="flex items-center gap-2">
+            Average monthly food expenses ($)
+            <InfoTooltip message="Enter your estimated total monthly food spending, including groceries and restaurants." />
+          </span>
+        }
         value={currentExpense}
         onChange={(e) => handleChange("food", "foodExpense", e.target.value)}
         showError={showError.food}
         type="number"
         min="0"
         onKeyDown={(e) => {
-          if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
+          if (["-", "e", "E"].includes(e.key)) e.preventDefault();
         }}
       />
     </div>

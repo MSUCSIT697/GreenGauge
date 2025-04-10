@@ -253,8 +253,11 @@ export default function Calculator() {
   return (
     <div className="p-4 sm:p-6">
 
-      <h1 className="text-2xl font-bold text-gray-900">Manual Calculator:</h1>
-      <p className="text-gray-600 mb-4">Provide the required details to calculate your carbon footprint.</p>
+<h1 className="text-2xl font-bold text-gray-900">Manual Carbon Footprint Calculator</h1>
+<p className="text-gray-600 mb-4">
+  Estimate your environmental impact by answering a few simple questions.  
+  Please provide at least one response per category, along with your ZIP code, to generate an accurate result.
+</p>
 
       {/* Zip Code Input */}
       <div className="mb-4">

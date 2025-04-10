@@ -1,9 +1,9 @@
 import FormInput from "../FormInput";
 import { useState } from 'react';
+import InfoToolTip from "../InfoToolTip";
 
 export default function RetailTab({ formData, handleChange, showError }) {
-
-  const [furnitureType, setFurnitureType] = useState('new'); // Default to 'new'
+  const [furnitureType, setFurnitureType] = useState('new');
   const [showFurnitureDropdown, setShowFurnitureDropdown] = useState(false);
 
   const furnitureOptions = [
@@ -16,7 +16,6 @@ export default function RetailTab({ formData, handleChange, showError }) {
   const handleFurnitureTypeChange = (type) => {
     setFurnitureType(type);
     setShowFurnitureDropdown(false);
-    // handleChange("retail", "furnitureType", type);
   };
 
   const restrictProps = {
@@ -30,6 +29,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
   return (
     <div>
       <h2 className="text-lg font-semibold">Retail Purchases</h2>
+
       <FormInput
         label="Kids (($) per month):"
         value={formData.retail.kids}
@@ -37,6 +37,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
         label="Clothing (($) per month):"
         value={formData.retail.clothing}
@@ -44,6 +45,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
         label="Entertainment (($) per month):"
         value={formData.retail.entertainment}
@@ -52,31 +54,30 @@ export default function RetailTab({ formData, handleChange, showError }) {
         {...restrictProps}
       />
 
-      {/* Furniture Input - matches existing style */}
+      {/* Furniture Input */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Furniture (($) per month):
+        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+          Furniture (($) per month)
+
         </label>
         <div className="flex gap-4">
-          {/* Type Dropdown */}
+          {/* Dropdown */}
           <div className="relative flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                readOnly
-                value={furnitureOptions.find(opt => opt.value === furnitureType)?.label || ''}
-                onClick={() => setShowFurnitureDropdown(!showFurnitureDropdown)}
-                className={`input input-bordered w-full px-3 py-2 border ${
-                  showError.retail ? 'border-red-500' : 'border-gray-300'
-                } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <input
+              type="text"
+              readOnly
+              value={furnitureOptions.find(opt => opt.value === furnitureType)?.label || ''}
+              onClick={() => setShowFurnitureDropdown(!showFurnitureDropdown)}
+              className={`input input-bordered w-full px-3 py-2 border ${
+                showError.retail ? 'border-red-500' : 'border-gray-300'
+              } rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
+              </svg>
             </div>
-            
+
             {showFurnitureDropdown && (
               <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-300">
                 {furnitureOptions.map((option) => (
@@ -93,7 +94,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
               </div>
             )}
           </div>
-          
+
           {/* Price Input */}
           <div className="flex-1">
             <input
@@ -111,7 +112,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
           </div>
         </div>
       </div>
-      
+
       <FormInput
         label="Home Supplies (($) per month):"
         value={formData.retail.home_supplies}
@@ -119,13 +120,20 @@ export default function RetailTab({ formData, handleChange, showError }) {
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
-        label="Medical Care (($) per month):"
+        label={
+          <span className="flex items-center gap-2">
+            Medical Care (($) per month)
+
+          </span>
+        }
         value={formData.retail.medical_care}
         onChange={(e) => handleChange("retail", "medical_care", e.target.value)}
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
         label="Personal Care (($) per month):"
         value={formData.retail.personal_care}
@@ -133,6 +141,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
         label="Pets (($) per month):"
         value={formData.retail.pets}
@@ -140,6 +149,7 @@ export default function RetailTab({ formData, handleChange, showError }) {
         showError={showError.retail}
         {...restrictProps}
       />
+
       <FormInput
         label="Electronics (($) per month):"
         value={formData.retail.electronics}
