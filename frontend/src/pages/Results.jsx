@@ -316,31 +316,32 @@ const listedComparison = Object.keys(USA_AVG_CATEGORY).map((category, i) => {
                 ))}
               </div>
 
-              {/* View Area */}
               {viewType === "pie" && (
-                <div className="flex flex-col md:flex-row justify-evenly items-center flex-wrap w-full px-4 sm:px-8 md:px-12 lg:px-20 gap-6 md:gap-12">
+  <div className="flex flex-col md:flex-row justify-evenly items-center flex-wrap w-full gap-6 md:gap-12">
+    <div className="w-full max-w-[260px] sm:max-w-[300px]">
+      <Pie
+        data={{
+          labels: Object.keys(formattedEmissions),
+          datasets: [{ data: Object.values(formattedEmissions), backgroundColor: chartColors }],
+        }}
+        options={{ maintainAspectRatio: true, responsive: true }}
+      />
+      <p className="text-center mt-2 text-md font-medium text-gray-700">Your Emissions</p>
+    </div>
 
+    <div className="w-full max-w-[260px] sm:max-w-[300px]">
+      <Pie
+        data={{
+          labels: Object.keys(USA_AVG_CATEGORY),
+          datasets: [{ data: Object.values(USA_AVG_CATEGORY), backgroundColor: chartColors }],
+        }}
+        options={{ maintainAspectRatio: true, responsive: true }}
+      />
+      <p className="text-center mt-2 text-md font-medium text-gray-700">US Average Emissions</p>
+    </div>
+  </div>
+)}
 
-                  <div style={{ width: "300px" }}>
-                    <Pie
-                      data={{
-                        labels: Object.keys(formattedEmissions),
-                        datasets: [{ data: Object.values(formattedEmissions), backgroundColor: chartColors }],
-                      }}
-                    />
-                    <p className="text-center mt-2 text-md font-medium text-gray-700">Your Emissions</p>
-                  </div>
-                  <div style={{ width: "300px" }}>
-                    <Pie
-                      data={{
-                        labels: Object.keys(USA_AVG_CATEGORY),
-                        datasets: [{ data: Object.values(USA_AVG_CATEGORY), backgroundColor: chartColors }],
-                      }}
-                    />
-                    <p className="text-center mt-2 text-md font-medium text-gray-700">US Average Emissions</p>
-                  </div>
-                </div>
-              )}
 
               {viewType === "bar" && (
                 <div className="mt-4 w-full" style={{ maxHeight: "600px", overflowY: "auto" }}>

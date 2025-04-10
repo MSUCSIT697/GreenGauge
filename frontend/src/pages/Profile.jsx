@@ -204,9 +204,12 @@ export default function Settings() {
 
       {/* Profile Content */}
 <div className="bg-white rounded-lg shadow-md p-6">
-  <div className="flex gap-8 items-center justify-start">
+<div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-center justify-center sm:justify-start">
+
+
     {/* Profile Picture */}
-    <div className="relative group w-40 h-40 shrink-0">
+    <div className="relative group w-32 h-32 sm:w-40 sm:h-40 shrink-0">
+
       <img
         src={profilePicture || defaultProfile}
         onError={(e) => {
@@ -229,16 +232,18 @@ export default function Settings() {
     </div>
 
     {/* Username & Email stacked vertically */}
-    <div className="flex flex-col justify-center gap-2">
-      <h2 className="text-4xl font-bold">{user.username}</h2>
-      <p className="text-2xl text-gray-600">{user.email}</p>
-    </div>
+    <div className="flex flex-col justify-center gap-2 h-full text-center sm:text-left">
+  <h2 className="text-4xl font-bold">{user.username}</h2>
+  <p className="text-2xl text-gray-600">{user.email}</p>
+</div>
+
   </div>
 
   {/* Action Buttons */}
-  <div className="flex gap-4 mt-12">
+  <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full">
+
   <button
-    className="btn btn-primary flex-1 px-6 py-3 text-base"
+    className="btn btn-primary w-full sm:flex-1 text-base"
       onClick={() => {
         setUpdatedInfo({
           username: user.username,
@@ -253,7 +258,7 @@ export default function Settings() {
     </button>
 
     <button
-    className="btn btn-primary flex-1 px-6 py-3 text-base"
+    className="btn btn-primary w-full sm:flex-1 text-base"
       onClick={() => navigate("/dashboard")}
       disabled={isLoading}
     >
@@ -266,7 +271,8 @@ export default function Settings() {
       {/* Update Info Modal */}
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md">
+
             <h2 className="text-xl font-bold mb-4">Update Profile</h2>
 
             {/* Modal-specific error message */}

@@ -160,7 +160,8 @@ useEffect(() => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+
       <h1 className="text-2xl font-bold text-gray-900">
   {username ? `${username}'s Dashboard:` : 'My Dashboard:'}
 </h1>
@@ -239,24 +240,24 @@ useEffect(() => {
         <ProgressChart data={progressData} maxScale={2000} />
       </div>
 
-      <div className="flex justify-center space-x-4 mt-6">
-        <button className="btn btn-primary" onClick={() => setIsUploadOpen(true)}>
-          Upload New PDF
-        </button>
-        <Link to="/calculator" className="btn btn-primary">
-          Manual Calculator
-        </Link>
-        <Link to="/reports" className="btn btn-primary">
-          View Reports
-        </Link>
-        <Link 
-          to={latestReport?.create_ts ? `/results/${latestReport.create_ts}` : "/results"} 
-          className="btn btn-primary"
-        >
-          View Latest Result
-        </Link>
+      <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+  <button className="btn btn-primary w-full sm:w-auto" onClick={() => setIsUploadOpen(true)}>
+    Upload New PDF
+  </button>
+  <Link to="/calculator" className="btn btn-primary w-full sm:w-auto">
+    Manual Calculator
+  </Link>
+  <Link to="/reports" className="btn btn-primary w-full sm:w-auto">
+    View Reports
+  </Link>
+  <Link 
+    to={latestReport?.create_ts ? `/results/${latestReport.create_ts}` : "/results"} 
+    className="btn btn-primary w-full sm:w-auto"
+  >
+    View Latest Result
+  </Link>
+</div>
 
-      </div>
 
       <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
       {/* Render LoginPromptModal only if showLoginModal is true */}
